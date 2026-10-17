@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Demo de estilos — Desarrollo con IA</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  /* ============ base ============ */
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    background: #14151a;
+    color: #fff;
+    font-family: Inter, system-ui, sans-serif;
+    display: flex; flex-direction: column; align-items: center;
+    gap: 14px; padding: 18px;
+  }
+  .topbar {
+    display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: center;
+    width: 100%; max-width: 1200px;
+  }
+  .topbar .label { font-size: 12px; letter-spacing: .12em; text-transform: uppercase; opacity: .5; margin-right: 6px; }
+  .tbtn {
+    font: 600 13px/1 Inter, sans-serif; color: #d7d9e0; background: #23242c;
+    border: 1px solid #33353f; border-radius: 999px; padding: 9px 15px; cursor: pointer;
+    transition: .15s;
+  }
+  .tbtn:hover { background: #2c2e38; }
+  .tbtn[aria-pressed="true"] { background: #fff; color: #16171c; border-color: #fff; }
+
+  /* ============ stage ============ */
+  .stage {
+    width: min(1200px, 94vw);
+    aspect-ratio: 16/9;
+    position: relative;
+    overflow: hidden;
+    border-radius: 14px;
+    box-shadow: 0 30px 80px rgba(0,0,0,.55);
+    isolation: isolate;
+  }
+  .slide {
+    position: absolute; inset: 0;
+    display: none;
+    --pad: 1.7em;
+    padding: var(--pad);
+    flex-direction: column;
+    font-size: 1em; /* JS sets stage font-size */
+    z-index: 1;
+  }
+  .slide.active { display: flex; }
+  .slide > div { position: relative; z-index: 2; }
+  .slide > .accentbar, .slide > .blob { z-index: 0; pointer-events: none; }
+
+  .kicker { font-size: .62em; letter-spacing: .22em; text-transform: uppercase; opacity: .65; }
+  h1 { font-size: 2.9em; line-height: 1.02; letter-spacing: -.02em; }
+  h2 { font-size: 1.85em; line-height: 1.05; letter-spacing: -.015em; }
+  .lead { font-size: .95em; line-height: 1.45; opacity: .82; max-width: 26em; }
+  .repo { font-size: .72em; opacity: .7; }
+  .repo a { color: inherit; }
+
+  .footer {
+    position: absolute; left: var(--pad); right: var(--pad); bottom: calc(var(--pad) * .55);
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: .6em; letter-spacing: .08em; opacity: .55;
+  }
+
+  /* chat vs agente */
+  .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 1.2em; margin-top: 1.1em; }
+  .card { border: 1px solid; border-radius: .8em; padding: 1.1em; }
+  .card h3 { font-size: 1em; margin-bottom: .5em; }
+  .card ul { list-style: none; display: grid; gap: .45em; font-size: .78em; line-height: 1.3; opacity: .9; }
+  .card li::before { content: "→ "; opacity: .6; }
+
+  /* layered diagram */
+  .stack { margin-top: 1em; display: grid; gap: .5em; }
+  .layer {
+    border: 1px solid; border-radius: .55em; padding: .55em .9em;
+    display: flex; align-items: center; gap: .7em; font-size: .82em;
+  }
+  .layer b { font-weight: 700; }
+  .layer .tag { margin-left: auto; font-size: .8em; opacity: .6; }
+  .layer.core { width: 40%; }
+  .layer.harness { width: 62%; }
+  .layer.full { width: 100%; }
+
+  .term {
+    position: relative; border-bottom: 1px dotted currentColor; cursor: help; outline: none;
+  }
+  .term .tip {
+    position: absolute; bottom: 145%; left: 50%; transform: translateX(-50%) translateY(4px);
+    width: 20em; padding: .6em .7em; border-radius: .5em; font-size: .78em; line-height: 1.3;
+    background: #101116; color: #eef; border: 1px solid rgba(255,255,255,.18);
+    box-shadow: 0 12px 30px rgba(0,0,0,.5); opacity: 0; visibility: hidden; transition: .15s; z-index: 5;
+  }
+  .term:hover .tip, .term:focus .tip { opacity: 1; visibility: visible; transform: translateX(-50%) translateY(0); }
+  .term sup { font-size: .7em; opacity: .8; }
+
+  /* ============ TEMA 1 — Terminal Green ============ */
+  .stage[data-theme="terminal"] {
+    background:
+      repeating-linear-gradient(0deg, rgba(0,0,0,.16) 0 1px, transparent 1px 3px),
+      radial-gradient(120% 120% at 85% 0%, #0d2417 0%, #070c09 60%);
+    color: #c8ffd8;
+    font-family: "JetBrains Mono", ui-monospace, monospace;
+    border: 1px solid #1c4a2e;
+  }
+  .stage[data-theme="terminal"] h1,
+  .stage[data-theme="terminal"] h2 { color: #7dff9e; text-shadow: 0 0 22px rgba(80,255,140,.35); }
+  .stage[data-theme="terminal"] .kicker { color: #4fd685; }
+  .stage[data-theme="terminal"] .card { border-color: #2a6b41; background: rgba(20,50,32,.35); }
+  .stage[data-theme="terminal"] .card li::before { color: #4fd685; }
+  .stage[data-theme="terminal"] .layer { border-color: #2a6b41; background: rgba(20,50,32,.35); }
+  .stage[data-theme="terminal"] .layer.core { border-color: #7dff9e; color: #d6ffe4; }
+  .stage[data-theme="terminal"] .term .tip { font-family: Inter, sans-serif; }
+  .stage[data-theme="terminal"] .prompt::before { content: "❯ "; color: #4fd685; }
+
+  /* ============ TEMA 2 — Electric Studio ============ */
+  .stage[data-theme="electric"] {
+    background: #0b1020; color: #e8edff;
+    font-family: "Space Grotesk", Inter, sans-serif;
+    border: 1px solid #1b2550;
+  }
+  .stage[data-theme="electric"]::before {
+    content: ""; position: absolute; inset: 0;
+    background: linear-gradient(115deg, #1b3bff 0%, #3b82f6 34%, transparent 34.2%);
+    opacity: .16;
+  }
+  .stage[data-theme="electric"] h1, .stage[data-theme="electric"] h2 { font-weight: 700; }
+  .stage[data-theme="electric"] h1 { background: linear-gradient(90deg,#7aa2ff,#b9ccff); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .stage[data-theme="electric"] .kicker { color: #7aa2ff; }
+  .stage[data-theme="electric"] .card { border-color: #2a3a6e; background: #121a33; }
+  .stage[data-theme="electric"] .card li::before { color: #7aa2ff; }
+  .stage[data-theme="electric"] .layer { border-color: #2a3a6e; background: #121a33; }
+  .stage[data-theme="electric"] .layer.core { border-color: #7aa2ff; background: #16224a; }
+  .stage[data-theme="electric"] .term .tip { font-family: Inter, sans-serif; }
+  .stage[data-theme="electric"] .accentbar { position: absolute; top: 0; right: 0; width: 34%; height: .5em; background: linear-gradient(90deg,#1b3bff,#3b82f6); }
+
+  /* ============ TEMA 3 — Swiss Modern ============ */
+  .stage[data-theme="swiss"] {
+    background: #f2f1ec; color: #111;
+    font-family: Inter, Helvetica, Arial, sans-serif;
+    border: 1px solid #d8d6cf;
+  }
+  .stage[data-theme="swiss"]::before {
+    content: ""; position: absolute; inset: 0;
+    background:
+      linear-gradient(#111 1px, transparent 1px) 0 0/100% 25% ,
+      linear-gradient(90deg, #111 1px, transparent 1px) 0 0/25% 100%;
+    opacity: .05;
+  }
+  .stage[data-theme="swiss"] h1, .stage[data-theme="swiss"] h2 { font-weight: 800; letter-spacing: -.03em; }
+  .stage[data-theme="swiss"] h1 { color: #111; }
+  .stage[data-theme="swiss"] .kicker { color: #e63b2e; font-weight: 700; }
+  .stage[data-theme="swiss"] .card { border-color: #111; background: #fff; }
+  .stage[data-theme="swiss"] .card li::before { color: #e63b2e; }
+  .stage[data-theme="swiss"] .layer { border-color: #111; background: #fff; }
+  .stage[data-theme="swiss"] .layer.core { background: #e63b2e; color: #fff; border-color: #e63b2e; }
+  .stage[data-theme="swiss"] .term .tip { border-color: #111; box-shadow: 0 12px 30px rgba(0,0,0,.2); }
+  .stage[data-theme="swiss"] .accentbar { position: absolute; top: 0; left: 0; width: .55em; height: 100%; background: #e63b2e; }
+
+  /* ============ TEMA 4 — Bold Signal ============ */
+  .stage[data-theme="bold"] {
+    background: #0e0e0f; color: #f5f5f2;
+    font-family: "Space Grotesk", Inter, sans-serif;
+  }
+  .stage[data-theme="bold"] h1, .stage[data-theme="bold"] h2 { font-family: "Archivo Black", Inter, sans-serif; font-weight: 400; text-transform: uppercase; letter-spacing: -.01em; line-height: .98; }
+  .stage[data-theme="bold"] .kicker { color: #d4ff3f; }
+  .stage[data-theme="bold"] .card { border-color: #2b2b2e; background: #17171a; }
+  .stage[data-theme="bold"] .card li::before { color: #d4ff3f; }
+  .stage[data-theme="bold"] .layer { border-color: #2b2b2e; background: #17171a; }
+  .stage[data-theme="bold"] .layer.core { background: #d4ff3f; color: #0e0e0f; border-color: #d4ff3f; }
+  .stage[data-theme="bold"] .term .tip { font-family: Inter, sans-serif; }
+  .stage[data-theme="bold"] .blob { position: absolute; right: -6%; bottom: -18%; width: 42%; aspect-ratio: 1; border-radius: 50%; background: radial-gradient(circle, #d4ff3f33, transparent 65%); }
+
+  /* ============ nav ============ */
+  .nav { display: flex; align-items: center; gap: 14px; }
+  .nav button {
+    font: 600 13px/1 Inter,sans-serif; background: #23242c; color: #fff; border: 1px solid #33353f;
+    border-radius: 8px; padding: 8px 14px; cursor: pointer;
+  }
+  .dots { display: flex; gap: 7px; }
+  .dot { width: 9px; height: 9px; border-radius: 50%; background: #3a3c46; cursor: pointer; border: 0; }
+  .dot.on { background: #fff; }
+  .hint { font-size: 12px; color: #8a8c97; }
+</style>
+</head>
+<body>
+
+  <div class="topbar">
+    <span class="label">Tema</span>
+    <button class="tbtn" data-t="terminal" aria-pressed="true">Terminal Green</button>
+    <button class="tbtn" data-t="electric" aria-pressed="false">Electric Studio</button>
+    <button class="tbtn" data-t="swiss" aria-pressed="false">Swiss Modern</button>
+    <button class="tbtn" data-t="bold" aria-pressed="false">Bold Signal</button>
+  </div>
+
+  <div class="stage" id="stage" data-theme="terminal">
+
+    <!-- SLIDE 1 · Portada -->
+    <section class="slide active">
+      <div class="accentbar"></div><div class="blob"></div>
+      <div style="margin-top:auto">
+        <p class="kicker">Presentación · 2026</p>
+        <h1>Desarrollo<br>con IA</h1>
+        <p class="lead" style="margin-top:.7em">Del chat al agente: modelos, contexto, skills, MCP y flujos de trabajo.</p>
+        <p class="repo" style="margin-top:1.1em">github.com/alfredogonzalezmartinez/desarrollo-con-ia</p>
+      </div>
+      <div class="footer">
+        <span>Desarrollo con IA</span>
+        <span>1 / 3</span>
+      </div>
+    </section>
+
+    <!-- SLIDE 2 · Chat vs Agente -->
+    <section class="slide">
+      <div class="accentbar"></div><div class="blob"></div>
+      <div>
+        <p class="kicker">Concepto</p>
+        <h2>Chat vs Agente</h2>
+      </div>
+      <div class="cols">
+        <div class="card">
+          <h3>Chat</h3>
+          <ul>
+            <li>Tú preguntas, responde texto</li>
+            <li>Sin acceso a tu repo</li>
+            <li>Tú copias y pegas</li>
+            <li>Contexto manual</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>Agente</h3>
+          <ul>
+            <li>Le das un objetivo</li>
+            <li>Lee, edita y ejecuta</li>
+            <li>Verifica y se corrige</li>
+            <li>Contexto gestionado</li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer">
+        <span>¿Qué es un agente?</span>
+        <span>2 / 3</span>
+      </div>
+    </section>
+
+    <!-- SLIDE 3 · modelo + harness -->
+    <section class="slide">
+      <div class="accentbar"></div><div class="blob"></div>
+      <div>
+        <p class="kicker">Modelo mental</p>
+        <h2><span class="term" tabindex="0">El agente<span class="tip"><b>Agente</b><br>Modelo + harness. El modelo predice texto; el harness le da herramientas, memoria y control para actuar.</span></span> = modelo + harness</h2>
+      </div>
+      <div class="stack">
+        <div class="layer core"><b>Modelo</b><span class="tag">el cerebro</span></div>
+        <div class="layer harness"><b>Harness</b><span class="tag">herramientas · permisos · memoria</span></div>
+        <div class="layer full"><b>Prompt</b> · <b>Contexto</b><span class="tag">lo que ve en cada momento</span></div>
+        <div class="layer full"><b>Skills</b> · <b>MCP</b> · <b>Subagentes</b><span class="tag">capacidades a demanda</span></div>
+      </div>
+      <div class="footer">
+        <span>Pasa el ratón por «El agente» ↑</span>
+        <span>3 / 3</span>
+      </div>
+    </section>
+  </div>
+
+  <div class="nav">
+    <button id="prev">← Anterior</button>
+    <div class="dots" id="dots"></div>
+    <button id="next">Siguiente →</button>
+    <span class="hint">Teclado: ← → para slides · 1-4 para temas</span>
+  </div>
+
+<script>
+  const stage = document.getElementById('stage');
+  const slides = [...document.querySelectorAll('.slide')];
+  const dotsWrap = document.getElementById('dots');
+  const themes = ['terminal','electric','swiss','bold'];
+  let cur = 0;
+
+  // font scaling: 1em = stage width / 40
+  function scale() {
+    stage.style.fontSize = (stage.clientWidth / 40) + 'px';
+  }
+  new ResizeObserver(scale).observe(stage);
+  scale();
+
+  // dots
+  slides.forEach((_, i) => {
+    const b = document.createElement('button');
+    b.className = 'dot' + (i === 0 ? ' on' : '');
+    b.setAttribute('aria-label', 'Slide ' + (i + 1));
+    b.onclick = () => show(i);
+    dotsWrap.appendChild(b);
+  });
+
+  function show(i) {
+    cur = (i + slides.length) % slides.length;
+    slides.forEach((s, j) => s.classList.toggle('active', j === cur));
+    [...dotsWrap.children].forEach((d, j) => d.classList.toggle('on', j === cur));
+  }
+
+  document.getElementById('next').onclick = () => show(cur + 1);
+  document.getElementById('prev').onclick = () => show(cur - 1);
+
+  function setTheme(t) {
+    stage.dataset.theme = t;
+    document.querySelectorAll('.tbtn').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.t === t)));
+  }
+  document.querySelectorAll('.tbtn').forEach(b => b.onclick = () => setTheme(b.dataset.t));
+
+  addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight') show(cur + 1);
+    if (e.key === 'ArrowLeft') show(cur - 1);
+    const n = parseInt(e.key, 10);
+    if (n >= 1 && n <= 4) setTheme(themes[n - 1]);
+  });
+</script>
+</body>
+</html>

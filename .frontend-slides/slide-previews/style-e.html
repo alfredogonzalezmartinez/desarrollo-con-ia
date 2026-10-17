@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Desarrollo con IA — Cuaderno anotado</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;600;700&family=Instrument+Serif:ital@0;1&family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+/* ===========================================
+   FIXED 16:9 STAGE: MANDATORY BASE STYLES
+   Include this ENTIRE file in every presentation.
+   Slides are authored at 1920×1080 and scaled as a whole.
+   =========================================== */
+html, body {
+    width: 100%; height: 100%; margin: 0; overflow: hidden;
+    background: var(--stage-bg, #000);
+}
+.deck-viewport {
+    position: fixed; inset: 0; overflow: hidden;
+    background: var(--stage-bg, #000);
+}
+.deck-stage {
+    position: absolute; left: 0; top: 0;
+    width: 1920px; height: 1080px; overflow: hidden;
+    transform-origin: 0 0;
+    background: var(--slide-bg, #fff);
+}
+.slide {
+    position: absolute; inset: 0;
+    width: 1920px; height: 1080px; overflow: hidden;
+    display: block; visibility: hidden; opacity: 0; pointer-events: none;
+    background: var(--slide-bg, #fff);
+}
+.slide.active, .slide.visible {
+    visibility: visible; opacity: 1; pointer-events: auto; z-index: 1;
+}
+img, video, canvas, svg { max-width: 100%; max-height: 100%; }
+.deck-controls {
+    position: fixed; left: 50%; bottom: 22px; transform: translateX(-50%);
+    z-index: 1000;
+}
+@media print {
+    html, body { width: 1920px; height: auto; overflow: visible; background: #fff; }
+    .deck-viewport { position: static; overflow: visible; background: #fff; }
+    .deck-stage { position: static; width: auto; height: auto; transform: none !important; background: none; }
+    .slide {
+        position: relative; display: block !important; visibility: visible !important;
+        opacity: 1 !important; pointer-events: auto !important;
+        width: 1920px; height: 1080px; break-after: page; page-break-after: always;
+    }
+    .slide:last-child { break-after: auto; page-break-after: auto; }
+    .deck-controls { display: none !important; }
+}
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.2s !important;
+    }
+}
+
+/* ===========================================
+   === STYLE: CUADERNO ANOTADO (paper + notas) ===
+   =========================================== */
+:root {
+    --stage-bg: #ded6c4;
+    --slide-bg: #fbf7ec;
+    --ink: #23201b;
+    --inkblue: #2c5f8a;
+    --muted: #6e675c;
+    --rule: rgba(120, 150, 180, .38);
+    --margin-rule: rgba(200, 86, 60, .5);
+    --hl: #f8e08e;
+    --card: #fffdf7;
+}
+
+.slide {
+    font-family: "Source Sans 3", sans-serif;
+    color: var(--ink);
+    background: var(--slide-bg);
+    transition: opacity .45s ease;
+}
+
+/* --- papel rallado + margen + perforaciones --- */
+.paper {
+    position: absolute; inset: 0; pointer-events: none;
+    background: repeating-linear-gradient(to bottom, transparent 0 45px, var(--rule) 45px 46px);
+    background-position: 0 96px;
+}
+.margin-rule {
+    position: absolute; left: 184px; top: 0; bottom: 0; width: 2px;
+    background: var(--margin-rule); pointer-events: none;
+}
+.holes { position: absolute; left: 58px; top: 0; bottom: 0; pointer-events: none; }
+.holes i {
+    position: absolute; left: 0; width: 30px; height: 30px; border-radius: 50%;
+    background: var(--stage-bg); box-shadow: inset 0 2px 5px rgba(0, 0, 0, .22);
+}
+.holes i:nth-child(1) { top: 190px; }
+.holes i:nth-child(2) { top: 520px; }
+.holes i:nth-child(3) { top: 850px; }
+
+.content { position: absolute; left: 236px; right: 100px; top: 0; bottom: 0; }
+
+/* --- tipografía --- */
+.serif {
+    font-family: "Instrument Serif", serif; font-weight: 400;
+    letter-spacing: -.01em; line-height: 1.0;
+}
+h1.title { font-size: 168px; margin: 0; }
+h1.title em { font-style: italic; color: var(--inkblue); }
+h2.page { font-size: 76px; margin: 0; }
+h2.page .n {
+    font-family: "Caveat", cursive; font-weight: 600; color: var(--inkblue);
+    font-size: 62px; margin-right: 14px;
+}
+p.body { font-size: 29px; line-height: 1.62; color: #3a362f; margin: 0; max-width: 1040px; }
+p.body b { color: var(--ink); font-weight: 700; }
+
+.kicker {
+    font-family: "Source Sans 3", sans-serif; font-weight: 700; font-size: 18px;
+    letter-spacing: .22em; text-transform: uppercase; color: var(--muted);
+}
+
+/* --- subrayado tipo rotulador --- */
+.hl {
+    background: linear-gradient(transparent 58%, var(--hl) 58%, var(--hl) 94%, transparent 94%);
+    padding: 0 4px;
+}
+
+/* --- nota manuscrita --- */
+.note {
+    font-family: "Caveat", cursive; font-weight: 600;
+    font-size: 34px; line-height: 1.18; color: var(--inkblue);
+}
+.note.big { font-size: 42px; }
+.page-num {
+    font-family: "Caveat", cursive; font-weight: 700; font-size: 46px; color: var(--muted);
+    transform: rotate(-3deg); display: inline-block;
+}
+
+/* --- tarjetas de capa (lista anotada) --- */
+.layer {
+    position: absolute; left: 0; width: 620px; height: 66px;
+    display: flex; align-items: center; gap: 18px;
+    background: var(--card); border: 2px solid var(--ink);
+    padding: 0 20px; box-shadow: 3px 3px 0 rgba(35, 32, 27, .16);
+}
+.layer .k {
+    font-family: "Source Sans 3", sans-serif; font-weight: 700; font-size: 26px;
+}
+.layer .r { font-size: 20px; color: var(--muted); margin-left: auto; }
+.layer.accent { border-color: var(--inkblue); }
+.layer.accent .k { color: var(--inkblue); }
+.leader {
+    position: absolute; height: 0; border-top: 2px dashed var(--inkblue); opacity: .55;
+}
+.annot { position: absolute; width: 420px; }
+
+/* --- comparativa: dos columnas papel --- */
+.cmp { display: grid; grid-template-columns: 1fr 1fr; gap: 44px; margin-top: 40px; }
+.cmp .col {
+    background: var(--card); border: 2px solid var(--ink); padding: 34px 36px 30px;
+    box-shadow: 5px 5px 0 rgba(35, 32, 27, .14); position: relative;
+}
+.cmp .col h3 {
+    font-family: "Instrument Serif", serif; font-weight: 400; font-size: 52px; margin: 0 0 6px;
+}
+.cmp .col.oc h3 { color: var(--inkblue); }
+.cmp .col .tag { font-family: "Caveat", cursive; font-size: 30px; color: var(--muted); display: block; margin-bottom: 22px; }
+.cmp .row { display: flex; gap: 16px; padding: 15px 0; border-top: 1px dashed rgba(35,32,27,.28); }
+.cmp .row:first-of-type { border-top: 0; }
+.cmp .row .lab {
+    font-size: 16px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase;
+    color: var(--muted); width: 132px; flex: none; padding-top: 4px;
+}
+.cmp .row .val { font-size: 24px; line-height: 1.35; }
+.cmp .row .val small { display: block; font-size: 19px; color: var(--muted); margin-top: 4px; }
+
+/* --- glosario: término, tooltip (nota adhesiva) y superíndice --- */
+.term { position: relative; border-bottom: 2px dotted var(--inkblue); cursor: help; outline: none; font-weight: 600; color: var(--inkblue); }
+.term .tip {
+    position: absolute; left: 50%; bottom: calc(100% + 16px); transform: translateX(-50%) rotate(-1.2deg) translateY(6px);
+    width: 470px; padding: 22px 24px; background: var(--hl); color: #2a250f;
+    font-family: "Source Sans 3", sans-serif; font-weight: 400; font-size: 20px; line-height: 1.45;
+    box-shadow: 6px 8px 18px rgba(35, 32, 27, .25); border: 1px solid rgba(35, 32, 27, .12);
+    opacity: 0; pointer-events: none; transition: opacity .18s ease, transform .18s ease; z-index: 6;
+}
+.term .tip b { font-weight: 700; }
+.term:hover .tip, .term:focus .tip { opacity: 1; transform: translateX(-50%) rotate(-1.2deg) translateY(0); }
+.term-ref {
+    font-family: "Caveat", cursive; font-size: 30px; font-weight: 700; text-decoration: none;
+    color: var(--inkblue); margin-left: 6px; border: 2px solid var(--inkblue);
+    border-radius: 50%; width: 34px; height: 34px; line-height: 30px; text-align: center;
+    display: inline-block; vertical-align: 2px;
+}
+.term-ref:hover { background: rgba(44, 95, 138, .12); }
+
+/* --- animación escalonada --- */
+.reveal { opacity: 0; transform: translateY(24px); animation: rise .8s cubic-bezier(.2,.7,.2,1) forwards; }
+@keyframes rise { to { opacity: 1; transform: translateY(0); } }
+.d1 { animation-delay: .06s; } .d2 { animation-delay: .18s; }
+.d3 { animation-delay: .30s; } .d4 { animation-delay: .42s; }
+.d5 { animation-delay: .54s; } .d6 { animation-delay: .66s; }
+
+/* --- controles --- */
+.ctl { display: flex; align-items: center; gap: 14px; }
+.ctl button {
+    font-family: "Source Sans 3", sans-serif; font-size: 16px; font-weight: 600; color: var(--muted);
+    background: #fbf7ec; border: 2px solid var(--ink); border-radius: 999px;
+    padding: 9px 18px; cursor: pointer; box-shadow: 3px 3px 0 rgba(35,32,27,.18);
+}
+.ctl button:hover { color: var(--ink); }
+.ctl .dots { display: flex; gap: 9px; }
+.ctl .dot { width: 11px; height: 11px; border-radius: 50%; background: #cfc7b4; border: 2px solid var(--ink); padding: 0; }
+.ctl .dot.on { background: var(--hl); }
+</style>
+</head>
+<body>
+<div class="deck-viewport">
+    <div class="deck-stage" id="stage">
+
+        <!-- === 01 Portada === -->
+        <section class="slide active">
+            <div class="paper"></div>
+            <div class="margin-rule"></div>
+            <div class="holes"><i></i><i></i><i></i></div>
+
+            <div class="content">
+                <div style="position:absolute; left:0; top:96px; display:flex; justify-content:space-between; align-items:baseline; right:0">
+                    <span class="kicker reveal d1">Charla técnica · 2026</span>
+                    <span class="page-num reveal d1">01 / 33</span>
+                </div>
+
+                <span class="note big reveal d2" style="position:absolute; left:0; top:220px">apuntes de una charla ↓</span>
+
+                <h1 class="title serif reveal d3" style="position:absolute; left:0; top:296px">
+                    Desarrollo<br>con <em>IA</em>
+                </h1>
+
+                <p class="body reveal d5" style="position:absolute; left:0; top:700px; max-width:1000px">
+                    Del chat al agente: <span class="hl">modelo, contexto, skills, MCP</span> y flujos de trabajo.
+                    Una ruta de 8 bloques con ramas para profundizar.
+                </p>
+
+                <div class="reveal d6" style="position:absolute; left:0; top:900px; display:flex; gap:46px; align-items:center">
+                    <span class="kicker">OpenCode · Claude Code</span>
+                    <span class="kicker">32 slides</span>
+                    <span class="kicker">17 de profundización</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- === 02 Contenido: el agente === -->
+        <section class="slide">
+            <div class="paper"></div>
+            <div class="margin-rule"></div>
+            <div class="holes"><i></i><i></i><i></i></div>
+
+            <div class="content">
+                <span class="kicker reveal d1">Bloque 01 · Fundamentos</span>
+                <h2 class="page serif reveal d2" style="margin-top:16px"><span class="n">01</span>¿Qué es un agente?</h2>
+                <p class="body reveal d3" style="position:absolute; left:0; top:250px; max-width:880px; font-size:27px">
+                    Un <b>modelo</b> solo genera texto. Un <b>agente</b> además <b>actúa</b>: lee ficheros, ejecuta
+                    comandos, edita código y comprueba el resultado en bucle. Lo demás son piezas que se enchufan a ese bucle.
+                </p>
+
+                <!-- capas -->
+                <div class="layer accent reveal d4" style="top:470px"><span class="k">modelo</span><span class="r">razona y genera</span></div>
+                <div class="layer accent reveal d5" style="top:548px"><span class="k">harness</span><span class="r">el bucle: actúa y verifica</span></div>
+                <div class="layer reveal d5" style="top:626px; left:60px; width:560px"><span class="k">prompt</span><span class="r">qué debe hacer</span></div>
+                <div class="layer reveal d5" style="top:704px; left:60px; width:560px"><span class="k">contexto</span><span class="r">qué puede ver</span></div>
+                <div class="layer reveal d6" style="top:782px; left:60px; width:560px"><span class="k">skills</span><span class="r">cómo hacerlo bien</span></div>
+                <div class="layer reveal d6" style="top:860px; left:60px; width:560px"><span class="k">mcp / cli</span><span class="r">con qué se conecta</span></div>
+                <div class="layer accent reveal d6" style="top:938px"><span class="k">subagentes</span><span class="r">en paralelo</span></div>
+
+                <!-- anotaciones al margen -->
+                <div class="leader reveal d4" style="left:640px; top:503px; width:150px"></div>
+                <div class="annot reveal d4" style="left:800px; top:452px">
+                    <span class="note">el modelo solo elige; no toca nada</span>
+                </div>
+
+                <div class="leader reveal d5" style="left:640px; top:581px; width:150px"></div>
+                <div class="annot reveal d5" style="left:800px; top:530px">
+                    <span class="note">aquí vive el agente: leer → editar → ejecutar → verificar</span>
+                </div>
+
+                <div class="leader reveal d6" style="left:640px; top:893px; width:150px"></div>
+                <div class="annot reveal d6" style="left:800px; top:842px">
+                    <span class="note">skills, MCP y contexto se enganchan al harness</span>
+                </div>
+
+                <div class="annot reveal d6" style="left:800px; top:960px">
+                    <span class="page-num">02 / 33</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- === 03 Comparativa + glosario === -->
+        <section class="slide">
+            <div class="paper"></div>
+            <div class="margin-rule"></div>
+            <div class="holes"><i></i><i></i><i></i></div>
+
+            <div class="content">
+                <span class="kicker reveal d1">Ruta alternativa 1.a · Herramientas</span>
+                <h2 class="page serif reveal d2" style="margin-top:16px"><span class="n">1.a</span>OpenCode vs Claude Code</h2>
+
+                <div class="cmp">
+                    <div class="col oc reveal d3">
+                        <h3>OpenCode</h3>
+                        <span class="tag">abierto, multi-interfaz</span>
+                        <div class="row"><span class="lab">Interfaz</span><span class="val">TUI, web y escritorio</span></div>
+                        <div class="row"><span class="lab">Modelos</span><span class="val">Cualquier proveedor<small>Anthropic, OpenAI, locales…</small></span></div>
+                        <div class="row"><span class="lab">Extensión</span><span class="val">
+                            <span class="term" tabindex="0">skills<a class="term-ref" href="#glosario" title="Ver en el glosario">1</a>
+                                <span class="tip"><b>Skill:</b> instrucciones y recursos que se cargan solo cuando la tarea lo pide. Convierten conocimiento experto en algo reutilizable.</span>
+                            </span> y
+                            <span class="term" tabindex="0">MCP<a class="term-ref" href="#glosario" title="Ver en el glosario">2</a>
+                                <span class="tip"><b>MCP:</b> protocolo abierto para conectar el agente a herramientas y datos externos (bases de datos, APIs, navegador).</span>
+                            </span>
+                        </span></div>
+                        <div class="row"><span class="lab">Encaje</span><span class="val">
+                            <span class="term" tabindex="0">harness<a class="term-ref" href="#glosario" title="Ver en el glosario">3</a>
+                                <span class="tip"><b>Harness:</b> el programa que envuelve al modelo: le da herramientas, ejecuta el bucle y decide cuándo parar.</span>
+                            </span> configurable a medida
+                        </span></div>
+                    </div>
+
+                    <div class="col reveal d4">
+                        <h3>Claude Code</h3>
+                        <span class="tag">producto cuidado de fábrica</span>
+                        <div class="row"><span class="lab">Interfaz</span><span class="val">CLI e IDE</span></div>
+                        <div class="row"><span class="lab">Modelos</span><span class="val">Modelos de Anthropic<small>Claude Sonnet / Opus / Haiku</small></span></div>
+                        <div class="row"><span class="lab">Extensión</span><span class="val">Skills, MCP y plugins<small>subagentes y hooks incluidos</small></span></div>
+                        <div class="row"><span class="lab">Encaje</span><span class="val">integrado en terminal y editor</span></div>
+                    </div>
+                </div>
+
+                <p class="note reveal d5" style="margin-top:44px; font-size:31px">
+                    hover sobre un término: definición · clic en el número: ir al glosario
+                </p>
+            </div>
+        </section>
+
+    </div>
+</div>
+
+<div class="deck-controls">
+    <div class="ctl">
+        <button id="prev">←</button>
+        <span class="dots" id="dots"></span>
+        <button id="next">→</button>
+    </div>
+</div>
+
+<script>
+(function () {
+    // Escala el escenario fijo 1920×1080 al viewport manteniendo 16:9.
+    const stage = document.getElementById('stage');
+    function fit() {
+        const s = Math.min(window.innerWidth / 1920, window.innerHeight / 1080);
+        const x = (window.innerWidth - 1920 * s) / 2;
+        const y = (window.innerHeight - 1080 * s) / 2;
+        stage.style.transform = 'translate(' + x + 'px,' + y + 'px) scale(' + s + ')';
+    }
+    window.addEventListener('resize', fit);
+    fit();
+
+    // Navegación entre slides.
+    const slides = Array.from(document.querySelectorAll('.slide'));
+    const dots = document.getElementById('dots');
+    slides.forEach(function (_, k) {
+        const b = document.createElement('button');
+        b.className = 'dot';
+        b.addEventListener('click', function () { go(k); });
+        dots.appendChild(b);
+    });
+    let i = 0;
+    function go(n) {
+        i = Math.max(0, Math.min(slides.length - 1, n));
+        slides.forEach(function (s, k) { s.classList.toggle('active', k === i); });
+        Array.from(dots.children).forEach(function (d, k) { d.classList.toggle('on', k === i); });
+        slides[i].querySelectorAll('.reveal').forEach(function (el) {
+            el.style.animation = 'none';
+            void el.offsetWidth;
+            el.style.animation = '';
+        });
+    }
+    document.getElementById('prev').addEventListener('click', function () { go(i - 1); });
+    document.getElementById('next').addEventListener('click', function () { go(i + 1); });
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') { e.preventDefault(); go(i + 1); }
+        if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); go(i - 1); }
+    });
+    go(0);
+})();
+</script>
+</body>
+</html>

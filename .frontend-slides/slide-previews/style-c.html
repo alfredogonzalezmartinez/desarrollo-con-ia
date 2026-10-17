@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Desarrollo con IA — Plano técnico</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* ===========================================
+   FIXED 16:9 STAGE: MANDATORY BASE STYLES
+   Include this ENTIRE file in every presentation.
+   Slides are authored at 1920×1080 and scaled as a whole.
+   =========================================== */
+html, body {
+    width: 100%; height: 100%; margin: 0; overflow: hidden;
+    background: var(--stage-bg, #000);
+}
+.deck-viewport {
+    position: fixed; inset: 0; overflow: hidden;
+    background: var(--stage-bg, #000);
+}
+.deck-stage {
+    position: absolute; left: 0; top: 0;
+    width: 1920px; height: 1080px; overflow: hidden;
+    transform-origin: 0 0;
+    background: var(--slide-bg, #fff);
+}
+.slide {
+    position: absolute; inset: 0;
+    width: 1920px; height: 1080px; overflow: hidden;
+    display: block; visibility: hidden; opacity: 0; pointer-events: none;
+    background: var(--slide-bg, #fff);
+}
+.slide.active, .slide.visible {
+    visibility: visible; opacity: 1; pointer-events: auto; z-index: 1;
+}
+img, video, canvas, svg { max-width: 100%; max-height: 100%; }
+.deck-controls {
+    position: fixed; left: 50%; bottom: 22px; transform: translateX(-50%);
+    z-index: 1000;
+}
+@media print {
+    html, body { width: 1920px; height: auto; overflow: visible; background: #fff; }
+    .deck-viewport { position: static; overflow: visible; background: #fff; }
+    .deck-stage { position: static; width: auto; height: auto; transform: none !important; background: none; }
+    .slide {
+        position: relative; display: block !important; visibility: visible !important;
+        opacity: 1 !important; pointer-events: auto !important;
+        width: 1920px; height: 1080px; break-after: page; page-break-after: always;
+    }
+    .slide:last-child { break-after: auto; page-break-after: auto; }
+    .deck-controls { display: none !important; }
+}
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.2s !important;
+    }
+}
+
+/* ===========================================
+   === STYLE: PLANO TÉCNICO ===
+   Papel cuadriculado azul, retícula, cotas, cajetín.
+   =========================================== */
+:root {
+    --stage-bg: #05101c;
+    --slide-bg: #0a1d33;
+    --line: #dbe9f7;
+    --cyan: #6fe3ff;
+    --dim: rgba(219, 233, 247, .55);
+    --faint: rgba(219, 233, 247, .28);
+}
+
+.slide { font-family: "IBM Plex Mono", monospace; color: var(--line); transition: opacity .45s ease; }
+
+/* --- papel cuadriculado --- */
+.bp-paper {
+    position: absolute; inset: 0; pointer-events: none;
+    background:
+        linear-gradient(to right, rgba(219, 233, 247, .11) 1px, transparent 1px) 0 0 / 100px 100%,
+        linear-gradient(to bottom, rgba(219, 233, 247, .11) 1px, transparent 1px) 0 0 / 100% 100px,
+        linear-gradient(to right, rgba(219, 233, 247, .05) 1px, transparent 1px) 0 0 / 20px 100%,
+        linear-gradient(to bottom, rgba(219, 233, 247, .05) 1px, transparent 1px) 0 0 / 100% 20px;
+}
+.bp-ruler { position: absolute; pointer-events: none; }
+.bp-ruler-top { left: 40px; right: 40px; top: 40px; height: 16px; background: repeating-linear-gradient(to right, var(--faint) 0 1px, transparent 1px 20px); }
+.bp-ruler-left { top: 40px; bottom: 40px; left: 40px; width: 16px; background: repeating-linear-gradient(to bottom, var(--faint) 0 1px, transparent 1px 20px); }
+
+/* --- marcas de registro --- */
+.bp-mark { position: absolute; width: 40px; height: 40px; color: var(--cyan); }
+.bp-mark::before, .bp-mark::after { content: ""; position: absolute; background: currentColor; }
+.bp-mark::before { left: 19px; top: 0; width: 2px; height: 40px; }
+.bp-mark::after { top: 19px; left: 0; height: 2px; width: 40px; }
+.bp-mark.tl { left: 18px; top: 18px; }
+.bp-mark.tr { right: 18px; top: 18px; }
+.bp-mark.bl { left: 18px; bottom: 18px; }
+.bp-mark.br { right: 18px; bottom: 18px; }
+
+/* --- marco --- */
+.bp-frame { position: absolute; inset: 88px 96px; border: 2px solid var(--faint); }
+.bp-frame::after { content: ""; position: absolute; inset: 10px; border: 1px dashed var(--faint); pointer-events: none; }
+
+/* --- cabecera --- */
+.bp-head {
+    position: absolute; left: 96px; right: 96px; top: 88px;
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 26px 34px; border-bottom: 2px solid var(--faint);
+    font-size: 19px; letter-spacing: .16em; text-transform: uppercase; color: var(--dim);
+}
+.bp-head b { color: var(--cyan); font-weight: 600; }
+
+/* --- portada --- */
+.bp-body { position: absolute; left: 96px; right: 96px; top: 300px; padding: 0 34px; }
+.bp-title {
+    font-family: "Chakra Petch", sans-serif; font-weight: 700;
+    font-size: 148px; line-height: .94; letter-spacing: .01em;
+    text-transform: uppercase; margin: 0; color: #ffffff;
+    text-shadow: 0 0 26px rgba(111, 227, 255, .18);
+}
+.bp-title .accent { color: var(--cyan); }
+.bp-sub { margin: 40px 0 0; font-size: 30px; line-height: 1.5; color: var(--dim); max-width: 980px; }
+.bp-dim { position: relative; margin-top: 66px; width: 1080px; height: 60px; }
+.bp-dim .rail { position: absolute; left: 0; right: 0; top: 30px; height: 1px; background: var(--cyan); }
+.bp-dim .tick { position: absolute; top: 14px; width: 2px; height: 33px; background: var(--cyan); }
+.bp-dim .tick.l { left: 0; } .bp-dim .tick.r { right: 0; }
+.bp-dim .val {
+    position: absolute; left: 50%; top: 0; transform: translateX(-50%);
+    background: var(--slide-bg); padding: 0 16px;
+    font-size: 20px; letter-spacing: .14em; color: var(--cyan); text-transform: uppercase;
+}
+.bp-block { position: absolute; right: 96px; bottom: 88px; width: 660px; border: 2px solid var(--faint); background: rgba(5,16,28,.35); }
+.bp-block .row { display: grid; grid-template-columns: 190px 1fr; border-top: 1px solid var(--faint); }
+.bp-block .row:first-child { border-top: 0; }
+.bp-block .row > span { padding: 14px 20px; font-size: 17px; letter-spacing: .12em; text-transform: uppercase; color: var(--dim); }
+.bp-block .row > span:first-child { border-right: 1px solid var(--faint); color: var(--faint); }
+.bp-block .row > span:last-child { color: var(--line); }
+.bp-note { position: absolute; left: 130px; bottom: 96px; max-width: 720px; font-size: 19px; line-height: 1.7; color: var(--faint); }
+.bp-note b { color: var(--cyan); font-weight: 500; }
+
+/* --- slides de contenido --- */
+.bp-h2 { position: absolute; left: 130px; right: 130px; top: 236px; }
+.bp-h2 h2 {
+    font-family: "Chakra Petch", sans-serif; font-weight: 700;
+    font-size: 86px; line-height: 1.04; letter-spacing: .005em;
+    text-transform: uppercase; margin: 0; color: #fff;
+}
+.bp-h2 h2 .accent { color: var(--cyan); }
+.bp-h2 .rule { width: 100%; height: 0; border-top: 1px dashed var(--faint); margin-top: 26px; }
+.bp-text { position: absolute; left: 130px; top: 470px; width: 740px; font-size: 24px; line-height: 1.72; color: var(--dim); }
+.bp-text b { color: var(--line); font-weight: 500; }
+.bp-text + .bp-text { top: 690px; }
+
+/* --- lista de capas con globos numerados --- */
+.bp-list { position: absolute; left: 1010px; right: 130px; top: 470px; }
+.bp-list .row {
+    display: flex; align-items: center; gap: 22px; padding: 15px 0;
+    border-bottom: 1px dashed var(--faint);
+}
+.bp-list .row:first-child { border-top: 1px dashed var(--faint); }
+.balloon {
+    width: 46px; height: 46px; flex: none;
+    border: 2px solid var(--cyan); border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; color: var(--cyan); background: rgba(111,227,255,.08);
+}
+.bp-list .k { font-family: "Chakra Petch", sans-serif; font-weight: 600; font-size: 34px; text-transform: uppercase; letter-spacing: .01em; }
+.bp-list .r { font-size: 18px; color: var(--dim); margin-left: auto; text-align: right; }
+.bp-list .row.on .balloon { background: var(--cyan); color: var(--slide-bg); border-color: var(--cyan); }
+
+/* --- rail de cota vertical junto a la lista --- */
+.bp-vrail { position: absolute; left: 950px; top: 470px; height: 500px; width: 60px; }
+.bp-vrail .rail { position: absolute; left: 30px; top: 0; bottom: 0; width: 1px; background: var(--cyan); }
+.bp-vrail .tick { position: absolute; left: 16px; height: 2px; width: 29px; background: var(--cyan); }
+.bp-vrail .tick.t { top: 0; } .bp-vrail .tick.b { bottom: 0; }
+.bp-vrail .lab {
+    position: absolute; left: -84px; top: 50%; transform: translateY(-50%) rotate(-90deg);
+    white-space: nowrap; font-size: 17px; letter-spacing: .16em; text-transform: uppercase; color: var(--cyan);
+    background: var(--slide-bg); padding: 0 10px;
+}
+
+/* --- tabla de especificaciones --- */
+.bp-spec { position: absolute; left: 130px; right: 130px; top: 452px; border-collapse: collapse; width: calc(100% - 0px); }
+.bp-spec th, .bp-spec td { text-align: left; vertical-align: top; padding: 22px 26px; border-bottom: 1px dashed var(--faint); }
+.bp-spec thead th {
+    font-size: 17px; letter-spacing: .18em; text-transform: uppercase; color: var(--dim);
+    border-bottom: 1px solid var(--faint);
+}
+.bp-spec thead th.oc { color: var(--cyan); }
+.bp-spec thead th:first-child { width: 250px; }
+.bp-spec td { font-size: 23px; line-height: 1.4; color: var(--line); }
+.bp-spec td:first-child { font-size: 17px; letter-spacing: .14em; text-transform: uppercase; color: var(--dim); }
+.bp-spec tbody tr:nth-child(odd) { background: rgba(111, 227, 255, .035); }
+.bp-spec .sub { display: block; font-size: 18px; color: var(--dim); margin-top: 5px; }
+.bp-hint { position: absolute; left: 130px; bottom: 104px; font-size: 18px; letter-spacing: .12em; text-transform: uppercase; color: var(--faint); }
+.bp-hint b { color: var(--cyan); font-weight: 500; }
+
+/* --- glosario: término, globo de llamada, superíndice --- */
+.term { position: relative; cursor: help; outline: none; color: var(--cyan); border-bottom: 2px dashed rgba(111,227,255,.7); }
+.term .tip {
+    position: absolute; left: 50%; bottom: calc(100% + 18px);
+    transform: translateX(-50%) translateY(6px);
+    width: 500px; padding: 20px 22px; background: #061726;
+    border: 2px solid var(--cyan); box-shadow: 0 18px 40px rgba(0,0,0,.6);
+    font-size: 19px; line-height: 1.5; color: var(--line); text-transform: none; letter-spacing: normal;
+    opacity: 0; pointer-events: none; transition: opacity .18s ease, transform .18s ease; z-index: 6;
+}
+.term .tip::after {
+    content: ""; position: absolute; left: 50%; bottom: -8px; width: 12px; height: 12px;
+    transform: translateX(-50%) rotate(45deg);
+    background: #061726; border-right: 2px solid var(--cyan); border-bottom: 2px solid var(--cyan);
+}
+.term .tip b { color: var(--cyan); font-weight: 500; }
+.term:hover .tip, .term:focus .tip { opacity: 1; transform: translateX(-50%) translateY(0); }
+.term-ref {
+    font-size: 15px; color: var(--slide-bg); background: var(--cyan); text-decoration: none;
+    width: 22px; height: 22px; display: inline-flex; align-items: center; justify-content: center;
+    border-radius: 50%; vertical-align: 4px; margin-left: 7px;
+}
+.term-ref:hover { background: #fff; }
+
+/* --- animación escalonada --- */
+.reveal { opacity: 0; transform: translateY(26px); animation: rise .85s cubic-bezier(.2,.7,.2,1) forwards; }
+@keyframes rise { to { opacity: 1; transform: translateY(0); } }
+.d1 { animation-delay: .05s; } .d2 { animation-delay: .18s; }
+.d3 { animation-delay: .32s; } .d4 { animation-delay: .46s; }
+.d5 { animation-delay: .60s; } .d6 { animation-delay: .74s; }
+
+/* --- controles --- */
+.ctl { display: flex; align-items: center; gap: 14px; }
+.ctl button {
+    font-family: "IBM Plex Mono", monospace; font-size: 16px; letter-spacing: .06em;
+    background: rgba(10,29,51,.9); color: var(--cyan); border: 2px solid var(--cyan);
+    padding: 8px 16px; cursor: pointer;
+}
+.ctl button:hover { background: var(--cyan); color: var(--slide-bg); }
+.ctl .dots { display: flex; gap: 10px; }
+.ctl .dot { width: 16px; height: 16px; border-radius: 50%; border: 2px solid var(--cyan); background: transparent; padding: 0; cursor: pointer; }
+.ctl .dot.on { background: var(--cyan); }
+</style>
+</head>
+<body>
+<div class="deck-viewport">
+    <div class="deck-stage" id="stage">
+
+        <!-- === 01 Portada === -->
+        <section class="slide active">
+            <div class="bp-paper"></div>
+            <div class="bp-ruler bp-ruler-top"></div>
+            <div class="bp-ruler bp-ruler-left"></div>
+            <span class="bp-mark tl"></span><span class="bp-mark tr"></span>
+            <span class="bp-mark bl"></span><span class="bp-mark br"></span>
+            <div class="bp-frame"></div>
+
+            <header class="bp-head reveal d1">
+                <span>Plano <b>01</b> / 33 · Sección 00</span>
+                <span>Escala 16:9 · Rev. <b>A</b></span>
+            </header>
+
+            <div class="bp-body">
+                <h1 class="bp-title reveal d2">Desarrollo<br>con <span class="accent">IA</span></h1>
+                <p class="bp-sub reveal d4">Del chat al agente: modelo, contexto, skills, MCP y flujos de trabajo. Una ruta de 8 bloques con ramas de profundización.</p>
+                <div class="bp-dim reveal d5">
+                    <span class="rail"></span><span class="tick l"></span><span class="tick r"></span>
+                    <span class="val">32 slides</span>
+                </div>
+            </div>
+
+            <div class="bp-block reveal d5">
+                <div class="row"><span>Proyecto</span><span>Desarrollo con IA</span></div>
+                <div class="row"><span>Repositorio</span><span>alfredogonzalezmartinez/desarrollo-con-ia</span></div>
+                <div class="row"><span>Dibujado</span><span>2026 · Charla técnica</span></div>
+            </div>
+
+            <p class="bp-note reveal d6">Nota: las <b>rutas alternativas</b> (18 en total) profundizan en cada bloque; el flujo principal avanza siempre de simple a complejo.</p>
+        </section>
+
+        <!-- === 02 Contenido: el agente === -->
+        <section class="slide">
+            <div class="bp-paper"></div>
+            <div class="bp-ruler bp-ruler-top"></div>
+            <div class="bp-ruler bp-ruler-left"></div>
+            <span class="bp-mark tl"></span><span class="bp-mark tr"></span>
+            <span class="bp-mark bl"></span><span class="bp-mark br"></span>
+            <div class="bp-frame"></div>
+
+            <header class="bp-head reveal d1">
+                <span>Plano <b>02</b> / 33 · Bloque 01 · Fundamentos</span>
+                <span>Vista de sección</span>
+            </header>
+
+            <div class="bp-h2">
+                <h2 class="reveal d2"><span class="accent">01</span> · ¿Qué es un agente?</h2>
+                <div class="rule reveal d3"></div>
+            </div>
+
+            <p class="bp-text reveal d3">Un <b>modelo</b> solo genera texto. Un <b>agente</b> además <b>actúa</b>: lee ficheros, ejecuta comandos, edita código y comprueba el resultado en bucle.</p>
+            <p class="bp-text reveal d4">Todo lo demás — contexto, skills, MCP, subagentes — son piezas que se enchufan a ese bucle.</p>
+
+            <div class="bp-vrail reveal d4">
+                <span class="rail"></span>
+                <span class="tick t"></span><span class="tick b"></span>
+                <span class="lab">7 capas</span>
+            </div>
+
+            <div class="bp-list reveal d4">
+                <div class="row on"><span class="balloon">01</span><span class="k">modelo</span><span class="r">razona y genera</span></div>
+                <div class="row on"><span class="balloon">02</span><span class="k">harness</span><span class="r">el bucle: actúa y verifica</span></div>
+                <div class="row"><span class="balloon">03</span><span class="k">prompt</span><span class="r">qué debe hacer</span></div>
+                <div class="row"><span class="balloon">04</span><span class="k">contexto</span><span class="r">qué puede ver</span></div>
+                <div class="row"><span class="balloon">05</span><span class="k">skills</span><span class="r">cómo hacerlo bien</span></div>
+                <div class="row"><span class="balloon">06</span><span class="k">mcp / cli</span><span class="r">con qué se conecta</span></div>
+                <div class="row on"><span class="balloon">07</span><span class="k">subagentes</span><span class="r">en paralelo</span></div>
+            </div>
+        </section>
+
+        <!-- === 03 Comparativa + glosario === -->
+        <section class="slide">
+            <div class="bp-paper"></div>
+            <div class="bp-ruler bp-ruler-top"></div>
+            <div class="bp-ruler bp-ruler-left"></div>
+            <span class="bp-mark tl"></span><span class="bp-mark tr"></span>
+            <span class="bp-mark bl"></span><span class="bp-mark br"></span>
+            <div class="bp-frame"></div>
+
+            <header class="bp-head reveal d1">
+                <span>Plano <b>03</b> / 33 · Ruta alternativa 1.a · Herramientas</span>
+                <span>Tabla de especificaciones</span>
+            </header>
+
+            <div class="bp-h2">
+                <h2 class="reveal d2">OpenCode <span class="accent">vs</span> Claude Code</h2>
+                <div class="rule reveal d3"></div>
+            </div>
+
+            <table class="bp-spec reveal d3">
+                <thead>
+                    <tr>
+                        <th></th>
+                        <th class="oc">OpenCode</th>
+                        <th>Claude Code</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Interfaz</td>
+                        <td>TUI, web y escritorio<span class="sub">abierto, multi-interfaz</span></td>
+                        <td>CLI e IDE<span class="sub">integrado en terminal y editor</span></td>
+                    </tr>
+                    <tr>
+                        <td>Modelos</td>
+                        <td>Cualquier proveedor<span class="sub">Anthropic, OpenAI, locales…</span></td>
+                        <td>Modelos de Anthropic<span class="sub">Claude Sonnet / Opus / Haiku</span></td>
+                    </tr>
+                    <tr>
+                        <td>Extensión</td>
+                        <td>
+                            <span class="term" tabindex="0">skills<a class="term-ref" href="#glosario" title="Ver en el glosario">1</a>
+                                <span class="tip"><b>Skill:</b> instrucciones y recursos que se cargan solo cuando la tarea lo pide. Convierten conocimiento experto en algo reutilizable.</span>
+                            </span> y
+                            <span class="term" tabindex="0">MCP<a class="term-ref" href="#glosario" title="Ver en el glosario">2</a>
+                                <span class="tip"><b>MCP:</b> protocolo abierto para conectar el agente a herramientas y datos externos (bases de datos, APIs, navegador).</span>
+                            </span>
+                        </td>
+                        <td>Skills, MCP y plugins<span class="sub">subagentes y hooks incluidos</span></td>
+                    </tr>
+                    <tr>
+                        <td>Encaje</td>
+                        <td>
+                            <span class="term" tabindex="0">harness<a class="term-ref" href="#glosario" title="Ver en el glosario">3</a>
+                                <span class="tip"><b>Harness:</b> el programa que envuelve al modelo: le da herramientas, ejecuta el bucle y decide cuándo parar.</span>
+                            </span> configurable a medida
+                        </td>
+                        <td>producto cuidado de fábrica</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <p class="bp-hint reveal d5">hover sobre un término: <b>definición</b> · clic en el número: ir al <b>glosario</b></p>
+        </section>
+
+    </div>
+</div>
+
+<div class="deck-controls">
+    <div class="ctl">
+        <button id="prev">←</button>
+        <span class="dots" id="dots"></span>
+        <button id="next">→</button>
+    </div>
+</div>
+
+<script>
+(function () {
+    // Escala el escenario fijo 1920×1080 al viewport manteniendo 16:9.
+    const stage = document.getElementById('stage');
+    function fit() {
+        const s = Math.min(window.innerWidth / 1920, window.innerHeight / 1080);
+        const x = (window.innerWidth - 1920 * s) / 2;
+        const y = (window.innerHeight - 1080 * s) / 2;
+        stage.style.transform = 'translate(' + x + 'px,' + y + 'px) scale(' + s + ')';
+    }
+    window.addEventListener('resize', fit);
+    fit();
+
+    // Navegación entre slides.
+    const slides = Array.from(document.querySelectorAll('.slide'));
+    const dots = document.getElementById('dots');
+    slides.forEach(function (_, k) {
+        const b = document.createElement('button');
+        b.className = 'dot';
+        b.addEventListener('click', function () { go(k); });
+        dots.appendChild(b);
+    });
+    let i = 0;
+    function go(n) {
+        i = Math.max(0, Math.min(slides.length - 1, n));
+        slides.forEach(function (s, k) { s.classList.toggle('active', k === i); });
+        Array.from(dots.children).forEach(function (d, k) { d.classList.toggle('on', k === i); });
+        slides[i].querySelectorAll('.reveal').forEach(function (el) {
+            el.style.animation = 'none';
+            void el.offsetWidth;
+            el.style.animation = '';
+        });
+    }
+    document.getElementById('prev').addEventListener('click', function () { go(i - 1); });
+    document.getElementById('next').addEventListener('click', function () { go(i + 1); });
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') { e.preventDefault(); go(i + 1); }
+        if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); go(i - 1); }
+    });
+    go(0);
+})();
+</script>
+</body>
+</html>
