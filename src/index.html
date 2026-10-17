@@ -1,0 +1,2142 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Desarrollo con IA — del chat al agente</title>
+<meta name="description" content="Presentación sobre desarrollo de software con agentes: modelo, contexto, skills, MCP, subagentes, flujos de trabajo y orquestación. 32 slides con ejemplos de OpenCode y Claude Code.">
+<meta name="author" content="Alfredo González Martínez">
+<meta name="color-scheme" content="dark">
+<style>
+/* ============================================================================
+   TIPOGRAFÍA — IBM Plex, recortada a los caracteres que usa el deck y
+   embebida en el build. Sin dependencias de red.
+   Por qué recortada: ver scripts/subset-fonts.sh
+   ========================================================================== */
+@font-face { font-family: "IBM Plex Sans"; font-style: normal; font-weight: 400; font-display: block; src: url(assets/fonts/IBMPlexSans-Regular.woff2) format("woff2"); }
+@font-face { font-family: "IBM Plex Sans"; font-style: normal; font-weight: 500; font-display: block; src: url(assets/fonts/IBMPlexSans-Medium.woff2) format("woff2"); }
+@font-face { font-family: "IBM Plex Sans"; font-style: normal; font-weight: 600; font-display: block; src: url(assets/fonts/IBMPlexSans-SemiBold.woff2) format("woff2"); }
+@font-face { font-family: "IBM Plex Sans"; font-style: normal; font-weight: 700; font-display: block; src: url(assets/fonts/IBMPlexSans-Bold.woff2) format("woff2"); }
+@font-face { font-family: "IBM Plex Mono"; font-style: normal; font-weight: 400; font-display: block; src: url(assets/fonts/IBMPlexMono-Regular.woff2) format("woff2"); }
+@font-face { font-family: "IBM Plex Mono"; font-style: normal; font-weight: 500; font-display: block; src: url(assets/fonts/IBMPlexMono-Medium.woff2) format("woff2"); }
+@font-face { font-family: "IBM Plex Mono"; font-style: normal; font-weight: 600; font-display: block; src: url(assets/fonts/IBMPlexMono-SemiBold.woff2) format("woff2"); }
+
+/* ============================================================================
+   ESCENARIO FIJO 16:9 — cada slide se diseña a 1920×1080 y el conjunto se
+   escala al viewport. En móvil no se reflowe: se mantiene el 16:9.
+   ========================================================================== */
+html, body { width: 100%; height: 100%; margin: 0; overflow: hidden; background: #05070c; }
+.deck-viewport { position: fixed; inset: 0; overflow: hidden; background: #05070c; }
+.deck-stage { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; overflow: hidden; transform-origin: 0 0; background: #0b0e14; }
+.slide { position: absolute; inset: 0; width: 1920px; height: 1080px; overflow: hidden; visibility: hidden; opacity: 0; pointer-events: none; background: #0b0e14; transition: opacity .45s ease; }
+.slide.active { visibility: visible; opacity: 1; pointer-events: auto; z-index: 1; }
+@media print {
+    html, body { width: 1920px; height: auto; overflow: visible; background: #fff; }
+    .deck-viewport { position: static; overflow: visible; background: #fff; }
+    .deck-stage { position: static; width: auto; height: auto; transform: none !important; background: none; }
+    .slide { position: relative; display: block !important; visibility: visible !important; opacity: 1 !important; pointer-events: auto !important; width: 1920px; height: 1080px; break-after: page; page-break-after: always; }
+    .slide:last-child { break-after: auto; page-break-after: auto; }
+    .deck-controls, .map { display: none !important; }
+}
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .2s !important; }
+}
+
+/* ============================================================================
+   ESTILO: «CONSOLA»
+   ========================================================================== */
+:root {
+    --slide-bg: #0b0e14;
+    --panel: #12161f;
+    --panel2: #0e1219;
+    --line: #232b38;
+    --line2: #2f3948;
+    --text: #e6edf3;
+    --muted: #8b98a9;
+    --dim: #5b6878;
+    --blue: #79c0ff;
+    --amber: #ffb454;
+    --violet: #b392f0;
+    --green: #7dd3a0;
+    --red: #ff7b72;
+}
+
+.slide {
+    font-family: "IBM Plex Sans", sans-serif;
+    color: var(--text);
+    background:
+        radial-gradient(1200px 700px at 78% -10%, rgba(121, 192, 255, .08), transparent 60%),
+        radial-gradient(900px 600px at 10% 110%, rgba(179, 146, 240, .07), transparent 60%),
+        var(--slide-bg);
+}
+
+/* --- ventana con barra de pestañas --- */
+.win { position: absolute; inset: 64px 96px; background: var(--panel2); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; box-shadow: 0 40px 90px rgba(0, 0, 0, .45); }
+.tabbar { display: flex; align-items: center; background: #0a0d13; border-bottom: 1px solid var(--line); padding: 0 14px; height: 58px; }
+.tabbar .lights { display: flex; gap: 8px; margin-right: 22px; }
+.tabbar .lights i { width: 12px; height: 12px; border-radius: 50%; background: var(--line2); display: block; }
+.tabbar .lights i:nth-child(1) { background: #3d2a2a; }
+.tab { font-family: "IBM Plex Mono", monospace; font-size: 16px; padding: 19px 22px; color: var(--text); background: var(--panel2); box-shadow: inset 0 2px 0 var(--blue); border-right: 1px solid var(--line); display: flex; align-items: center; gap: 12px; }
+.tab .ext { color: var(--amber); font-size: 14px; }
+.tabbar .spacer { flex: 1; }
+.tabbar .meta { font-family: "IBM Plex Mono", monospace; font-size: 15px; color: var(--muted); padding-right: 8px; display: flex; align-items: center; gap: 10px; }
+.win-body { position: absolute; inset: 58px 0 46px 0; padding: 56px 72px; }
+.statusbar { position: absolute; left: 0; right: 0; bottom: 0; height: 46px; background: #0a0d13; border-top: 1px solid var(--line); display: flex; align-items: center; gap: 28px; padding: 0 22px; font-family: "IBM Plex Mono", monospace; font-size: 15px; color: var(--muted); }
+.statusbar .spacer { flex: 1; }
+.statusbar b { color: var(--blue); font-weight: 500; }
+
+/* --- formas dibujadas (IBM Plex no trae estos glifos a propósito) --- */
+.dotg { display: inline-block; width: 9px; height: 9px; border-radius: 50%; background: var(--green); vertical-align: 1px; }
+.sq { display: inline-block; width: 11px; height: 11px; border-radius: 2px; background: var(--blue); vertical-align: -1px; }
+.tri { display: inline-block; width: 0; height: 0; border-left: 8px solid var(--violet); border-top: 5px solid transparent; border-bottom: 5px solid transparent; vertical-align: 0; }
+.chev { display: inline-block; width: 9px; height: 9px; border-right: 2.5px solid var(--green); border-top: 2.5px solid var(--green); transform: rotate(45deg) translate(-1px, 1px); }
+
+/* --- prompt --- */
+.prompt { font-family: "IBM Plex Mono", monospace; font-size: 22px; color: var(--muted); display: flex; gap: 14px; align-items: center; }
+.prompt .cmd { color: var(--text); }
+.cursor { display: inline-block; width: 12px; height: 26px; margin-left: 6px; background: var(--blue); animation: blink 1.05s steps(1) infinite; }
+@keyframes blink { 50% { opacity: 0; } }
+
+/* --- titulares --- */
+.h-display { font-family: "IBM Plex Sans", sans-serif; font-weight: 700; font-size: 132px; line-height: 1; letter-spacing: -.03em; margin: 0; }
+.h-display .accent { color: var(--blue); }
+.lede { font-size: 30px; line-height: 1.5; color: var(--muted); max-width: 1080px; margin: 0; }
+.lede b, .lede strong { color: var(--text); font-weight: 600; }
+.eyebrow { font-family: "IBM Plex Mono", monospace; font-size: 19px; letter-spacing: .16em; text-transform: uppercase; color: var(--blue); display: flex; align-items: center; gap: 12px; }
+h2.h-page { font-size: 64px; font-weight: 600; letter-spacing: -.02em; margin: 12px 0 0; }
+h2.h-page .n { font-family: "IBM Plex Mono", monospace; color: var(--green); font-weight: 500; font-size: 50px; margin-right: 18px; }
+.head { display: flex; align-items: flex-end; justify-content: space-between; gap: 40px; }
+
+/* --- bloques de código y árboles --- */
+.code { font-family: "IBM Plex Mono", monospace; font-size: 21px; line-height: 1.62; color: var(--text); white-space: pre; margin: 0; }
+.code .cm { color: var(--dim); }
+.code .k { color: var(--violet); }
+.code .s { color: var(--green); }
+.code .a { color: var(--amber); }
+.code .b { color: var(--blue); }
+.code .r { color: var(--red); }
+.file { font-family: "IBM Plex Mono", monospace; font-size: 16px; color: var(--muted); background: rgba(255,255,255,.03); border: 1px solid var(--line); border-radius: 8px 8px 0 0; border-bottom: 0; padding: 10px 18px; display: inline-block; }
+.file + .code, .file + .term-block, .file + .kv { border-top-left-radius: 0; }
+.panel { background: #080b11; border: 1px solid var(--line); border-radius: 10px; padding: 22px 26px; }
+.panel.code { font-size: 21px; }
+.term-block { font-family: "IBM Plex Mono", monospace; font-size: 19px; line-height: 1.7; white-space: pre; margin: 0; background: #080b11; border: 1px solid var(--line); border-radius: 10px; padding: 24px 28px; }
+.term-block .ok { color: var(--green); }
+.term-block .bad { color: var(--red); }
+.term-block .dim { color: var(--dim); }
+.term-block .warn { color: var(--amber); }
+
+/* --- rejillas --- */
+.split { display: grid; grid-template-columns: 1fr 1fr; gap: 56px; align-items: start; }
+.split-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 30px; align-items: start; }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px 26px; }
+
+/* --- chips --- */
+.chips { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 30px; }
+.chip { font-family: "IBM Plex Mono", monospace; font-size: 17px; padding: 8px 16px; border: 1px solid var(--line); border-radius: 999px; color: var(--muted); background: rgba(255,255,255,.02); }
+.chip.on { color: var(--text); border-color: rgba(121,192,255,.5); }
+.chip .cm { color: var(--dim); }
+
+/* --- ayuda de teclas --- */
+.hint { margin-top: 34px; font-family: "IBM Plex Mono", monospace; font-size: 17px; color: var(--muted); }
+.key { display: inline-block; padding: 2px 8px; margin: 0 2px; border: 1px solid var(--line); border-radius: 6px; background: rgba(255,255,255,.04); color: var(--text); }
+
+/* --- tabla comparativa --- */
+.cmp { width: 100%; border-collapse: collapse; font-size: 23px; }
+.cmp th, .cmp td { text-align: left; padding: 18px 20px; border-bottom: 1px solid var(--line); vertical-align: top; }
+.cmp thead th { font-family: "IBM Plex Mono", monospace; font-size: 17px; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
+.cmp thead th.oc { color: var(--green); }
+.cmp thead th.cc { color: var(--amber); }
+.cmp td:first-child, .cmp th:first-child { font-family: "IBM Plex Mono", monospace; font-size: 18px; color: var(--muted); width: 230px; }
+.cmp .sub { display: block; font-size: 17px; color: var(--dim); margin-top: 6px; }
+.cmp .sub.mono, .mono { font-family: "IBM Plex Mono", monospace; }
+
+/* --- diagrama de capas (hoverable) --- */
+.layers { display: flex; flex-direction: column; gap: 6px; }
+.layer { position: relative; display: flex; align-items: baseline; gap: 16px; padding: 13px 18px; border: 1px solid var(--line); border-radius: 10px; background: rgba(255,255,255,.015); font-family: "IBM Plex Mono", monospace; font-size: 20px; }
+.layer .lname { color: var(--text); min-width: 130px; }
+.layer .lnote { color: var(--dim); font-size: 17px; }
+.layer .lx { margin-left: auto; color: var(--blue); font-size: 16px; text-decoration: none; opacity: 0; transition: opacity .15s; }
+.layer.tree { padding: 9px 18px 9px 34px; border-color: transparent; background: none; }
+.layer.tree .lnote { font-size: 16px; }
+.layer .gt { color: var(--dim); }
+.layer:hover { border-color: rgba(121,192,255,.45); background: rgba(121,192,255,.05); }
+.layer:hover .lx { opacity: 1; }
+.layer.tree { border: 0; background: none; padding: 5px 0 5px 0; border-radius: 0; }
+.layer.tree .lname { min-width: 168px; }
+.layer.lv1 { border-color: var(--line2); }
+
+/* --- métrica / medidor de contexto --- */
+.meter { height: 46px; border: 1px solid var(--line); border-radius: 8px; background: #080b11; display: flex; overflow: hidden; font-family: "IBM Plex Mono", monospace; font-size: 15px; }
+.meter span { display: flex; align-items: center; justify-content: center; border-right: 1px solid rgba(0,0,0,.4); }
+.m-meter { background: rgba(125,211,160,.22); color: var(--green); }
+.m-conv { background: rgba(121,192,255,.22); color: var(--blue); }
+.m-files { background: rgba(179,146,240,.22); color: var(--violet); }
+.m-tools { background: rgba(255,180,84,.22); color: var(--amber); }
+.meter-legend { display: flex; gap: 26px; margin-top: 16px; font-family: "IBM Plex Mono", monospace; font-size: 16px; color: var(--muted); }
+.swatch { display: inline-block; width: 12px; height: 12px; border-radius: 3px; margin-right: 8px; vertical-align: -1px; }
+
+/* --- flujo de pasos --- */
+.flow { display: flex; align-items: stretch; gap: 14px; }
+.step { flex: 1; border: 1px solid var(--line); border-radius: 12px; padding: 20px 18px; background: rgba(255,255,255,.015); }
+.step .sn { font-family: "IBM Plex Mono", monospace; font-size: 15px; color: var(--blue); letter-spacing: .1em; }
+.step h4 { margin: 8px 0 8px; font-size: 24px; font-weight: 600; }
+.step p { margin: 0; font-size: 18px; line-height: 1.45; color: var(--muted); }
+.step.gate { border-color: rgba(255,180,84,.5); }
+.step.gate .sn { color: var(--amber); }
+.arrow { align-self: center; color: var(--dim); font-family: "IBM Plex Mono", monospace; font-size: 24px; }
+
+/* --- matriz 2×2 --- */
+.matrix { display: grid; grid-template-columns: 130px 1fr 1fr; grid-template-rows: 60px 1fr 1fr; gap: 10px; }
+.matrix .ax { display: flex; align-items: center; justify-content: center; font-family: "IBM Plex Mono", monospace; font-size: 15px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+.matrix .ax.v { writing-mode: vertical-rl; transform: rotate(180deg); }
+.matrix .cell { border: 1px solid var(--line); border-radius: 12px; padding: 20px; background: rgba(255,255,255,.015); }
+.matrix .cell h4 { margin: 0 0 6px; font-size: 22px; font-weight: 600; }
+.matrix .cell p { margin: 0; font-size: 17px; line-height: 1.4; color: var(--muted); }
+
+/* --- tarjetas --- */
+.cards { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
+.card { border: 1px solid var(--line); border-radius: 12px; padding: 22px 24px; background: rgba(255,255,255,.015); }
+.card h4 { margin: 0 0 8px; font-size: 23px; font-weight: 600; font-family: "IBM Plex Mono", monospace; }
+.card p { margin: 0; font-size: 18px; line-height: 1.45; color: var(--muted); }
+.card .tag { font-family: "IBM Plex Mono", monospace; font-size: 14px; color: var(--green); text-transform: uppercase; letter-spacing: .12em; }
+
+/* --- filas clave/valor --- */
+.kv { display: grid; grid-template-columns: 210px 1fr; gap: 0; font-size: 21px; }
+.kv dt { font-family: "IBM Plex Mono", monospace; font-size: 17px; color: var(--muted); padding: 15px 0; border-bottom: 1px solid var(--line); }
+.kv dd { margin: 0; padding: 15px 0; border-bottom: 1px solid var(--line); line-height: 1.4; }
+.kv dd b { color: var(--blue); font-weight: 500; }
+
+/* --- frase-regla --- */
+.rule { font-size: 34px; font-weight: 600; line-height: 1.3; letter-spacing: -.01em; margin: 0; }
+.rule .q { color: var(--amber); }
+
+/* --- listas --- */
+.ticks { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 14px; }
+.ticks li { display: flex; gap: 14px; align-items: baseline; font-size: 21px; line-height: 1.4; }
+.ticks li::before { content: ""; flex: 0 0 auto; width: 8px; height: 8px; border-radius: 2px; background: var(--green); transform: translateY(-2px) rotate(45deg); }
+.ticks.plain li::before { background: var(--dim); }
+.ticks .m { font-family: "IBM Plex Mono", monospace; font-size: 18px; color: var(--blue); }
+
+/* --- glosario: término + tooltip + superíndice --- */
+.term { position: relative; border-bottom: 1px dashed rgba(121,192,255,.55); cursor: help; outline: none; }
+.term:focus { background: rgba(121,192,255,.1); border-radius: 4px; }
+.tip { position: absolute; left: 50%; bottom: calc(100% + 14px); transform: translateX(-50%) translateY(6px); width: 470px; padding: 18px 20px; background: #161b25; border: 1px solid rgba(121,192,255,.45); border-radius: 10px; color: var(--text); font-family: "IBM Plex Sans", sans-serif; font-size: 19px; line-height: 1.45; box-shadow: 0 24px 50px rgba(0,0,0,.5); opacity: 0; pointer-events: none; transition: opacity .18s ease, transform .18s ease; z-index: 6; text-align: left; white-space: normal; }
+.tip b { color: var(--blue); }
+.tip.below { bottom: auto; top: calc(100% + 14px); }
+.term:hover .tip, .term:focus .tip, .term:focus-within .tip { opacity: 1; }
+.term-ref { font-family: "IBM Plex Mono", monospace; font-size: 13px; vertical-align: super; color: var(--blue); text-decoration: none; margin-left: 4px; border: 1px solid rgba(121,192,255,.45); border-radius: 50%; width: 20px; height: 20px; display: inline-flex; align-items: center; justify-content: center; line-height: 1; }
+.term-ref:hover { background: rgba(121,192,255,.16); }
+
+/* --- glosario: la lista completa --- */
+.gloss { column-count: 4; column-gap: 32px; }
+.gloss h4 { font-family: "IBM Plex Mono", monospace; font-size: 13px; letter-spacing: .16em; text-transform: uppercase; color: var(--blue); margin: 0 0 8px; padding-bottom: 5px; border-bottom: 1px solid var(--line); break-after: avoid; }
+.gloss h4 + h4 { margin-top: 0; }
+.gloss .gitem { break-inside: avoid; margin: 0 0 9px; padding-left: 26px; position: relative; }
+.gloss .gn { position: absolute; left: 0; top: 3px; font-family: "IBM Plex Mono", monospace; font-size: 13px; color: var(--dim); }
+.gloss .gterm { display: block; font-weight: 600; font-size: 16px; }
+.gloss .gdef { display: block; font-size: 14px; line-height: 1.3; color: var(--muted); }
+.gloss .gitem:target { background: rgba(255,180,84,.12); border-radius: 6px; }
+.gloss .gitem.flash { animation: flash 1.6s ease; }
+@keyframes flash { 0%, 30% { background: rgba(255,180,84,.28); } 100% { background: transparent; } }
+
+/* --- revelado escalonado --- */
+.reveal { opacity: 0; transform: translateY(26px); animation: rise .8s cubic-bezier(.2,.7,.2,1) forwards; }
+@keyframes rise { to { opacity: 1; transform: translateY(0); } }
+.d1 { animation-delay: .06s; } .d2 { animation-delay: .18s; } .d3 { animation-delay: .30s; }
+.d4 { animation-delay: .42s; } .d5 { animation-delay: .54s; } .d6 { animation-delay: .66s; }
+
+/* --- bibliografía --- */
+.refs { column-count: 3; column-gap: 44px; }
+.refs h4 { font-family: "IBM Plex Mono", monospace; font-size: 14px; letter-spacing: .16em; text-transform: uppercase; color: var(--blue); margin: 0 0 10px; padding-bottom: 6px; border-bottom: 1px solid var(--line); break-after: avoid; }
+.refs .r { break-inside: avoid; margin: 0 0 9px; font-size: 16px; line-height: 1.35; color: var(--muted); padding-left: 16px; position: relative; }
+.refs .r::before { content: ""; position: absolute; left: 0; top: 8px; width: 5px; height: 5px; border-radius: 50%; background: var(--line2); }
+.refs .r a { text-decoration: none; }
+.refs .r a:hover { text-decoration: underline; }
+.refs .r b { color: var(--text); font-weight: 600; }
+.foot { display: flex; align-items: center; gap: 24px; margin-top: 24px; padding-top: 18px; border-top: 1px solid var(--line); font-family: "IBM Plex Mono", monospace; font-size: 16px; color: var(--muted); }
+.foot .spacer { flex: 1; }
+
+/* --- utilidades --- */.mt8 { margin-top: 8px; } .mt16 { margin-top: 16px; } .mt24 { margin-top: 24px; }
+.mt32 { margin-top: 32px; } .mt44 { margin-top: 44px; } .mt52 { margin-top: 52px; }
+.small { font-size: 18px; color: var(--muted); }
+.tiny { font-size: 16px; color: var(--dim); font-family: "IBM Plex Mono", monospace; }
+.ok { color: var(--green); } .bad { color: var(--red); } .warn { color: var(--amber); } .bl { color: var(--blue); } .vi { color: var(--violet); }
+a { color: var(--blue); }
+
+/* --- controles --- */
+.deck-controls { position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%); z-index: 1000; }
+.ctl { display: flex; align-items: center; gap: 14px; }
+.ctl button { font-family: "IBM Plex Mono", monospace; font-size: 15px; color: var(--muted); background: rgba(11,14,20,.88); border: 1px solid var(--line); border-radius: 999px; padding: 9px 16px; cursor: pointer; backdrop-filter: blur(6px); }
+.ctl button:hover { color: var(--text); border-color: var(--line2); }
+.ctl button.on { color: var(--text); border-color: rgba(121,192,255,.55); background: rgba(121,192,255,.12); }
+.ctl .track { width: 300px; height: 4px; border-radius: 2px; background: var(--line2); overflow: hidden; }
+.ctl .track i { display: block; height: 100%; width: 0; background: var(--blue); transition: width .25s ease; }
+.ctl .num { font-family: "IBM Plex Mono", monospace; font-size: 15px; color: var(--muted); min-width: 74px; text-align: center; }
+
+/* --- mapa / índice --- */
+.map { position: fixed; inset: 0; z-index: 2000; background: rgba(5,7,12,.94); padding: 54px 80px; overflow: auto; display: none; }
+.map.on { display: block; }
+.map .mhead { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 26px; }
+.map h3 { font-size: 34px; margin: 0; font-weight: 600; }
+.map h3 span { font-family: "IBM Plex Mono", monospace; font-size: 17px; color: var(--muted); margin-left: 18px; font-weight: 400; }
+.map .mgrid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px 20px; }
+.map .mi { display: flex; gap: 12px; align-items: baseline; padding: 11px 14px; border: 1px solid var(--line); border-radius: 10px; cursor: pointer; color: var(--muted); font-size: 17px; background: none; text-align: left; font-family: inherit; }
+.map .mi:hover { color: var(--text); border-color: var(--line2); background: rgba(255,255,255,.03); }
+.map .mi.now { border-color: rgba(121,192,255,.6); color: var(--text); }
+.map .mi .mn { font-family: "IBM Plex Mono", monospace; font-size: 14px; color: var(--dim); min-width: 22px; }
+.map .mi.branch { border-style: dashed; }
+.map .mi.branch .mn { color: var(--violet); }
+.map .legend { margin-top: 24px; font-family: "IBM Plex Mono", monospace; font-size: 15px; color: var(--muted); display: flex; gap: 30px; }
+
+/* --- encaje a 1920×1080 -------------------------------------------------
+   Slides cuyo contenido no cabía en la ventana (medido con `npm run check`).
+   Se comprime el ritmo vertical de esa slide; el diseño de las demás no se
+   toca. Si se edita el contenido de una de estas slides, volver a medir. */
+#s-contexto .mt44 { margin-top: 20px; }
+#s-contexto .mt32 { margin-top: 18px; }
+#s-contexto .mt24 { margin-top: 12px; }
+#s-contexto .mt16 { margin-top: 8px; }
+#s-contexto .lede { font-size: 25px !important; }
+#s-contexto .rule { font-size: 22px !important; }
+#s-subagentes .mt32 { margin-top: 20px; }
+#s-subagentes .mt24 { margin-top: 14px; }
+#s-subagentes .lede { font-size: 24px !important; }
+#s-subagentes pre.code { font-size: 16px !important; }
+#s-hooks .mt44 { margin-top: 18px; }
+#s-hooks .mt24 { margin-top: 12px; }
+#s-hooks .mt16 { margin-top: 8px; }
+#s-hooks .lede { font-size: 24px !important; }
+#s-hooks pre.code { font-size: 15.5px !important; }
+#s-hooks .step { padding: 15px 14px; }
+#s-hooks .step h4 { font-size: 21px; margin: 6px 0; }
+#s-api .mt32 { margin-top: 16px; }
+#s-api .rule { font-size: 23px !important; }
+#s-api table.cmp { font-size: 19px; }
+#s-catalogo .mt32 { margin-top: 14px; }
+#s-catalogo table.cmp { font-size: 18px !important; }
+#s-catalogo .cmp td, #s-catalogo .cmp th { padding: 9px 16px; }
+#s-catalogo .cmp .sub { font-size: 15px; margin-top: 2px; }
+#s-glosario .mt32 { margin-top: 20px; }
+</style>
+</head>
+<body>
+<div class="deck-viewport">
+<div class="deck-stage" id="stage">
+
+<!-- ═══ 01 · Portada ═══════════════════════════════════════════════════════ -->
+<section class="slide" id="s-portada" data-ch="00" data-file="00-portada" data-kind="main" data-chapter="Portada">
+    <div class="win">
+        <div class="win-body">
+            <div class="prompt reveal d1"><span class="chev"></span><span class="cmd">presentar desarrollo-con-ia --slides 32 --profundizacion 17</span><span class="cursor"></span></div>
+            <h1 class="h-display reveal d2 mt32">Desarrollo<br>con <span class="accent">IA</span></h1>
+            <p class="lede reveal d3 mt32">Del chat al agente: modelo, contexto, reglas, skills, MCP y flujos de trabajo. Ocho bloques, con diecisiete slides de profundización para quien quiera más.</p>
+            <div class="chips reveal d4">
+                <span class="chip on">OpenCode</span>
+                <span class="chip on">Claude Code</span>
+                <span class="chip">Codex</span>
+                <span class="chip">Cursor</span>
+                <span class="chip">Aider</span>
+            </div>
+            <p class="hint reveal d5"><span class="key">&larr;</span> <span class="key">&rarr;</span> avanzar &middot; <span class="key">c</span> modo charla &middot; <span class="key">m</span> mapa &middot; <span class="key">f</span> pantalla completa &middot; pasa el rat&oacute;n por un t&eacute;rmino subrayado: definici&oacute;n</p>
+        </div>
+    </div>
+</section>
+
+<!-- ═══ 02 · ¿Qué es un agente? ════════════════════════════════════════════ -->
+<section class="slide" id="s-agente" data-ch="01" data-file="01-agente" data-kind="main" data-chapter="Fundamentos" data-title="¿Qué es un agente?">
+    <div class="win">
+        <div class="win-body">
+            <span class="eyebrow reveal d1"><span class="sq"></span> Bloque 01 · Fundamentos</span>
+            <h2 class="h-page reveal d2"><span class="n">01</span>¿Qué es un agente?</h2>
+
+            <div class="split mt44">
+                <div>
+                    <p class="lede reveal d3" style="font-size:29px">Un modelo solo genera texto. Un <b>agente</b> además <b>actúa</b>: lee ficheros, ejecuta comandos, edita código y comprueba el resultado. Y vuelve a empezar.</p>
+                    <p class="lede reveal d4 mt24" style="font-size:29px">Todo lo demás — contexto, reglas, skills, MCP, subagentes — son piezas que se enchufan a ese bucle.</p>
+                    <div class="chips reveal d5">
+                        <span class="chip">leer</span>
+                        <span class="chip">editar</span>
+                        <span class="chip">ejecutar</span>
+                        <span class="chip">verificar</span>
+                    </div>
+                </div>
+
+                <div class="layers reveal d4">
+                    <div class="layer lv1"><span class="lname">harness</span><span class="lnote">el bucle: actúa y verifica</span></div>
+                    <div class="layer tree"><span class="gt">├─</span><span class="lname">modelo</span><span class="lnote">razona y genera</span><a class="lx" href="#s-modelos">03 &rarr;</a></div>
+                    <div class="layer tree"><span class="gt">├─</span><span class="lname">prompt</span><span class="lnote">qué debe hacer</span></div>
+                    <div class="layer tree"><span class="gt">├─</span><span class="lname">contexto</span><span class="lnote">qué puede ver</span><a class="lx" href="#s-contexto">04 &rarr;</a></div>
+                    <div class="layer tree"><span class="gt">├─</span><span class="lname">skills</span><span class="lnote">cómo hacerlo bien</span><a class="lx" href="#s-skills">06 &rarr;</a></div>
+                    <div class="layer tree"><span class="gt">├─</span><span class="lname">mcp / cli</span><span class="lnote">con qué se conecta</span><a class="lx" href="#s-mcp">07 &rarr;</a></div>
+                    <div class="layer tree"><span class="gt">└─</span><span class="lname">subagentes</span><span class="lnote">en paralelo</span><a class="lx" href="#s-subagentes">08 &rarr;</a></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ═══ 03 · Chat vs agente ════════════════════════════════════════════════ -->
+<section class="slide" id="s-chat" data-ch="01" data-file="01-agente" data-kind="main" data-chapter="Fundamentos" data-title="Chat vs agente">
+    <div class="win">
+        <div class="win-body">
+            <span class="eyebrow reveal d1"><span class="sq"></span> Bloque 01 · Fundamentos</span>
+            <h2 class="h-page reveal d2"><span class="n">02</span>Chat vs agente</h2>
+
+            <table class="cmp reveal d3 mt32">
+                <thead>
+                    <tr>
+                        <th></th>
+                        <th>Chat</th>
+                        <th class="oc">Agente</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Le das</td>
+                        <td>una pregunta</td>
+                        <td>un <b>objetivo</b></td>
+                    </tr>
+                    <tr>
+                        <td>Obtienes</td>
+                        <td>texto que copias tú<span class="sub">la acción es tuya</span></td>
+                        <td>cambios en tu repositorio<span class="sub">lee, edita y ejecuta por su cuenta</span></td>
+                    </tr>
+                    <tr>
+                        <td>Mira</td>
+                        <td>solo lo que le pegas</td>
+                        <td>tu código, con herramientas<span class="sub">y decide qué necesita leer</span></td>
+                    </tr>
+                    <tr>
+                        <td>Verifica</td>
+                        <td>nada: compruebas tú</td>
+                        <td>ejecuta tests y comandos, y reintenta<span class="sub">hasta que sale o se atasca</span></td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="grid2 reveal d5 mt32">
+                <div class="panel">
+                    <div class="tiny">OpenCode</div>
+                    <div class="code mt8" style="font-size:19px"><span class="b">opencode</span>              <span class="cm"># abre la sesión</span>
+<span class="b">/agents</span>               <span class="cm"># elige agente: `plan` no edita ficheros</span></div>
+                </div>
+                <div class="panel">
+                    <div class="tiny">Claude Code</div>
+                    <div class="code mt8" style="font-size:19px"><span class="b">claude</span>                <span class="cm"># abre la sesión</span>
+<span class="cm">subagentes de fábrica: Explore, Plan (solo lectura),</span>
+<span class="cm">General-purpose (explorar y actuar)</span></div>
+                </div>
+            </div>
+
+            <p class="tiny reveal d6 mt24">La frontera se difumina: los chats también usan herramientas. La distinción útil es <b>objetivo y autonomía</b>, no el producto.</p>
+        </div>
+    </div>
+</section>
+
+<!-- ═══ 04 · Modelos ══════════════════════════════════════════════════════ -->
+<section class="slide" id="s-modelos" data-ch="02" data-file="02-modelos" data-kind="main" data-chapter="Modelos" data-title="Modelos">
+    <div class="win">
+        <div class="win-body">
+            <span class="eyebrow reveal d1"><span class="sq"></span> Bloque 02 · Modelos</span>
+            <h2 class="h-page reveal d2"><span class="n">03</span>Modelos</h2>
+
+            <p class="rule reveal d3 mt24">No hay «el mejor modelo». Hay <span class="q">el mejor modelo para esta tarea</span> — y al menor coste.</p>
+
+            <div class="split mt32">
+                <div class="cards reveal d4">
+                    <div class="card">
+                        <span class="tag">frontera</span>
+                        <h4>lo difícil</h4>
+                        <p>Arquitectura, bugs enrevesados, cambios que cruzan medio repo. Caro y lento: úsalo a propósito.</p>
+                    </div>
+                    <div class="card">
+                        <span class="tag">medio</span>
+                        <h4>el trabajo diario</h4>
+                        <p>Implementar, refactorizar, escribir tests. Es donde vive el 80&nbsp;% del tiempo.</p>
+                    </div>
+                    <div class="card">
+                        <span class="tag">pequeño y rápido</span>
+                        <h4>lo mecánico</h4>
+                        <p>Renombrar, formatear, resumir, clasificar, tareas de subagente. Barato y suficiente.</p>
+                    </div>
+                    <div class="card">
+                        <span class="tag">reasoning effort</span>
+                        <h4>el mando que se olvida</h4>
+                        <p>Cuánto «piensa» antes de responder. Subirlo mejora lo difícil y encarece todo. Ajustarlo es tan importante como elegir el modelo.</p>
+                    </div>
+                </div>
+
+                <div class="reveal d5">
+                    <div class="file">OpenCode</div>
+                    <pre class="code panel" style="border-top-left-radius:0"><span class="b">/models</span>                                  <span class="cm"># cambia el modelo de la sesión</span>
+<span class="b">--model</span> anthropic/claude-sonnet-4-5      <span class="cm"># para una ejecución suelta</span>
+anthropic/claude-sonnet-4-5<span class="a">#high</span>        <span class="cm"># la variante es el esfuerzo</span></pre>
+
+                    <div class="file mt24">Claude Code</div>
+                    <pre class="code panel" style="border-top-left-radius:0"><span class="b">/model</span> sonnet | opus | haiku | opusplan
+<span class="b">/model</span> sonnet[1m]                      <span class="cm"># ventana de 1M de tokens</span>
+                                        <span class="cm"># esfuerzo: low … max</span></pre>
+
+                    <p class="small mt24">La misma tarea con dos esfuerzos distintos no da «mejor» y «peor»: da <b>distinto coste y distinto tiempo</b>. Mídelo en tu caso antes de decidir.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ═══ 05 · Contexto ═════════════════════════════════════════════════════ -->
+<section class="slide" id="s-contexto" data-ch="03" data-file="03-contexto" data-kind="main" data-chapter="Contexto y memoria" data-title="Contexto">
+    <div class="win">
+        <div class="win-body">
+            <span class="eyebrow reveal d1"><span class="sq"></span> Bloque 03 · Contexto y memoria</span>
+            <h2 class="h-page reveal d2"><span class="n">04</span>Contexto: lo que el agente ve</h2>
+
+            <p class="lede reveal d3 mt24" style="font-size:28px; max-width:none">El <span class="term" data-term="contexto">contexto<a class="term-ref" href="#glosario-contexto" title="Ver en el glosario"></a></span> es todo lo que el modelo tiene delante: las reglas, la conversación, los ficheros y los resultados de las herramientas. Es <b>finito</b> y <b>caro</b>.</p>
+
+            <div class="meter reveal d4 mt32">
+                <span class="m-meter" style="flex:2">reglas del proyecto</span>
+                <span class="m-conv" style="flex:5">conversación</span>
+                <span class="m-files" style="flex:4">ficheros leídos</span>
+                <span class="m-tools" style="flex:3">resultados de herramientas</span>
+            </div>
+            <div class="meter-legend reveal d4">
+                <span><span class="swatch m-meter"></span>se carga siempre</span>
+                <span><span class="swatch m-conv"></span>crece en cada turno</span>
+                <span><span class="swatch m-files"></span>lo decide el agente</span>
+                <span><span class="swatch m-tools"></span>lo más voluminoso</span>
+            </div>
+
+            <div class="split mt44">
+                <div class="reveal d5">
+                    <p class="rule" style="font-size:26px">Cuando se llena, no falla: <span class="q">se degrada</span>.</p>
+                    <p class="small mt16">El agente empieza a olvidar lo que ya leyó, repite trabajo y toma decisiones peores. No hay un error en pantalla que te avise.</p>
+                    <ul class="ticks mt24">
+                        <li><span class="m">/clear</span> empieza de cero: se pierde todo el hilo.</li>
+                        <li><span class="m">/compact</span> resume lo antiguo: se pierde detalle.</li>
+                        <li><span class="m">autocompact</span> lo hace solo al acercarse al límite.</li>
+                    </ul>
+                </div>
+                <div class="reveal d5">
+                    <div class="file">OpenCode</div>
+                    <pre class="code panel" style="border-top-left-radius:0"><span class="cm"># compactación automática por defecto,
+# configurable (compaction, keep.tokens);
+# también se puede pedir a mano.</span>
+
+<span class="cm"># lee CLAUDE.md además de AGENTS.md</span></pre>
+                    <div class="file mt24">Claude Code</div>
+                    <pre class="code panel" style="border-top-left-radius:0"><span class="b">/context</span>      <span class="cm"># desglose de lo que ocupa la ventana</span>
+<span class="b">/compact</span>      <span class="cm"># resumir ahora</span>
+<span class="b">/autocompact</span>  <span class="cm"># dejarlo en automático</span></pre>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ═══ 06 · Reglas ═══════════════════════════════════════════════════════ -->
+<section class="slide" id="s-reglas" data-ch="03" data-file="03-contexto" data-kind="main" data-chapter="Contexto y memoria" data-title="Reglas: AGENTS.md / CLAUDE.md">
+    <div class="win">
+        <div class="win-body">
+            <span class="eyebrow reveal d1"><span class="sq"></span> Bloque 03 · Contexto y memoria</span>
+            <h2 class="h-page reveal d2"><span class="n">05</span>Reglas: <span class="mono" style="font-size:46px; color:var(--blue)">AGENTS.md</span></h2>
+
+            <div class="split mt32">
+                <div class="reveal d3">
+                    <div class="file">AGENTS.md</div>
+                    <pre class="code panel" style="border-top-left-radius:0; font-size:19px"><span class="k"># Comandos</span>
+- build: <span class="s">npm run build</span>
+- test:  <span class="s">npm test -- --run</span>
+- lint:  <span class="s">npm run lint</span>
+
+<span class="k"># Estilo</span>
+- TypeScript estricto. Sin <span class="a">any</span>.
+- Commits en imperativo.
+
+<span class="k"># Avisos</span>
+- No toques <span class="a">dist/</span>: se genera.
+- Los tests de integración necesitan Docker.</pre>
+                </div>
+
+                <div class="reveal d4">
+                    <p class="small">Es el <b>README para agentes</b>. Se lee al empezar y condiciona todo lo que viene después. Los comandos de build y test, además, son lo que hace posible la verificación (slide 10).</p>
+
+                    <p class="tiny mt24">Precedencia: de lo general a lo concreto</p>
+                    <div class="layers mt8">
+                        <div class="layer tree" style="padding-left:18px"><span class="lname mono" style="font-size:17px">~/.config/opencode/AGENTS.md</span><span class="lnote">global, tu máquina</span></div>
+                        <div class="layer tree" style="padding-left:18px"><span class="lname mono" style="font-size:17px">./AGENTS.md</span><span class="lnote">el proyecto</span></div>
+                        <div class="layer tree" style="padding-left:18px"><span class="lname mono" style="font-size:17px">./packages/web/AGENTS.md</span><span class="lnote"><b class="bl">el más cercano gana</b></span></div>
+                    </div>
+
+                    <div class="grid2 mt24">
+                        <div class="panel">
+                            <div class="tiny">OpenCode</div>
+                            <p class="small mt8" style="font-size:17px">Lee el global y <b>todos</b> los del proyecto, incluidos los anidados. También lee <span class="mono">CLAUDE.md</span>.</p>
+                        </div>
+                        <div class="panel">
+                            <div class="tiny">Claude Code</div>
+                            <p class="small mt8" style="font-size:17px"><span class="mono">/init</span> lo genera. De lo más amplio (organización) a lo más específico.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ═══ 07 · Skills ════════════════════════════════════════════════════════ -->
+<section class="slide" id="s-skills" data-ch="04" data-file="04-skills" data-kind="main" data-chapter="Skills" data-title="Skills">
+    <div class="win">
+        <div class="win-body">
+            <span class="eyebrow reveal d1"><span class="sq"></span> Bloque 04 · Skills</span>
+            <h2 class="h-page reveal d2"><span class="n">06</span>Skills: conocimiento a demanda</h2>
+
+            <div class="split mt32">
+                <div class="reveal d3">
+                    <div class="file">.opencode/skills/revisar-pr/</div>
+                    <pre class="code panel" style="border-top-left-radius:0; font-size:19px"><span class="b">SKILL.md</span>        <span class="cm"># qué es y cuándo usarla</span>
+├── <span class="k">scripts/</span>      <span class="cm"># lo que se ejecuta</span>
+│   └── <span class="s">lint.sh</span>
+├── <span class="k">references/</span>    <span class="cm"># detalle que casi nunca hace falta</span>
+│   └── <span class="s">checklist.md</span>
+└── <span class="k">assets/</span>        <span class="cm"># plantillas y ficheros</span>
+    └── <span class="s">informe.md</span></pre>
+
+                    <p class="small mt24">Una <span class="term" data-term="skill">skill<a class="term-ref" href="#glosario-skill" title="Ver en el glosario"></a></span> es una carpeta con un <span class="mono">SKILL.md</span>. Convierte «cómo lo hacemos aquí» en algo que el agente puede cargar solo, cuando la tarea lo pide.</p>
+                </div>
+
+                <div class="reveal d4">
+                    <p class="tiny">Progressive disclosure: se carga por capas</p>
+                    <div class="layers mt8">
+                        <div class="layer lv1"><span class="lname">1 · metadata</span><span class="lnote">nombre y descripción: siempre presente, cuesta casi nada</span></div>
+                        <div class="layer tree" style="padding-left:34px"><span class="gt">↓</span><span class="lname">2 · instrucciones</span><span class="lnote">el cuerpo del <span class="mono">SKILL.md</span>: se carga si la tarea encaja</span></div>
+                        <div class="layer tree" style="padding-left:34px"><span class="gt">↓</span><span class="lname">3 · recursos</span><span class="lnote">scripts y referencias: solo si el agente los abre</span></div>
+                    </div>
+
+                    <div class="grid2 mt24">
+                        <div class="panel">
+                            <div class="tiny">OpenCode</div>
+                            <p class="small mt8" style="font-size:17px"><span class="mono">.opencode/skills/&lt;id&gt;/SKILL.md</span> o global. Lee además <span class="mono">~/.claude/skills</span> y <span class="mono">~/.agents/skills</span>.</p>
+                        </div>
+                        <div class="panel">
+                            <div class="tiny">Claude Code</div>
+                            <p class="small mt8" style="font-size:17px"><span class="mono">.claude/skills/</span> se versiona con el repo. El <span class="mono">description</span> decide cuándo se usa.</p>
+                        </div>
+                    </div>
+
+                    <p class="tiny mt24">El formato es abierto: la <b class="bl">misma skill</b> funciona en las dos herramientas. El conocimiento no queda encerrado.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ═══ 08 · MCP ══════════════════════════════════════════════════════════ -->
+<section class="slide" id="s-mcp" data-ch="05" data-file="05-mcp" data-kind="main" data-chapter="MCP" data-title="MCP: conectar con el mundo">
+    <div class="win">
+        <div class="win-body">
+            <span class="eyebrow reveal d1"><span class="sq"></span> Bloque 05 · MCP</span>
+            <h2 class="h-page reveal d2"><span class="n">07</span>MCP: conectar el agente con el mundo</h2>
+
+            <div class="flow mt44 reveal d3">
+                <div class="step">
+                    <span class="sn">AGENTE</span>
+                    <h4>pide</h4>
+                    <p>«dame los issues abiertos del repo»</p>
+                </div>
+                <div class="arrow">&rarr;</div>
+                <div class="step">
+                    <span class="sn">SERVIDOR MCP</span>
+                    <h4>expone</h4>
+                    <p>herramientas con contrato: <span class="mono">list_issues</span>, <span class="mono">create_pr</span>&hellip;</p>
+                </div>
+                <div class="arrow">&rarr;</div>
+                <div class="step">
+                    <span class="sn">SERVICIO</span>
+                    <h4>responde</h4>
+                    <p>GitHub, una base de datos, el navegador, tus ficheros</p>
+                </div>
+            </div>
+
+            <p class="lede reveal d4 mt32" style="font-size:27px; max-width:none"><span class="term" data-term="mcp">MCP<a class="term-ref" href="#glosario-mcp" title="Ver en el glosario"></a></span> (<i>Model Context Protocol</i>) es un <b>estándar</b>: escribes la integración una vez y vale para muchos agentes. Eso es lo que lo hace distinto de un script suelto.</p>
+
+            <div class="grid2 reveal d5 mt24">
+                <div>
+                    <div class="file">OpenCode</div>
+                    <pre class="code panel" style="border-top-left-radius:0; font-size:19px"><span class="b">opencode mcp add</span> github --global --url <span class="s">&lt;url&gt;</span>
+<span class="b">opencode mcp list</span>
+<span class="cm"># login OAuth desde /mcps</span></pre>
+                </div>
+                <div>
+                    <div class="file">Claude Code</div>
+                    <pre class="code panel" style="border-top-left-radius:0; font-size:19px"><span class="b">claude mcp add</span> --transport http github <span class="s">&lt;url&gt;</span>
+<span class="cm"># --scope local | project | user</span>
+<span class="cm"># .mcp.json versionado: lo tiene todo el equipo</span></pre>
+                </div>
+            </div>
+
+            <p class="tiny reveal d6 mt24">Alternativa que no hay que olvidar: la <span class="term" data-term="cli">CLI<a class="term-ref" href="#glosario-cli" title="Ver en el glosario"></a></span>. Muchas veces basta con dejar que el agente ejecute un comando.</p>
+        </div>
+    </div>
+</section>
+
+<!-- ═══ 09 · Subagentes ═══════════════════════════════════════════════════ -->
+<section class="slide" id="s-subagentes" data-ch="06" data-file="06-subagentes" data-kind="main" data-chapter="Subagentes" data-title="Subagentes: delegar y aislar">
+    <div class="win">
+        <div class="win-body">
+            <span class="eyebrow reveal d1"><span class="sq"></span> Bloque 06 · Subagentes</span>
+            <h2 class="h-page reveal d2"><span class="n">08</span>Subagentes: delegar y aislar</h2>
+
+            <div class="split mt32">
+                <div class="reveal d3">
+                    <p class="lede" style="font-size:27px">Un <span class="term" data-term="subagente">subagente<a class="term-ref" href="#glosario-subagente" title="Ver en el glosario"></a></span> es un agente con su <b>propio contexto</b>, su prompt, su modelo y sus permisos. El principal le delega un trabajo y recibe solo el resultado.</p>
+                    <ul class="ticks mt24">
+                        <li>No contamina el contexto principal.<span class="small">&nbsp;Lee 40 ficheros y devuelve 5 líneas.</span></li>
+                        <li>Puede ser <b>especialista</b>: revisor, explorador, testeador.</li>
+                        <li>Y puede correr <b>en paralelo</b> con otros.</li>
+                    </ul>
+                    <div class="layers mt24">
+                        <div class="layer lv1"><span class="lname">principal</span><span class="lnote">contexto A · decide y delega</span></div>
+                        <div class="layer tree"><span class="gt">├─</span><span class="lname">reviewer</span><span class="lnote">contexto B · solo lectura</span></div>
+                        <div class="layer tree"><span class="gt">├─</span><span class="lname">explorer</span><span class="lnote">contexto C · busca y resume</span></div>
+                        <div class="layer tree"><span class="gt">└─</span><span class="lname">tester</span><span class="lnote">contexto D · ejecuta y reporta</span></div>
+                    </div>
+                </div>
+
+                <div class="reveal d4">
+                    <div class="file">.opencode/agents/reviewer.md</div>
+                    <pre class="code panel" style="border-top-left-radius:0; font-size:18px"><span class="a">---</span>
+<span class="k">description</span>: Revisa el diff y señala riesgos
+<span class="k">mode</span>: subagent
+<span class="k">model</span>: anthropic/claude-sonnet-4-5
+<span class="a">---</span>
+Revisa solo el diff. No edites ficheros.</pre>
+
+                    <div class="file mt24">.claude/agents/code-reviewer.md</div>
+                    <pre class="code panel" style="border-top-left-radius:0; font-size:18px"><span class="a">---</span>
+<span class="k">name</span>: code-reviewer
+<span class="k">description</span>: Revisa el diff y señala riesgos
+<span class="k">tools</span>: Read, Glob, Grep
+<span class="k">model</span>: sonnet
+<span class="a">---</span>
+Revisa solo el diff. No edites ficheros.</pre>
+
+                    <p class="tiny mt24">Casi el mismo fichero, en dos carpetas distintas. La parte que importa es la <span class="term" data-term="frontmatter">cabecera<a class="term-ref" href="#glosario-frontmatter" title="Ver en el glosario"></a></span>: la <span class="mono">description</span> es lo que hace que el agente principal sepa cuándo delegar.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ═══ 10 · Flujos de trabajo ════════════════════════════════════════════ -->
+<section class="slide" id="s-flujos" data-ch="07" data-file="07-flujos" data-kind="main" data-chapter="Flujos de trabajo" data-title="Flujos: explorar, planificar, codificar, confirmar">
+    <div class="win">
+        <div class="win-body">
+            <span class="eyebrow reveal d1"><span class="sq"></span> Bloque 07 · Flujos de trabajo</span>
+            <h2 class="h-page reveal d2"><span class="n">09</span>Un proceso que se repite</h2>
+
+            <div class="flow mt44 reveal d3">
+                <div class="step">
+                    <span class="sn">01 · EXPLORAR</span>
+                    <h4>entender</h4>
+                    <p>Antes de tocar nada. El agente en solo lectura te dice cómo está montado.</p>
+                </div>
+                <div class="arrow">&rarr;</div>
+                <div class="step gate">
+                    <span class="sn">02 · PLANIFICAR › puerta</span>
+                    <h4>acordar</h4>
+                    <p>El <span class="term" data-term="modo-plan">modo plan<a class="term-ref" href="#glosario-modo-plan" title="Ver en el glosario"></a></span> propone y no edita. Aquí dices «sí» o corriges el rumbo, cuando corregir es barato.</p>
+                </div>
+                <div class="arrow">&rarr;</div>
+                <div class="step">
+                    <span class="sn">03 · CODIFICAR</span>
+                    <h4>hacer</h4>
+                    <p>Cambios pequeños y revisables. Si el diff no cabe en una pantalla, el paso era demasiado grande.</p>
+                </div>
+                <div class="arrow">&rarr;</div>
+                <div class="step gate">
+                    <span class="sn">04 · CONFIRMAR › puerta</span>
+                    <h4>comprobar</h4>
+                    <p>Tests, linter, tipos, diff leído. Idealmente lo revisa otro modelo o subagente.</p>
+                </div>
+            </div>
+
+            <div class="split mt44">
+                <div class="reveal d5">
+                    <p class="rule" style="font-size:26px">Las puertas son <span class="q">tuyas</span>. El agente propone; quien acepta el riesgo eres tú.</p>
+                    <p class="small mt16">Si el resultado no convence, se vuelve al paso anterior. El bucle es la parte normal del proceso, no un fallo.</p>
+                </div>
+                <div class="reveal d5">
+                    <div class="panel">
+                        <div class="tiny">OpenCode</div>
+                        <p class="small mt8" style="font-size:17px"><span class="mono">/agents</span> → agente <b>plan</b>: explora y planifica sin editar los ficheros del proyecto.</p>
+                    </div>
+                    <div class="panel mt16">
+                        <div class="tiny">Claude Code</div>
+                        <p class="small mt8" style="font-size:17px"><span class="mono">Shift+Tab</span> → <b>plan mode</b>. <span class="mono">/rewind</span> revierte si el resultado no convence.</p>
+                    </div>
+                    <p class="tiny mt16">Métodos formalizados que desarrollan esta idea: <b class="bl">SDD</b> y <b class="bl">RPI</b> (slides 30 y 31).</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ═══ 11 · Verificación ═════════════════════════════════════════════════ -->
+<section class="slide" id="s-verificacion" data-ch="07" data-file="07-flujos" data-kind="main" data-chapter="Flujos de trabajo" data-title="Verificación: cómo sabes que está bien">
+    <div class="win">
+        <div class="win-body">
+            <span class="eyebrow reveal d1"><span class="sq"></span> Bloque 07 · Flujos de trabajo</span>
+            <h2 class="h-page reveal d2"><span class="n">10</span>Verificación</h2>
+
+            <div class="split mt32">
+                <div class="reveal d3">
+                    <pre class="term-block"><span class="dim">&gt;</span> npm test -- --run
+
+  <span class="ok">✓</span> cart/total.test.ts
+  <span class="bad">×</span> discount.test.ts
+    <span class="bad">expected 900 to be 950</span>
+
+<span class="dim"># le pides que lo arregle y vuelva a probar</span>
+
+  <span class="ok">✓</span> discount.test.ts
+
+  <span class="ok">Tests  42 passed (42)</span></pre>
+                    <p class="tiny mt16">Salida real pegada como texto, no como captura: se puede leer, buscar y anotar.</p>
+                </div>
+
+                <div class="reveal d4">
+                    <p class="rule" style="font-size:30px">El agente <span class="q">no sabe</span> si su cambio está bien. Solo sabe si el comando no falló.</p>
+
+                    <ul class="ticks mt24">
+                        <li>La verificación es <b>tuya</b> y tiene que ser <b>ejecutable</b>: tests, linter, tipos, build, diff leído.</li>
+                        <li>Verificación cruzada: <b>otro</b> modelo o subagente revisa el diff. Quien escribe no es el mejor revisor de lo suyo.</li>
+                        <li>Un buen <span class="mono">AGENTS.md</span> incluye el comando exacto de test justo por esto.</li>
+                    </ul>
+
+                    <div class="flow mt24">
+                        <div class="step" style="padding:14px"><span class="sn">CAMBIAR</span></div>
+                        <div class="arrow">&rarr;</div>
+                        <div class="step" style="padding:14px"><span class="sn">COMPROBAR</span></div>
+                        <div class="arrow">&rarr;</div>
+                        <div class="step gate" style="padding:14px"><span class="sn">DECIDIR › humano</span></div>
+                    </div>
+                </div>
+            </div>
+
+            <p class="rule reveal d5 mt32" style="font-size:32px">«Verde» no significa <span class="q">correcto</span>. Significa que los tests que se te ocurrieron pasan. Y: si no puedes comprobarlo, <span class="q">no lo puedes delegar</span>.</p>
+        </div>
+    </div>
+</section>
+
+<!-- ═══ 12 · Orquestación ══════════════════════════════════════════════════ -->
+<section class="slide" id="s-orquestacion" data-ch="08" data-file="08-orquestacion" data-kind="main" data-chapter="Orquestación" data-title="Orquestación: muchos agentes a la vez">
+    <div class="win">
+        <div class="win-body">
+            <span class="eyebrow reveal d1"><span class="sq"></span> Bloque 08 · Orquestación</span>
+            <h2 class="h-page reveal d2"><span class="n">11</span>Orquestación: de uno a muchos</h2>
+
+            <p class="lede reveal d3 mt24" style="font-size:28px; max-width:none">Se pasa de «un agente en una terminal» a un <b>entorno con varios agentes</b>. El límite deja de ser lo capaz que sea el modelo.</p>
+
+            <div class="split mt32">
+                <div class="reveal d4">
+                    <div class="layers">
+                        <div class="layer lv1"><span class="lname">repositorio</span><span class="lnote">un solo repo, una sola historia</span></div>
+                        <div class="layer tree"><span class="gt">├─</span><span class="lname">worktree A</span><span class="lnote">rama A · sesión 1 · tarea «migrar login»</span></div>
+                        <div class="layer tree"><span class="gt">├─</span><span class="lname">worktree B</span><span class="lnote">rama B · sesión 2 · tarea «tests de carrito»</span></div>
+                        <div class="layer tree"><span class="gt">└─</span><span class="lname">worktree C</span><span class="lnote">rama C · sesión 3 · tarea «subir dependencias»</span></div>
+                    </div>
+                    <p class="tiny mt16">Un <span class="term" data-term="worktree">worktree<a class="term-ref" href="#glosario-worktree" title="Ver en el glosario"></a></span> por tarea: mismo repositorio, carpeta y rama propias. Sin eso, dos agentes se pisan los ficheros.</p>
+                </div>
+
+                <div class="reveal d4">
+                    <div class="panel">
+                        <div class="tiny">OpenCode</div>
+                        <p class="small mt8" style="font-size:17px">Los subagentes corren en <b>sesiones hijas</b> con contexto propio, en primer o segundo plano. Varias sesiones en paralelo, cada una en su worktree.</p>
+                    </div>
+                    <div class="panel mt16">
+                        <div class="tiny">Claude Code</div>
+                        <pre class="code mt8" style="font-size:18px"><span class="b">claude --worktree</span> migrar-login
+<span class="b">--resume</span>                       <span class="cm"># retomar la sesión</span></pre>
+                    </div>
+                    <p class="rule mt24" style="font-size:26px">El cuello de botella ya no es <span class="q">generar</span>. Es <span class="q">coordinar y revisar</span>.</p>
+                </div>
+            </div>
+
+            <p class="tiny reveal d5 mt24">Herramientas que montan ese entorno (matriz 2×2 en la slide 32): <b class="bl">Superset</b>, <b class="bl">Emdash</b>, <b class="bl">Claude Squad</b> — las tres admiten OpenCode explícitamente — y <b class="bl">Sculptor</b>, que encierra cada agente en un contenedor.</p>
+        </div>
+    </div>
+</section>
+
+<!-- ═══ 13 · Cierre ═══════════════════════════════════════════════════════ -->
+<section class="slide" id="s-cierre" data-ch="09" data-file="09-cierre" data-kind="main" data-chapter="Cierre" data-title="Empieza pequeño">
+    <div class="win">
+        <div class="win-body">
+            <span class="eyebrow reveal d1"><span class="sq"></span> Bloque 09 · Cierre</span>
+            <h2 class="h-page reveal d2"><span class="n">12</span>Empieza pequeño, añade capas</h2>
+
+            <p class="lede reveal d3 mt24" style="font-size:27px; max-width:none">Un agente con reglas y modo plan ya te cambia el día. Lo demás se añade <b>solo cuando aporte</b>, y se mide.</p>
+
+            <div class="split mt32">
+                <div class="reveal d4">
+                    <div class="code" style="font-size:21px; line-height:1.9"><span class="gt" style="color:var(--dim)">1</span>  <span class="k">Crea las reglas</span>
+   <span class="s">AGENTS.md</span>  ·  o <span class="s">/init</span> &rarr; <span class="s">CLAUDE.md</span>
+
+<span class="gt" style="color:var(--dim)">2</span>  <span class="k">Trabaja en modo plan</span>
+   <span class="s">/agents</span> (OpenCode)  ·  <span class="s">Shift+Tab</span> (Claude Code)
+
+<span class="gt" style="color:var(--dim)">3</span>  <span class="k">Añade una skill útil</span>
+   <span class="s">.opencode/skills/&lt;id&gt;/SKILL.md</span>
+   <span class="s">~/.claude/skills/&lt;nombre&gt;/SKILL.md</span></div>
+                </div>
+                <div class="reveal d4">
+                    <div class="code" style="font-size:21px; line-height:1.9"><span class="gt" style="color:var(--dim)">4</span>  <span class="k">Prueba un subagente revisor</span>
+   <span class="s">.opencode/agents/reviewer.md</span>   (<span class="a">mode: subagent</span>)
+   <span class="s">.claude/agents/code-reviewer.md</span>
+
+<span class="gt" style="color:var(--dim)">5</span>  <span class="k">Conecta un MCP</span>
+   <span class="s">opencode mcp add &hellip;</span>
+   <span class="s">claude mcp add --transport http &hellip;</span>
+
+<span class="gt" style="color:var(--dim)">6</span>  <span class="k">Cuando quieras paralelizar</span>
+   una sesión por <span class="s">worktree</span>
+   <span class="s">claude --worktree &lt;nombre&gt;</span></div>
+                </div>
+            </div>
+
+            <p class="rule reveal d5 mt32" style="font-size:30px">Y la regla que resume todo el deck: <span class="q">si no puedes comprobarlo, no lo puedes delegar</span>.</p>
+        </div>
+    </div>
+</section>
+
+<!-- ═══ 14 · Glosario ═════════════════════════════════════════════════════ -->
+<section class="slide" id="s-glosario" data-ch="10" data-file="10-glosario" data-kind="main" data-chapter="Glosario" data-title="Glosario">
+    <div class="win">
+        <div class="win-body">
+            <div class="head">
+                <div>
+                    <span class="eyebrow reveal d1"><span class="sq"></span> Referencia</span>
+                    <h2 class="h-page reveal d2"><span class="n">13</span>Glosario</h2>
+                </div>
+                <p class="tiny reveal d3" style="text-align:right; max-width:520px">Pasa el ratón por cualquier término <span class="term" data-term="harness">subrayado<a class="term-ref" href="#glosario-harness" title="Ver en el glosario"></a></span> del deck para ver su definición. El superíndice te trae aquí.</p>
+            </div>
+
+            <div class="gloss reveal d4 mt32">
+                <h4>Fundamentos</h4>
+                <div class="gitem" id="glosario-agente"><span class="gterm">agente</span><span class="gdef">Un modelo más un bucle que le da herramientas y le deja actuar sobre tu código: leer, editar, ejecutar y verificar.</span></div>
+                <div class="gitem" id="glosario-modelo"><span class="gterm">modelo / LLM</span><span class="gdef">Programa que predice el siguiente token. Sabe «de todo» pero no hace nada por sí solo.</span></div>
+                <div class="gitem" id="glosario-harness"><span class="gterm">harness</span><span class="gdef">El programa que envuelve al modelo: le da herramientas, ejecuta el bucle y decide cuándo parar.</span></div>
+                <div class="gitem" id="glosario-prompt"><span class="gterm">prompt</span><span class="gdef">Lo que le pides; la instrucción con la que abres el turno.</span></div>
+                <div class="gitem" id="glosario-herramienta"><span class="gterm">herramienta (tool)</span><span class="gdef">Una acción que el agente puede invocar: leer un fichero, escribir, ejecutar un comando, buscar.</span></div>
+                <div class="gitem" id="glosario-tool-calling"><span class="gterm">tool calling</span><span class="gdef">Capacidad del modelo de pedir herramientas en vez de limitarse a escribir texto.</span></div>
+                <div class="gitem" id="glosario-sesion"><span class="gterm">sesión</span><span class="gdef">Una conversación con estado propio: su contexto, su modelo y sus permisos.</span></div>
+                <div class="gitem" id="glosario-cli"><span class="gterm">CLI</span><span class="gdef">Interfaz de línea de comandos. La vía universal para que el agente haga cosas.</span></div>
+
+                <h4>Modelos</h4>
+                <div class="gitem" id="glosario-modelo-frontera"><span class="gterm">modelo frontera</span><span class="gdef">El más capaz (y caro) del momento. Para lo difícil, no para todo.</span></div>
+                <div class="gitem" id="glosario-modelo-local"><span class="gterm">modelo local</span><span class="gdef">Corre en tu máquina: privacidad y coste cero a cambio de calidad y hardware.</span></div>
+                <div class="gitem" id="glosario-reasoning-effort"><span class="gterm">reasoning effort</span><span class="gdef">Cuánto «piensa» el modelo antes de responder. Subirlo mejora lo difícil y encarece todo.</span></div>
+                <div class="gitem" id="glosario-enrutador"><span class="gterm">enrutador de modelos</span><span class="gdef">Una sola API delante de muchos modelos: ella decide a cuál va cada petición.</span></div>
+                <div class="gitem" id="glosario-cache-prompt"><span class="gterm">caché de prompt</span><span class="gdef">Reutilizar lo que el modelo ya procesó, para pagar y esperar menos por lo mismo.</span></div>
+                <div class="gitem" id="glosario-cuota"><span class="gterm">rate limit / cuota</span><span class="gdef">Límite de peticiones o tokens por ventana de tiempo. Es lo que de verdad te frena.</span></div>
+
+                <h4>Contexto y memoria</h4>
+                <div class="gitem" id="glosario-contexto"><span class="gterm">contexto</span><span class="gdef">Todo lo que el modelo tiene delante: reglas, conversación, ficheros y resultados de herramientas.</span></div>
+                <div class="gitem" id="glosario-ventana-contexto"><span class="gterm">ventana de contexto</span><span class="gdef">Cuántos tokens caben ahí. Al llenarse, la calidad baja y toca compactar.</span></div>
+                <div class="gitem" id="glosario-token"><span class="gterm">token</span><span class="gdef">Unidad mínima de texto con la que trabaja el modelo (≈ 4 caracteres). Todo se mide y se cobra en tokens.</span></div>
+                <div class="gitem" id="glosario-compactar"><span class="gterm">compactar / autocompact</span><span class="gdef">Resumir la conversación antigua para liberar espacio. Es con pérdida: se pierde detalle.</span></div>
+                <div class="gitem" id="glosario-agents-md"><span class="gterm">AGENTS.md / CLAUDE.md</span><span class="gdef">Fichero de reglas que el agente lee al empezar: comandos de build y test, estilo, convenciones, avisos.</span></div>
+
+                <h4>Skills</h4>
+                <div class="gitem" id="glosario-skill"><span class="gterm">skill</span><span class="gdef">Carpeta con un SKILL.md que el agente carga a demanda para hacer bien una tarea concreta.</span></div>
+                <div class="gitem" id="glosario-progressive-disclosure"><span class="gterm">progressive disclosure</span><span class="gdef">Cargar por capas: primero solo nombre y descripción; el contenido completo, solo si hace falta.</span></div>
+                <div class="gitem" id="glosario-frontmatter"><span class="gterm">frontmatter</span><span class="gdef">La cabecera YAML entre --- de un SKILL.md o un agente: ahí van name, description, model…</span></div>
+
+                <h4>MCP</h4>
+                <div class="gitem" id="glosario-mcp"><span class="gterm">MCP</span><span class="gdef">Model Context Protocol. Estándar para conectar el agente a herramientas y datos externos.</span></div>
+
+                <h4>Subagentes</h4>
+                <div class="gitem" id="glosario-subagente"><span class="gterm">subagente</span><span class="gdef">Agente con contexto, prompt, modelo y permisos propios, al que el principal le delega un trabajo.</span></div>
+                <div class="gitem" id="glosario-worktree"><span class="gterm">worktree</span><span class="gdef">Copia de trabajo del mismo repositorio, con su carpeta y su rama. Deja que N agentes no se pisen.</span></div>
+
+                <h4>Flujos de trabajo</h4>
+                <div class="gitem" id="glosario-modo-plan"><span class="gterm">modo plan</span><span class="gdef">El agente investiga y propone, pero no toca los ficheros. La forma sana de empezar.</span></div>
+                <div class="gitem" id="glosario-permiso"><span class="gterm">permiso (allow / ask / deny)</span><span class="gdef">Regla que decide si una acción se permite, se pregunta o se bloquea.</span></div>
+                <div class="gitem" id="glosario-modo-auto"><span class="gterm">modo auto</span><span class="gdef">El agente ejecuta sin preguntar lo que considera seguro; tú revisas después. Comodidad a cambio de control.</span></div>
+                <div class="gitem" id="glosario-hook"><span class="gterm">hook</span><span class="gdef">Acción automática al ocurrir un evento (antes o después de una herramienta), sin depender del modelo.</span></div>
+                <div class="gitem" id="glosario-sdd"><span class="gterm">SDD</span><span class="gdef">Spec-Driven Development: la especificación es el artefacto central y el código la sirve.</span></div>
+                <div class="gitem" id="glosario-rpi"><span class="gterm">RPI</span><span class="gdef">Research → Plan → Implement. Tres fases con criterios de salida claros entre ellas.</span></div>
+
+                <h4>Orquestación</h4>
+                <div class="gitem" id="glosario-orquestador"><span class="gterm">orquestador</span><span class="gdef">Herramienta que lanza y vigila varios agentes en paralelo.</span></div>
+                <div class="gitem" id="glosario-ade"><span class="gterm">ADE</span><span class="gdef">Agent Development Environment: entorno que reúne worktrees, terminales y revisión para varios agentes.</span></div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ═══ 15 · Referencias ══════════════════════════════════════════════════ -->
+<section class="slide" id="s-referencias" data-ch="11" data-file="11-referencias" data-kind="main" data-chapter="Referencias" data-title="Referencias">
+    <div class="win">
+        <div class="win-body">
+            <span class="eyebrow reveal d1"><span class="sq"></span> Para seguir</span>
+            <h2 class="h-page reveal d2"><span class="n">14</span>Referencias</h2>
+
+            <div class="refs reveal d3 mt32">
+                <h4>Agentes y harness</h4>
+                <p class="r"><b>OpenCode</b> · <a href="https://opencode.ai/v2/docs/">docs V2</a> · <a href="https://opencode.ai/v2/docs/instructions/">instructions</a> · <a href="https://opencode.ai/v2/docs/compaction/">compaction</a> · <a href="https://opencode.ai/v2/docs/permissions/">permissions</a> · <a href="https://opencode.ai/v2/docs/skills/">skills</a> · <a href="https://opencode.ai/v2/docs/agents/">agents</a> · <a href="https://opencode.ai/v2/docs/models/">models</a></p>
+                <p class="r"><b>Claude Code</b> · <a href="https://code.claude.com/docs/">docs</a> · <a href="https://code.claude.com/docs/en/memory">memory</a> · <a href="https://code.claude.com/docs/en/permission-modes">permission modes</a> · <a href="https://code.claude.com/docs/en/model-config">model config</a> · <a href="https://code.claude.com/docs/en/hooks">hooks</a> · <a href="https://code.claude.com/docs/en/worktrees">worktrees</a> · <a href="https://code.claude.com/docs/en/sub-agents">subagents</a></p>
+                <p class="r"><b>AGENTS.md</b> — el formato abierto · <a href="https://agents.md/">agents.md</a></p>
+                <p class="r"><b>Aider</b> — <a href="https://aider.chat/">aider.chat</a></p>
+                <p class="r"><b>Codex</b> — <a href="https://openai.com/codex/">openai.com/codex</a> · <b>Gemini CLI</b> — <a href="https://github.com/google-gemini/gemini-cli">github</a></p>
+                <p class="r"><b>Cline</b> — <a href="https://github.com/cline/cline">github</a> · <b>Hermes Agent</b> — <a href="https://www.hermes-agent.org">hermes-agent.org</a></p>
+
+                <h4>Skills y MCP</h4>
+                <p class="r"><b>Agent Skills</b> — especificación · <a href="https://agentskills.io/specification">agentskills.io</a></p>
+                <p class="r"><b>Model Context Protocol</b> — <a href="https://modelcontextprotocol.io/">modelcontextprotocol.io</a></p>
+                <p class="r"><b>frontend-slides</b> — la skill con la que se hizo este deck · <a href="https://github.com/zarazhangrui/frontend-slides">github</a></p>
+                <p class="r"><b>playwright-cli</b> — la skill con la que se revisó este deck · <a href="https://playwright.dev/agent-cli/skills">playwright.dev/agent-cli/skills</a></p>
+
+                <h4>Modelos, coste y benchmarks</h4>
+                <p class="r"><b>Artificial Analysis</b> (agentes de código) · <a href="https://artificialanalysis.ai/agents/coding-agents">artificialanalysis.ai</a></p>
+                <p class="r"><b>SWE-bench</b> · <a href="https://www.swebench.com/">swebench.com</a> · <b>LiveCodeBench</b> · <a href="https://livecodebench.github.io/leaderboard">leaderboard</a></p>
+                <p class="r"><b>Aider leaderboards</b> · <a href="https://aider.chat/docs/leaderboards/">aider.chat</a> · <b>BenchLeader</b> · <a href="https://www.benchleader.com/best/llm-for-coding">benchleader.com</a></p>
+                <p class="r"><b>OpenRouter</b> · <a href="https://openrouter.ai/">openrouter.ai</a> · <b>LiteLLM</b> · <a href="https://docs.litellm.ai/">docs.litellm.ai</a></p>
+                <p class="r"><b>Ollama</b> · <a href="https://ollama.com/">ollama.com</a> · <b>LM Studio</b> · <a href="https://lmstudio.ai/">lmstudio.ai</a></p>
+
+                <h4>Flujos de trabajo</h4>
+                <p class="r"><b>Spec Kit</b> (SDD) · <a href="https://github.com/github/spec-kit/">github.com/github/spec-kit</a></p>
+                <p class="r"><b>Curso RPI</b> (CodelyTV) · <a href="https://github.com/CodelyTV/rpi-course">github.com/CodelyTV/rpi-course</a></p>
+
+                <h4>Orquestación</h4>
+                <p class="r"><b>Superset</b> · <a href="https://superset.sh/">superset.sh</a> · <b>Emdash</b> · <a href="https://emdash.com/">emdash.com</a></p>
+                <p class="r"><b>Claude Squad</b> · <a href="https://github.com/smtg-ai/claude-squad">github</a> · <b>Vibe Kanban</b> · <a href="https://github.com/BloopAI/vibe-kanban">github</a></p>
+                <p class="r"><b>Sculptor</b> · <a href="https://imbue.com/sculptor/">imbue.com/sculptor</a> · <b>Conductor</b> · <a href="https://conductor.build/">conductor.build</a></p>
+                <p class="r"><b>Orca</b> · <a href="https://www.onorca.dev/">onorca.dev</a> · <b>Herdr</b> · <a href="https://herdr.dev/">herdr.dev</a> · <b>Nimbalyst</b> · <a href="https://nimbalyst.com/">nimbalyst.com</a></p>
+            </div>
+
+            <div class="foot reveal d5">
+                <span><span class="sq"></span> flujo principal &middot; <span class="tri"></span> profundización</span>
+                <span>enlaces verificados el 2026-10-17</span>
+                <span class="spacer"></span>
+                <span>v1.1 &middot; actualizado 2026-10-17</span>
+                <span><a href="https://github.com/alfredogonzalezmartinez/desarrollo-con-ia">repositorio</a></span>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ═══ 16 ▸ Permisos y modos de trabajo ═══════════════════════════════════ -->
+<section class="slide" id="s-permisos" data-ch="01" data-file="01-agente" data-kind="branch" data-chapter="Fundamentos" data-title="Permisos y modos de trabajo">
+    <div class="win">
+        <div class="win-body">
+            <span class="eyebrow reveal d1"><span class="tri"></span> Profundización · Bloque 01</span>
+            <h2 class="h-page reveal d2"><span class="n">2.a</span>Permisos y modos de trabajo</h2>
+
+            <table class="cmp reveal d3 mt32">
+                <thead>
+                    <tr><th>Permiso</th><th>Qué significa</th><th>Cuándo tiene sentido</th></tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td class="ok">allow</td>
+                        <td>La acción se ejecuta sin preguntar.</td>
+                        <td>Lo que es reversible y ya revisaste: leer, buscar, ejecutar tests.</td>
+                    </tr>
+                    <tr>
+                        <td class="warn">ask</td>
+                        <td>Se detiene y te pide permiso.</td>
+                        <td>Lo que toca el mundo: escribir ficheros, lanzar comandos.</td>
+                    </tr>
+                    <tr>
+                        <td class="bad">deny</td>
+                        <td>La acción se bloquea.</td>
+                        <td>Lo que no debe pasar nunca: <span class="mono">rm -rf</span>, despliegues, secretos.</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="split mt32">
+                <div class="reveal d4">
+                    <p class="rule" style="font-size:27px">Empieza restrictivo y relaja <span class="q">solo lo necesario</span>.</p>
+                    <p class="small mt16">Un permiso de más no se nota hasta el día que se nota. La comodidad de no tener que aprobar se paga en el único comando que nunca quisiste ejecutar.</p>
+                </div>
+                <div class="reveal d4">
+                    <div class="grid2">
+                        <div class="panel">
+                            <div class="tiny">OpenCode</div>
+                            <p class="small mt8" style="font-size:17px">Permisos por herramienta. El agente <b>plan</b> no edita los ficheros del proyecto, pero los comandos de shell siguen pasando por permisos.</p>
+                        </div>
+                        <div class="panel">
+                            <div class="tiny">Claude Code</div>
+                            <p class="small mt8" style="font-size:17px">Modos: <b>plan</b> (no edita), <b>acceptEdits</b> (auto-aprueba ediciones) y <span class="mono">--dangerously-skip-permissions</span> para entornos aislados.</p>
+                        </div>
+                    </div>
+                    <p class="tiny mt16">Modo <span class="term" data-term="modo-auto">auto<a class="term-ref" href="#glosario-modo-auto" title="Ver en el glosario"></a></span>: cómodo, y precisamente por eso el que más se usa mal.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ═══ 17 ▸ Hooks ════════════════════════════════════════════════════════ -->
+<section class="slide" id="s-hooks" data-ch="01" data-file="01-agente" data-kind="branch" data-chapter="Fundamentos" data-title="Hooks: lo que pasa solo">
+    <div class="win">
+        <div class="win-body">
+            <span class="eyebrow reveal d1"><span class="tri"></span> Profundización · Bloque 01</span>
+            <h2 class="h-page reveal d2"><span class="n">2.b</span>Hooks: lo que pasa sin que el modelo decida</h2>
+
+            <p class="lede reveal d3 mt24" style="font-size:27px; max-width:none">Un <span class="term" data-term="hook">hook<a class="term-ref" href="#glosario-hook" title="Ver en el glosario"></a></span> ejecuta algo automáticamente cuando ocurre un evento. No lo pide el modelo: pasa porque tú lo configuraste. Es la forma de tener garantías en vez de confianza.</p>
+
+            <div class="flow mt44 reveal d4">
+                <div class="step">
+                    <span class="sn">EVENTO</span>
+                    <h4>el agente edita un fichero</h4>
+                    <p><span class="mono">PostToolUse</span> sobre la herramienta de edición.</p>
+                </div>
+                <div class="arrow">&rarr;</div>
+                <div class="step gate">
+                    <span class="sn">HOOK</span>
+                    <h4>se lanza solo</h4>
+                    <p>Formatear, pasar el linter, ejecutar los tests, comprobar que no hay secretos.</p>
+                </div>
+                <div class="arrow">&rarr;</div>
+                <div class="step">
+                    <span class="sn">ACCIÓN</span>
+                    <h4>pasa o se bloquea</h4>
+                    <p>Si el hook falla, el resultado vuelve al agente y le obliga a arreglarlo.</p>
+                </div>
+            </div>
+
+            <div class="split mt44">
+                <div class="reveal d5">
+                    <p class="tiny">Para qué sirven, en orden de utilidad</p>
+                    <ul class="ticks mt8">
+                        <li>Verificar después de cada cambio, sin que nadie se acuerde.</li>
+                        <li>Formatear y ordenar imports: el ruido fuera de los diffs.</li>
+                        <li>Bloquear de verdad (<span class="mono">deny</span>), no solo avisar.</li>
+                        <li>Dejar rastro: qué se ejecutó y cuándo.</li>
+                    </ul>
+                </div>
+                <div class="reveal d5">
+                    <div class="file">settings.json (Claude Code)</div>
+                    <pre class="code panel" style="border-top-left-radius:0; font-size:18px">{
+  <span class="s">"hooks"</span>: {
+    <span class="s">"PostToolUse"</span>: [{
+      <span class="s">"matcher"</span>: <span class="a">"Edit|Write"</span>,
+      <span class="s">"hooks"</span>: [{ <span class="s">"type"</span>: <span class="a">"command"</span>,
+                  <span class="s">"command"</span>: <span class="a">"npm test -- --run"</span> }]
+    }]
+  }
+}</pre>
+                    <p class="tiny mt16">Los hooks van en la slide 10 (verificación): son la manera de que comprobar no dependa de que alguien se acuerde.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ═══ 18 ▸ Benchmarks ═══════════════════════════════════════════════════ -->
+<section class="slide" id="s-benchmarks" data-ch="02" data-file="02-modelos" data-kind="branch" data-chapter="Modelos" data-title="Benchmarks y cómo leerlos">
+    <div class="win">
+        <div class="win-body">
+            <span class="eyebrow reveal d1"><span class="tri"></span> Profundización · Bloque 02</span>
+            <h2 class="h-page reveal d2"><span class="n">3.a</span>Benchmarks: cómo leerlos sin creértelos</h2>
+
+            <p class="lede reveal d3 mt24" style="font-size:27px; max-width:none">Lee <b>el benchmark que se parece a tu trabajo</b>. Cada uno mide una cosa distinta, y ninguno mide la tuya.</p>
+
+            <table class="cmp reveal d4 mt32">
+                <thead>
+                    <tr><th>Benchmark</th><th>Qué mide</th><th>Cuándo te dice algo</th></tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>SWE-bench</td>
+                        <td>Arreglar <i>issues</i> reales de repositorios abiertos.</td>
+                        <td>Cuando tu día se parece a arreglar bugs en código ajeno.</td>
+                    </tr>
+                    <tr>
+                        <td>LiveCodeBench</td>
+                        <td>Problemas de algoritmia y competición.</td>
+                        <td>Casi nunca en trabajo de producto. Mide otra cosa.</td>
+                    </tr>
+                    <tr>
+                        <td>Aider Polyglot</td>
+                        <td>Edición de código en varios lenguajes, con diff.</td>
+                        <td>Si lo tuyo es refactorizar y editar ficheros existentes.</td>
+                    </tr>
+                    <tr>
+                        <td>Terminal-Bench</td>
+                        <td>Tareas resueltas desde una terminal.</td>
+                        <td>Si le das al agente la terminal y no solo el editor.</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="split mt32">
+                <div class="reveal d5">
+                    <p class="tiny">Tres trampas que hay que nombrar</p>
+                    <ul class="ticks mt8">
+                        <li><b>Contaminación</b>: el test estaba en los datos de entrenamiento.</li>
+                        <li><b>Auto-reporte</b>: la cifra la publica quien vende el modelo.</li>
+                        <li><b>Sobreajuste</b>: optimizar el examen no es saber la asignatura.</li>
+                    </ul>
+                </div>
+                <div class="reveal d5">
+                    <p class="rule" style="font-size:27px">Los benchmarks <span class="q">acotan</span>; no deciden.</p>
+                    <p class="small mt16">Los rankings cambian cada semana. Esta slide enseña a leerlos, no da cifras: cualquier número que pusiera aquí estaría caducado antes que el deck.</p>
+                    <p class="tiny mt16">Dónde mirarlos · <a href="https://artificialanalysis.ai/agents/coding-agents">Artificial Analysis</a> · <a href="https://www.swebench.com/">SWE-bench</a> · <a href="https://livecodebench.github.io/leaderboard">LiveCodeBench</a> · <a href="https://aider.chat/docs/leaderboards/">Aider</a></p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ═══ 19 ▸ Modelos locales ══════════════════════════════════════════════ -->
+<section class="slide" id="s-locales" data-ch="02" data-file="02-modelos" data-kind="branch" data-chapter="Modelos" data-title="Modelos locales">
+    <div class="win">
+        <div class="win-body">
+            <span class="eyebrow reveal d1"><span class="tri"></span> Profundización · Bloque 02</span>
+            <h2 class="h-page reveal d2"><span class="n">3.b</span>Modelos locales: lo que no sale de tu máquina</h2>
+
+            <p class="lede reveal d3 mt24" style="font-size:27px; max-width:none">Un <span class="term" data-term="modelo-local">modelo local<a class="term-ref" href="#glosario-modelo-local" title="Ver en el glosario"></a></span> corre en tu ordenador. Ganas <b>privacidad</b> (el código no sale) y <b>coste cero por token</b>. Pagas en calidad, en velocidad y en hardware.</p>
+
+            <div class="split mt32">
+                <div class="reveal d4">
+                    <table class="cmp" style="font-size:21px">
+                        <thead><tr><th>Tamaño</th><th>VRAM aproximada</th><th>Para qué da</th></tr></thead>
+                        <tbody>
+                            <tr><td>7–8B</td><td>8–16 GB</td><td>Autocompletar, resumir, clasificar, renombrar.</td></tr>
+                            <tr><td>30B</td><td>24–48 GB</td><td>Tareas de código sencillas y agentes de apoyo.</td></tr>
+                            <tr><td>70B+</td><td>48 GB o más</td><td>Acercarse al trabajo diario, con paciencia.</td></tr>
+                        </tbody>
+                    </table>
+                    <p class="tiny mt16">Cifras orientativas con cuantización de 4 bits. Varían por modelo y por cómo de larga sea la conversación.</p>
+                </div>
+                <div class="reveal d4">
+                    <p class="tiny">Qué mirar si vas a montarlo</p>
+                    <ul class="ticks mt8">
+                        <li><b>Privacidad real</b>: código de cliente, datos personales, entornos sin salida a internet.</li>
+                        <li><b>Coste</b>: la factura pasa de por-token a electricidad y a una GPU que ya tienes o no tienes.</li>
+                        <li><b>Encaje</b>: sirve como subagente mecánico aunque no como agente principal.</li>
+                    </ul>
+                    <div class="panel mt24">
+                        <div class="tiny">Herramientas</div>
+                        <p class="small mt8" style="font-size:17px"><b>Ollama</b> (<a href="https://ollama.com/">ollama.com</a>) para levantar un modelo con un comando · <b>LM Studio</b> (<a href="https://lmstudio.ai/">lmstudio.ai</a>) si prefieres interfaz gráfica · <b>Hugging Face</b> para buscar el modelo.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ═══ 20 ▸ Enrutadores ══════════════════════════════════════════════════ -->
+<section class="slide" id="s-routers" data-ch="02" data-file="02-modelos" data-kind="branch" data-chapter="Modelos" data-title="Enrutadores de modelos">
+    <div class="win">
+        <div class="win-body">
+            <span class="eyebrow reveal d1"><span class="tri"></span> Profundización · Bloque 02</span>
+            <h2 class="h-page reveal d2"><span class="n">3.c</span>Enrutadores de modelos</h2>
+
+            <p class="lede reveal d3 mt24" style="font-size:27px; max-width:none">Un <span class="term" data-term="enrutador">enrutador<a class="term-ref" href="#glosario-enrutador" title="Ver en el glosario"></a></span> pone <b>una sola API</b> delante de muchos modelos y decide a dónde va cada petición: por coste, por latencia, por disponibilidad.</p>
+
+            <div class="flow mt44 reveal d4">
+                <div class="step">
+                    <span class="sn">TU APP O TU AGENTE</span>
+                    <h4>una sola clave</h4>
+                    <p>Configuras una URL y una credencial. Dejas de tocar código cuando cambias de proveedor.</p>
+                </div>
+                <div class="arrow">&rarr;</div>
+                <div class="step gate">
+                    <span class="sn">ENRUTADOR</span>
+                    <h4>decide</h4>
+                    <p>Reglas y estrategias: el barato por defecto, el caro si la tarea es difícil, otro si el primero se cae.</p>
+                </div>
+                <div class="arrow">&rarr;</div>
+                <div class="step">
+                    <span class="sn">PROVEEDORES</span>
+                    <h4>muchos modelos</h4>
+                    <p>OpenAI, Anthropic, Google, un modelo local… bajo el mismo contrato.</p>
+                </div>
+            </div>
+
+            <div class="split mt44">
+                <div class="reveal d5">
+                    <p class="tiny">Cuándo vale la pena</p>
+                    <ul class="ticks mt8">
+                        <li>Quieres <b>probar modelos</b> sin reescribir la integración.</li>
+                        <li>Necesitas <b>respaldo</b>: si un proveedor se cae, otro responde.</li>
+                        <li>Mezclas <b>modelos locales y de nube</b> en el mismo flujo.</li>
+                        <li>Cuidado: añade un intermediario que ve tus peticiones.</li>
+                    </ul>
+                </div>
+                <div class="reveal d5">
+                    <div class="grid2">
+                        <div class="card"><h4>OpenRouter</h4><p>Servicio con muchos modelos detrás de una API. <a href="https://openrouter.ai/">openrouter.ai</a></p></div>
+                        <div class="card"><h4>LiteLLM</h4><p>Librería y proxy para unificar APIs de distintos proveedores. <a href="https://docs.litellm.ai/">docs.litellm.ai</a></p></div>
+                    </div>
+                    <p class="tiny mt16">También hay gateways autoalojados. Uno que aparece mucho es <b>OmniRoute</b>; su README promete cifras muy altas, así que conviene mirarlo con distancia y quedarse con la idea: <b>una puerta, muchos proveedores</b>.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ═══ 21 ▸ API vs suscripción ═══════════════════════════════════════════ -->
+<section class="slide" id="s-api" data-ch="02" data-file="02-modelos" data-kind="branch" data-chapter="Modelos" data-title="API o suscripción">
+    <div class="win">
+        <div class="win-body">
+            <span class="eyebrow reveal d1"><span class="tri"></span> Profundización · Bloque 02</span>
+            <h2 class="h-page reveal d2"><span class="n">3.d</span>API o suscripción</h2>
+
+            <table class="cmp reveal d3 mt32">
+                <thead><tr><th></th><th>Suscripción</th><th class="oc">API</th></tr></thead>
+                <tbody>
+                    <tr>
+                        <td>Lo que pagas</td>
+                        <td>Cuota fija al mes<span class="sub">sabes lo que gastas</span></td>
+                        <td>Por uso: tokens de entrada y salida<span class="sub">la factura la decides tú… y el agente</span></td>
+                    </tr>
+                    <tr>
+                        <td>El límite</td>
+                        <td>Ventanas de uso y <span class="term" data-term="cuota">cuotas<a class="term-ref" href="#glosario-cuota" title="Ver en el glosario"></a></span><span class="sub">es lo que de verdad te frena</span></td>
+                        <td>Presupuesto y concurrencia<span class="sub">no hay techo, hay sorpresa</span></td>
+                    </tr>
+                    <tr>
+                        <td>Automatizar</td>
+                        <td>Incómodo: está pensada para uso interactivo</td>
+                        <td>Natural: es para lo que existe</td>
+                    </tr>
+                    <tr>
+                        <td>Para empezar</td>
+                        <td><b class="ok">Sí</b><span class="sub">aprender, un agente, tu día a día</span></td>
+                        <td>Cuando ya sabes qué automatizar</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="split mt32">
+                <div class="reveal d4">
+                    <p class="rule" style="font-size:27px">Para aprender, suscripción. Para automatizar de verdad, <span class="q">API</span>.</p>
+                    <p class="small mt16">Y una advertencia de coste que casi nadie mide: un agente gasta <b>muchas más veces</b> que un chat. Cada vuelta del bucle vuelve a enviar el contexto entero.</p>
+                </div>
+                <div class="reveal d4">
+                    <p class="tiny">Cómo estirar lo que ya pagas</p>
+                    <ul class="ticks mt8">
+                        <li>Modelo grande para <b>planificar</b>; pequeño para lo mecánico.</li>
+                        <li>Subagentes con contexto propio: leen mucho y devuelven poco.</li>
+                        <li>Aprovechar la <span class="term" data-term="cache-prompt">caché de prompt<a class="term-ref" href="#glosario-cache-prompt" title="Ver en el glosario"></a></span>: repetir el mismo contexto cuesta menos.</li>
+                        <li>Compactar antes de que la ventana se llene sola.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ═══ 22 ▸ Ventana y compactación ═══════════════════════════════════════ -->
+<section class="slide" id="s-ventana" data-ch="03" data-file="03-contexto" data-kind="branch" data-chapter="Contexto y memoria" data-title="La ventana de contexto por dentro">
+    <div class="win">
+        <div class="win-body">
+            <span class="eyebrow reveal d1"><span class="tri"></span> Profundización · Bloque 03</span>
+            <h2 class="h-page reveal d2"><span class="n">4.a</span>La ventana, por dentro</h2>
+
+            <div class="reveal d3 mt32">
+                <p class="tiny">Antes de compactar · la ventana llena</p>
+                <div class="meter mt8">
+                    <span class="m-meter" style="flex:2">reglas</span>
+                    <span class="m-conv" style="flex:7">conversación larga</span>
+                    <span class="m-files" style="flex:6">12 ficheros leídos</span>
+                    <span class="m-tools" style="flex:5">salidas de comandos</span>
+                </div>
+            </div>
+
+            <div class="reveal d4 mt24">
+                <p class="tiny">Después de compactar · cabe, pero falta detalle</p>
+                <div class="meter mt8">
+                    <span class="m-meter" style="flex:2">reglas</span>
+                    <span class="m-conv" style="flex:2">resumen</span>
+                    <span style="flex:16; color:var(--dim); background:repeating-linear-gradient(45deg, rgba(255,255,255,.02) 0 10px, transparent 10px 20px)">espacio libre</span>
+                </div>
+            </div>
+
+            <div class="split mt32">
+                <div class="reveal d5">
+                    <table class="cmp" style="font-size:21px">
+                        <thead><tr><th>Comando</th><th>Qué hace</th><th>Coste</th></tr></thead>
+                        <tbody>
+                            <tr><td class="mono">/clear</td><td>Empieza de cero.</td><td class="bad">Pierdes todo el hilo.</td></tr>
+                            <tr><td class="mono">/compact</td><td>Resume lo antiguo.</td><td class="warn">Pierdes detalle, conservas el hilo.</td></tr>
+                            <tr><td class="mono">/autocompact</td><td>Lo decide el agente.</td><td>No te enteras de cuándo pasa.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="reveal d5">
+                    <p class="rule" style="font-size:26px">El contexto no avisa: <span class="q">se degrada</span>.</p>
+                    <p class="small mt16">Los síntomas son de comportamiento, no de error: el agente vuelve a leer un fichero que ya leyó, repite una pregunta que ya respondiste, o «olvida» una convención del <span class="mono">AGENTS.md</span>.</p>
+                    <p class="small mt16">Cuando lo notes, no insistas: <b>compacta o reinicia</b>, y si el trabajo es otro, abre una sesión nueva.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ═══ 23 ▸ Memoria y eficiencia ═════════════════════════════════════════ -->
+<section class="slide" id="s-memoria" data-ch="03" data-file="03-contexto" data-kind="branch" data-chapter="Contexto y memoria" data-title="Memoria persistente y eficiencia de contexto">
+    <div class="win">
+        <div class="win-body">
+            <span class="eyebrow reveal d1"><span class="tri"></span> Profundización · Bloque 03</span>
+            <h2 class="h-page reveal d2"><span class="n">4.b</span>Memoria persistente y eficiencia de contexto</h2>
+
+            <p class="lede reveal d3 mt24" style="font-size:27px; max-width:none">El contexto se va al terminar la sesión. Si quieres que algo <b>sobreviva</b>, o que ocupe menos, hay que dárselo con otro mecanismo.</p>
+
+            <div class="split mt32">
+                <div class="reveal d4">
+                    <p class="tiny">Dos problemas distintos que se confunden</p>
+                    <ul class="ticks mt8">
+                        <li><b>Persistir</b>: que el agente se acuerde mañana de lo que decidisteis hoy.</li>
+                        <li><b>Aligerar</b>: que no se pase la ventana leyendo cosas que no necesitaba meter enteras.</li>
+                    </ul>
+                    <p class="small mt24">Antes de instalar nada, la solución aburrida funciona: un <span class="mono">AGENTS.md</span> cuidado y una sesión por tarea. La memoria externa resuelve lo que estas dos no llegan a cubrir.</p>
+                </div>
+
+                <div class="reveal d4">
+                    <table class="cmp" style="font-size:19px">
+                        <thead><tr><th>Herramienta</th><th>Idea</th></tr></thead>
+                        <tbody>
+                            <tr>
+                                <td class="mono">context-mode</td>
+                                <td>Servidor MCP que mantiene los datos crudos <b>fuera</b> de la ventana: un índice y un <i>sandbox</i>. El modelo consulta en vez de leer 50 ficheros. <span class="sub mono"><a href="https://github.com/mksglu/context-mode">github.com/mksglu/context-mode</a></span></td>
+                            </tr>
+                            <tr>
+                                <td class="mono">engram</td>
+                                <td>Memoria persistente entre sesiones: binario Go, SQLite con búsqueda full-text, servidor MCP, CLI y TUI. <span class="sub mono"><a href="https://github.com/Gentleman-Programming/engram">github.com/Gentleman-Programming/engram</a></span></td>
+                            </tr>
+                            <tr>
+                                <td class="mono">rtk</td>
+                                <td>Recorta el gasto de tokens en los comandos habituales: un binario, sin dependencias. <span class="sub mono"><a href="https://github.com/rtk-ai/rtk">github.com/rtk-ai/rtk</a></span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <p class="tiny mt16">Existen y están vivos (comprobado el 2026-10-17). De <span class="mono">rtk</span>, quédate con la idea —recortar salidas— más que con sus cifras de ahorro, que su README exagera.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ═══ 24 ▸ Crear una skill ══════════════════════════════════════════════ -->
+<section class="slide" id="s-crear-skill" data-ch="04" data-file="04-skills" data-kind="branch" data-chapter="Skills" data-title="Cómo crear una skill">
+    <div class="win">
+        <div class="win-body">
+            <span class="eyebrow reveal d1"><span class="tri"></span> Profundización · Bloque 04</span>
+            <h2 class="h-page reveal d2"><span class="n">5.a</span>Cómo crear una skill</h2>
+
+            <div class="split mt32">
+                <div class="reveal d3">
+                    <div class="file">~/.claude/skills/revisar-pr/SKILL.md</div>
+                    <pre class="code panel" style="border-top-left-radius:0; font-size:19px"><span class="a">---</span>
+<span class="k">name</span>: revisar-pr
+<span class="k">description</span>: &gt; Revisa un PR contra las
+  convenciones del equipo. Úsala cuando
+  el usuario pida revisar un pull request
+  o un diff grande.
+<span class="a">---</span>
+
+1. Lee el diff completo con <span class="s">git diff</span>.
+2. Comprueba la checklist de <span class="s">references/</span>.
+3. Informa de riesgos, no de estilos.
+4. No edites ficheros.</pre>
+                </div>
+
+                <div class="reveal d4">
+                    <p class="tiny">Lo que decide si funciona o no</p>
+                    <ul class="ticks mt8">
+                        <li><b>La <span class="mono">description</span></b> es lo más importante del fichero: es lo que el agente lee para saber <i>cuándo</i> abrir la skill. Si es vaga, no se usa.</li>
+                        <li>El cuerpo, corto. Los detalles, en ficheros aparte: así solo se pagan si hacen falta.</li>
+                        <li>Nombres concretos y verbos: <span class="mono">revisar-pr</span> mejor que <span class="mono">utilidades</span>.</li>
+                        <li>Si lleva un script, que el script imprima poco.</li>
+                    </ul>
+
+                    <div class="panel mt24">
+                        <div class="tiny">Extras de Claude Code</div>
+                        <p class="small mt8" style="font-size:17px"><span class="mono">disable-model-invocation: true</span> hace que solo la invoques tú · <span class="mono">context: fork</span> la ejecuta en un subagente, sin ensuciar el contexto principal.</p>
+                    </div>
+                    <p class="tiny mt16">Referencia · <a href="https://agentskills.io/specification">agentskills.io/specification</a> · <a href="https://github.com/agentskills/agentskills">github.com/agentskills</a></p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ═══ 25 ▸ Catálogo de skills ═══════════════════════════════════════════ -->
+<section class="slide" id="s-catalogo" data-ch="04" data-file="04-skills" data-kind="branch" data-chapter="Skills" data-title="Siete skills para mirar">
+    <div class="win">
+        <div class="win-body">
+            <span class="eyebrow reveal d1"><span class="tri"></span> Profundización · Bloque 04</span>
+            <h2 class="h-page reveal d2"><span class="n">5.b</span>Siete skills para mirar</h2>
+
+            <table class="cmp reveal d3 mt32" style="font-size:19px">
+                <thead><tr><th>Skill</th><th>Para qué sirve</th></tr></thead>
+                <tbody>
+                    <tr>
+                        <td>frontend-slides <span class="sub">zarazhangrui</span></td>
+                        <td>Crea presentaciones HTML. <b>Es la que generó este deck.</b> <span class="mono"><a href="https://github.com/zarazhangrui/frontend-slides">github.com/zarazhangrui/frontend-slides</a></span></td>
+                    </tr>
+                    <tr>
+                        <td>skills <span class="sub">vercel-labs</span></td>
+                        <td>CLI para instalar y gestionar skills en distintos agentes: <span class="mono">npx skills</span>. <span class="mono"><a href="https://github.com/vercel-labs/skills">github.com/vercel-labs/skills</a></span></td>
+                    </tr>
+                    <tr>
+                        <td>playwright-cli <span class="sub">Microsoft</span></td>
+                        <td>Maneja un navegador real desde el agente. Se instala como skill. <b>Con esta se revisó el deck.</b> <span class="mono"><a href="https://playwright.dev/agent-cli/skills">playwright.dev/agent-cli/skills</a></span></td>
+                    </tr>
+                    <tr>
+                        <td>archify</td>
+                        <td>Convierte una idea, un plan o un código en un <b>diagrama interactivo</b>. <span class="mono"><a href="https://github.com/tt-a1i/archify">github.com/tt-a1i/archify</a></span></td>
+                    </tr>
+                    <tr>
+                        <td>anydoc <span class="sub">firecrawl</span></td>
+                        <td>Pasa Word, PowerPoint, Excel y PDF a Markdown limpio. Herramienta dentro de una skill. <span class="mono"><a href="https://github.com/firecrawl/anydoc">github.com/firecrawl/anydoc</a></span></td>
+                    </tr>
+                    <tr>
+                        <td>security-audit <span class="sub">Cloudflare</span></td>
+                        <td>Auditoría de seguridad por fases, con hallazgos verificables uno a uno. <span class="mono"><a href="https://github.com/cloudflare/security-audit-skill">github.com/cloudflare/security-audit-skill</a></span></td>
+                    </tr>
+                    <tr>
+                        <td>agent-harness <span class="sub">CodelyTV</span></td>
+                        <td>Harness y skills del curso RPI: cómo se organiza esto en un repo real. <span class="mono"><a href="https://github.com/CodelyTV/agent-harness">github.com/CodelyTV/agent-harness</a></span></td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <p class="tiny reveal d4 mt24">Las siete existen y están vivas (comprobado el 2026-10-17). Fíjate en el patrón: casi ninguna sabe <i>hacer</i> algo nuevo; lo que hacen es <b>empaquetar criterio</b>.</p>
+        </div>
+    </div>
+</section>
+
+<!-- ═══ 26 ▸ MCP vs CLI ═══════════════════════════════════════════════════ -->
+<section class="slide" id="s-mcp-cli" data-ch="05" data-file="05-mcp" data-kind="branch" data-chapter="MCP" data-title="MCP o CLI">
+    <div class="win">
+        <div class="win-body">
+            <span class="eyebrow reveal d1"><span class="tri"></span> Profundización · Bloque 05</span>
+            <h2 class="h-page reveal d2"><span class="n">6.a</span>MCP o CLI</h2>
+
+            <table class="cmp reveal d3 mt32">
+                <thead><tr><th></th><th>MCP</th><th class="oc">CLI</th></tr></thead>
+                <tbody>
+                    <tr>
+                        <td>Portabilidad</td>
+                        <td>Alta: el mismo servidor vale para cualquier agente que hable MCP</td>
+                        <td>Universal por defecto: existe en todas las máquinas</td>
+                    </tr>
+                    <tr>
+                        <td>Contrato</td>
+                        <td>Herramientas tipadas, con esquema y descripción</td>
+                        <td>Ninguno: entiende la salida lo mejor que puede</td>
+                    </tr>
+                    <tr>
+                        <td>Contexto</td>
+                        <td><b class="warn">Consume</b>: cada herramienta ocupa con su descripción</td>
+                        <td>Barato: solo cuesta lo que imprima el comando</td>
+                    </tr>
+                    <tr>
+                        <td>Esfuerzo</td>
+                        <td>Hay que montar y mantener el servidor</td>
+                        <td>Cero: si el comando ya existe, ya está</td>
+                    </tr>
+                    <tr>
+                        <td>Control</td>
+                        <td>Más acotado: puedes limitar qué expone</td>
+                        <td>El agente puede lanzar lo que le permitas</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="split mt32">
+                <div class="reveal d4">
+                    <p class="rule" style="font-size:26px">Antes de escribir un MCP, pregúntate si ya existe un <span class="q">comando</span>.</p>
+                    <p class="small mt16">Muchas veces la respuesta es sí. Un MCP se justifica cuando el contrato importa, cuando hay estado que mantener, o cuando quieres que la integración sea la misma para todo el equipo y para varias herramientas.</p>
+                </div>
+                <div class="reveal d4">
+                    <div class="grid2">
+                        <div class="card"><h4>Elige MCP</h4><p>Cuando la integración se comparte, cuando el tipado evita errores, cuando hay credenciales que gestionar en un sitio.</p></div>
+                        <div class="card"><h4>Elige CLI</h4><p>Cuando el comando ya existe y funciona, cuando el contexto es escaso, cuando quieres poder reproducirlo tú a mano.</p></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ═══ 27 ▸ Crear un MCP ═════════════════════════════════════════════════ -->
+<section class="slide" id="s-crear-mcp" data-ch="05" data-file="05-mcp" data-kind="branch" data-chapter="MCP" data-title="Cómo crear un MCP">
+    <div class="win">
+        <div class="win-body">
+            <span class="eyebrow reveal d1"><span class="tri"></span> Profundización · Bloque 05</span>
+            <h2 class="h-page reveal d2"><span class="n">6.b</span>Cómo crear un servidor MCP</h2>
+
+            <div class="split mt32">
+                <div class="reveal d3">
+                    <div class="file">servidor.mjs</div>
+                    <pre class="code panel" style="border-top-left-radius:0; font-size:18px"><span class="k">import</span> { McpServer } <span class="k">from</span> <span class="a">"@modelcontextprotocol/sdk/server/mcp.js"</span>;
+<span class="k">import</span> { StdioServerTransport } <span class="k">from</span> <span class="a">"…/stdio.js"</span>;
+
+<span class="k">const</span> server = <span class="k">new</span> McpServer({ name: <span class="a">"tareas"</span>, version: <span class="a">"1.0.0"</span> });
+
+server.<span class="b">tool</span>(<span class="a">"listar_tareas"</span>,
+  { estado: z.string().describe(<span class="a">"pendiente | hecha"</span>) },
+  <span class="k">async</span> ({ estado }) =&gt; ({
+    content: [{ type: <span class="a">"text"</span>, text: <span class="k">await</span> listar(estado) }]
+  }));
+
+<span class="k">await</span> server.connect(<span class="k">new</span> StdioServerTransport());</pre>
+                    <p class="tiny mt16">La <span class="mono">description</span> de cada herramienta no es decorativa: es lo que el modelo lee para decidir si la usa. Escribirla bien es la mitad del trabajo.</p>
+                </div>
+
+                <div class="reveal d4">
+                    <p class="tiny">Las tres decisiones</p>
+                    <ul class="ticks mt8">
+                        <li><b>Transporte</b>: <span class="mono">stdio</span> si el servidor corre en tu máquina; HTTP si es remoto o compartido.</li>
+                        <li><b>Qué expones</b>: mejor pocas herramientas claras que veinte ambiguas. Cada una ocupa contexto.</li>
+                        <li><b>Qué devuelves</b>: texto corto. Una respuesta de 200 líneas se come la ventana y no ayuda a nadie.</li>
+                    </ul>
+
+                    <div class="panel mt24">
+                        <div class="tiny">Registro en el cliente</div>
+                        <pre class="code mt8" style="font-size:18px"><span class="b">opencode mcp add</span> tareas -- <span class="s">node servidor.mjs</span>
+<span class="b">claude mcp add</span> tareas -- <span class="s">node servidor.mjs</span></pre>
+                    </div>
+
+                    <p class="tiny mt24">Empieza por envolver algo que ya usas a diario: tu gestor de tareas, tu base de datos de desarrollo, el buscador interno. Un MCP que nadie usa es un servidor más que mantener.</p>
+                    <p class="tiny mt16">Referencia · <a href="https://modelcontextprotocol.io/">modelcontextprotocol.io</a></p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ═══ 28 ▸ Paralelismo y worktrees ══════════════════════════════════════ -->
+<section class="slide" id="s-worktrees" data-ch="06" data-file="06-subagentes" data-kind="branch" data-chapter="Subagentes" data-title="Paralelismo y worktrees">
+    <div class="win">
+        <div class="win-body">
+            <span class="eyebrow reveal d1"><span class="tri"></span> Profundización · Bloque 06</span>
+            <h2 class="h-page reveal d2"><span class="n">7.a</span>Paralelismo y worktrees</h2>
+
+            <p class="lede reveal d3 mt24" style="font-size:27px; max-width:none">Dos agentes en la <b>misma carpeta</b> se pisan: uno escribe un fichero mientras el otro lo está leyendo. La solución no es coordinar mejor, es <b>dar a cada uno su sitio</b>.</p>
+
+            <div class="split mt32">
+                <div class="reveal d4">
+                    <p class="tiny">Un repositorio, tres líneas de trabajo</p>
+                    <div class="layers mt8">
+                        <div class="layer lv1"><span class="lname">repo</span><span class="lnote">la historia es una sola</span></div>
+                        <div class="layer tree"><span class="gt">├─</span><span class="lname">.worktrees/login</span><span class="lnote">rama <span class="mono">feat/login</span> · agente 1</span></div>
+                        <div class="layer tree"><span class="gt">├─</span><span class="lname">.worktrees/tests</span><span class="lnote">rama <span class="mono">feat/tests</span> · agente 2</span></div>
+                        <div class="layer tree"><span class="gt">└─</span><span class="lname">.</span><span class="lnote">rama actual · tú</span></div>
+                    </div>
+                    <p class="tiny mt16">Es <span class="mono">git worktree</span> de toda la vida: mismo repositorio, carpeta y rama propias. Ni copias del repo ni ramas huérfanas.</p>
+                </div>
+
+                <div class="reveal d4">
+                    <div class="file">A mano</div>
+                    <pre class="code panel" style="border-top-left-radius:0; font-size:18px"><span class="b">git worktree add</span> ../login -b feat/login
+<span class="b">cd</span> ../login &amp;&amp; <span class="b">opencode</span></pre>
+
+                    <div class="file mt24">Con el agente</div>
+                    <pre class="code panel" style="border-top-left-radius:0; font-size:18px"><span class="b">claude --worktree</span> login     <span class="cm"># sesión en su worktree</span>
+<span class="b">claude --resume</span>              <span class="cm"># retomarla luego</span></pre>
+
+                    <div class="panel mt24">
+                        <p class="small" style="font-size:17px">En Claude Code, un subagente puede fijar <span class="mono">isolation: worktree</span> en su frontmatter: se le da un worktree propio y no puede pisar nada.</p>
+                    </div>
+                </div>
+            </div>
+
+            <p class="tiny reveal d5 mt24">Y una consecuencia que sorprende: con worktrees, el trabajo deja de ser «escribir código» y pasa a ser <b>revisar cambios que no escribiste tú</b>, varios a la vez. Eso se paga en atención, no en tokens.</p>
+        </div>
+    </div>
+</section>
+
+<!-- ═══ 29 ▸ Crear un subagente ═══════════════════════════════════════════ -->
+<section class="slide" id="s-crear-subagente" data-ch="06" data-file="06-subagentes" data-kind="branch" data-chapter="Subagentes" data-title="Cómo crear un subagente">
+    <div class="win">
+        <div class="win-body">
+            <span class="eyebrow reveal d1"><span class="tri"></span> Profundización · Bloque 06</span>
+            <h2 class="h-page reveal d2"><span class="n">7.b</span>Cómo crear un subagente</h2>
+
+            <p class="lede reveal d3 mt24" style="font-size:26px; max-width:none">Es un fichero Markdown con <span class="term" data-term="frontmatter">frontmatter<a class="term-ref" href="#glosario-frontmatter" title="Ver en el glosario"></a></span> y un prompt. Lo que decide si sirve de algo es <b>una buena <span class="mono">description</span></b>: es lo que lee el agente principal para saber cuándo delegarle algo.</p>
+
+            <div class="split mt32">
+                <div class="reveal d4">
+                    <table class="cmp" style="font-size:20px">
+                        <thead><tr><th>Campo</th><th>Para qué</th></tr></thead>
+                        <tbody>
+                            <tr><td class="mono">description</td><td><b>Cuándo</b> usarlo. Lo más importante del fichero.</td></tr>
+                            <tr><td class="mono">mode / name</td><td>Que sea subagente y no un agente principal.</td></tr>
+                            <tr><td class="mono">model</td><td>Subagente barato para explorar; bueno para revisar.</td></tr>
+                            <tr><td class="mono">tools</td><td>Limitar herramientas. Un revisor necesita leer, no escribir.</td></tr>
+                            <tr><td class="mono">permissionMode</td><td>Solo lectura para el que solo analiza.</td></tr>
+                            <tr><td class="mono">isolation: worktree</td><td>Que trabaje en su propio worktree y no pueda pisar.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="reveal d4">
+                    <p class="tiny">Dónde va</p>
+                    <pre class="code panel mt8" style="font-size:18px"><span class="cm"># OpenCode</span>
+.opencode/agents/reviewer.md      <span class="cm"># se versiona</span>
+~/.config/opencode/agents/        <span class="cm"># global</span>
+
+<span class="cm"># Claude Code</span>
+.claude/agents/code-reviewer.md   <span class="cm"># se versiona</span>
+~/.claude/agents/                 <span class="cm"># global</span></pre>
+
+                    <p class="tiny mt24">Empieza por <b>uno</b>: un revisor de solo lectura. Es el que más devuelve por lo que cuesta, y el que hace visible que delegar no es perder control. Después, un explorador para leer sin ensuciar el contexto principal.</p>
+                    <p class="tiny mt16">Referencia · <a href="https://opencode.ai/v2/docs/agents/">OpenCode agents</a> · <a href="https://code.claude.com/docs/en/sub-agents">Claude Code subagents</a></p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ═══ 30 ▸ SDD ══════════════════════════════════════════════════════════ -->
+<section class="slide" id="s-sdd" data-ch="07" data-file="07-flujos" data-kind="branch" data-chapter="Flujos de trabajo" data-title="SDD: Spec-Driven Development">
+    <div class="win">
+        <div class="win-body">
+            <span class="eyebrow reveal d1"><span class="tri"></span> Profundización · Bloque 07</span>
+            <h2 class="h-page reveal d2"><span class="n">8.a</span>SDD: la especificación manda</h2>
+
+            <p class="lede reveal d3 mt24" style="font-size:27px; max-width:none"><span class="term" data-term="sdd">Spec-Driven Development<a class="term-ref" href="#glosario-sdd" title="Ver en el glosario"></a></span>: el artefacto central no es el código, es la <b>especificación</b>. El código la sirve, y por eso se puede rehacer sin volver a discutir qué queríamos.</p>
+
+            <div class="flow mt32 reveal d4">
+                <div class="step"><span class="sn">CONSTITUTION</span><h4>reglas</h4><p>Principios y convenciones que no se negocian en cada tarea.</p></div>
+                <div class="arrow">&rarr;</div>
+                <div class="step gate"><span class="sn">SPECIFY</span><h4>qué</h4><p>El comportamiento deseado, en lenguaje claro. <b>Puerta humana.</b></p></div>
+                <div class="arrow">&rarr;</div>
+                <div class="step"><span class="sn">PLAN</span><h4>cómo</h4><p>Decisiones técnicas y arquitectura.</p></div>
+                <div class="arrow">&rarr;</div>
+                <div class="step"><span class="sn">TASKS</span><h4>en trozos</h4><p>Tareas pequeñas, cada una verificable.</p></div>
+            </div>
+
+            <div class="split mt32">
+                <div class="reveal d5">
+                    <p class="tiny">Y vuelta a empezar</p>
+                    <div class="layers mt8">
+                        <div class="layer tree" style="padding-left:18px"><span class="gt">&rarr;</span><span class="lname">implement</span><span class="lnote">el agente ejecuta las tareas</span></div>
+                        <div class="layer tree" style="padding-left:18px"><span class="gt">&rarr;</span><span class="lname">converge</span><span class="lnote">se compara lo hecho con la spec y se corrige</span></div>
+                    </div>
+                    <p class="small mt16">La spec no es documentación muerta: es el criterio con el que se juzga el resultado. Y sirve de contexto para el siguiente que llegue, humano o agente.</p>
+                </div>
+                <div class="reveal d5">
+                    <p class="rule" style="font-size:26px">Si la spec es escribible, el código es <span class="q">repetible</span>.</p>
+                    <p class="small mt16">Cuándo encaja: trabajo que va a durar, varios agentes o personas implicadas, requisitos que hay que poder demostrar. Cuándo no: un arreglo de una tarde.</p>
+                    <p class="tiny mt16">Herramientas · <a href="https://github.com/github/spec-kit/">github/spec-kit</a> · <a href="https://github.github.com/spec-kit/">la guía</a></p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ═══ 31 ▸ RPI ══════════════════════════════════════════════════════════ -->
+<section class="slide" id="s-rpi" data-ch="07" data-file="07-flujos" data-kind="branch" data-chapter="Flujos de trabajo" data-title="RPI: Research, Plan, Implement">
+    <div class="win">
+        <div class="win-body">
+            <span class="eyebrow reveal d1"><span class="tri"></span> Profundización · Bloque 07</span>
+            <h2 class="h-page reveal d2"><span class="n">8.b</span>RPI: tres fases con puertas</h2>
+
+            <p class="lede reveal d3 mt24" style="font-size:27px; max-width:none"><span class="term" data-term="rpi">Research → Plan → Implement<a class="term-ref" href="#glosario-rpi" title="Ver en el glosario"></a></span>. Cada fase termina en un artefacto y en un <b>criterio de salida</b> claro: no se pasa a la siguiente por cansancio, se pasa porque se puede demostrar que está hecha.</p>
+
+            <div class="split-3 mt32">
+                <div class="step reveal d4">
+                    <span class="sn">1 · RESEARCH</span>
+                    <h4>entender</h4>
+                    <p>Leer el código, la documentación y el histórico. El agente explora en solo lectura y <b>escribe lo que encontró</b>.</p>
+                    <p class="tiny mt16">Sale: un documento con el estado real y las incógnitas.</p>
+                </div>
+                <div class="step gate reveal d4">
+                    <span class="sn">2 · PLAN › puerta</span>
+                    <h4>decidir</h4>
+                    <p>El plan con pasos, riesgos y criterios de aceptación. Aquí corriges el rumbo, cuando todavía es gratis.</p>
+                    <p class="tiny mt16">Sale: un plan que otra persona podría ejecutar sin ti.</p>
+                </div>
+                <div class="step reveal d4">
+                    <span class="sn">3 · IMPLEMENT</span>
+                    <h4>hacer</h4>
+                    <p>Ejecutar el plan en cambios pequeños, verificando cada uno contra los criterios acordados.</p>
+                    <p class="tiny mt16">Sale: el cambio, más la prueba de que cumple.</p>
+                </div>
+            </div>
+
+            <div class="split mt32">
+                <div class="reveal d5">
+                    <p class="rule" style="font-size:26px">El valor no está en las tres fases, sino en las <span class="q">puertas</span>.</p>
+                    <p class="small mt16">Un plan malo se detecta en diez minutos de lectura; un plan malo ya implementado se detecta en una tarde de revisión. La puerta existe para mover el error al momento barato.</p>
+                </div>
+                <div class="reveal d5">
+                    <p class="tiny">Comparado con el flujo base (slide 09)</p>
+                    <ul class="ticks mt8">
+                        <li>Explorar se convierte en un <b>artefacto</b>, no en una conversación.</li>
+                        <li>Planificar se convierte en una <b>puerta</b>, no en un paso más.</li>
+                        <li>Confirmar usa los criterios que se acordaron <b>antes</b>, no los que aparezcan después.</li>
+                    </ul>
+                    <p class="tiny mt16">Referencia · <a href="https://github.com/CodelyTV/rpi-course">CodelyTV/rpi-course</a></p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ═══ 32 ▸ Herramientas y comparativa ═══════════════════════════════════ -->
+<section class="slide" id="s-herramientas" data-ch="08" data-file="08-orquestacion" data-kind="branch" data-chapter="Orquestación" data-title="Herramientas y comparativa">
+    <div class="win">
+        <div class="win-body">
+            <span class="eyebrow reveal d1"><span class="tri"></span> Profundización · Bloque 08</span>
+            <h2 class="h-page reveal d2"><span class="n">9.a</span>Herramientas: dónde encaja cada una</h2>
+
+            <div class="matrix reveal d3 mt24">
+                <div class="ax"></div>
+                <div class="ax">terminal / TUI</div>
+                <div class="ax">escritorio, con interfaz</div>
+
+                <div class="ax">código abierto</div>
+                <div class="cell">
+                    <h4>Claude Squad</h4>
+                    <p>TUI sobre tmux, un worktree por agente. Soporta <b>OpenCode</b>, Claude Code, Codex y Amp.</p>
+                </div>
+                <div class="cell">
+                    <h4>Superset · Emdash</h4>
+                    <p>Worktree por tarea, con diffs y revisión en la propia app. Los dos soportan <b>OpenCode</b> explícitamente.</p>
+                </div>
+
+                <div class="ax">producto de empresa</div>
+                <div class="cell">
+                    <h4><span class="warn">nada que enseñar</span></h4>
+                    <p>La terminal es terreno de lo abierto. Aquí no hay un producto que compense frente a lo de arriba.</p>
+                </div>
+                <div class="cell">
+                    <h4>Sculptor</h4>
+                    <p>Cada agente en un <b>contenedor</b> aislado, para probar y fusionar sin conflictos.</p>
+                </div>
+            </div>
+
+            <div class="split mt32">
+                <div class="reveal d5">
+                    <p class="tiny">Lo que no entra en el gráfico y conviene saber que existe</p>
+                    <p class="small mt8" style="font-size:17px"><b>Vibe Kanban</b> (tablero kanban, cada tarjeta su worktree) · <b>Conductor</b> (nació en macOS y ya ofrece agentes en la nube) · <b>Orca</b> (worktrees, terminal y navegador) · <b>Herdr</b> (agentes que siguen corriendo) · <b>Nimbalyst</b> (wiki más espacio de trabajo).</p>
+                </div>
+                <div class="reveal d5">
+                    <p class="rule" style="font-size:26px">Todas prometen multiplicar tu productividad. Ninguna resuelve <span class="q">revisar</span>.</p>
+                    <p class="small mt16">Son buenas para lanzar y vigilar agentes. El problema que dejan abierto es el de la slide 10: alguien tiene que leer esos diffs y decidir. Si no hay tiempo para eso, paralelizar solo produce más cambios sin revisar.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+
+
+
+
+
+
+
+</div>
+</div>
+
+<div class="deck-controls">
+    <div class="ctl">
+        <button id="prev" title="Anterior (←)">&larr;</button>
+        <div class="track"><i id="bar"></i></div>
+        <span class="num" id="num">1 / 32</span>
+        <button id="next" title="Siguiente (→)">&rarr;</button>
+        <button id="mode" title="Modo charla (c)">charla</button>
+        <button id="map" title="Mapa (m)">mapa</button>
+    </div>
+</div>
+
+<div class="map" id="mapOverlay">
+    <div class="mhead">
+        <h3>Mapa del deck</h3>
+        <span class="tiny" id="mapHint"></span>
+    </div>
+    <div class="mgrid" id="mapGrid"></div>
+    <div class="legend">
+        <span><span class="sq"></span> flujo principal</span>
+        <span><span class="tri"></span> profundizaci&oacute;n</span>
+        <span>clic en una entrada para ir &middot; Esc para cerrar</span>
+    </div>
+</div>
+
+<script>
+(function () {
+    'use strict';
+
+    // ── Datos del deck ──────────────────────────────────────────────────────
+    var DECK = {
+        version: 'v1.1',
+        date: '2026-10-17',
+        repo: 'https://github.com/alfredogonzalezmartinez/desarrollo-con-ia'
+    };
+
+    // Definiciones breves (lo que sale en el tooltip). Fuente única: aquí se
+    // escriben una vez y el deck las reparte por todas las menciones.
+    var GLOSARIO = {
+        'agente': '<b>Agente:</b> un modelo m&aacute;s un bucle que le da herramientas y le deja <b>actuar</b> sobre tu c&oacute;digo: leer, editar, ejecutar y verificar.',
+        'modelo': '<b>Modelo / LLM:</b> programa que predice el siguiente token. Sabe &laquo;de todo&raquo; pero <b>no hace nada</b> por s&iacute; solo.',
+        'harness': '<b>Harness:</b> el programa que envuelve al modelo: le da herramientas, ejecuta el bucle y decide cu&aacute;ndo parar.',
+        'prompt': '<b>Prompt:</b> lo que le pides; la instrucci&oacute;n con la que abres el turno.',
+        'herramienta': '<b>Herramienta (tool):</b> una acci&oacute;n que el agente puede invocar: leer un fichero, escribir, ejecutar un comando, buscar.',
+        'tool-calling': '<b>Tool calling:</b> capacidad del modelo de <b>pedir herramientas</b> en vez de limitarse a escribir texto.',
+        'sesion': '<b>Sesi&oacute;n:</b> una conversaci&oacute;n con estado propio: su contexto, su modelo y sus permisos.',
+        'cli': '<b>CLI:</b> interfaz de l&iacute;nea de comandos. Es la v&iacute;a universal para que el agente haga cosas.',
+        'modelo-frontera': '<b>Modelo frontera:</b> el m&aacute;s capaz (y caro) del momento. Para lo dif&iacute;cil, no para todo.',
+        'modelo-local': '<b>Modelo local:</b> corre en tu m&aacute;quina. Privacidad y coste cero a cambio de calidad y hardware.',
+        'reasoning-effort': '<b>Reasoning effort:</b> cu&aacute;nto &laquo;piensa&raquo; el modelo antes de responder. Subirlo mejora lo dif&iacute;cil y encarece todo.',
+        'enrutador': '<b>Enrutador de modelos:</b> una sola API delante de muchos modelos; ella decide a cu&aacute;l va cada petici&oacute;n.',
+        'cache-prompt': '<b>Cach&eacute; de prompt:</b> reutilizar lo que el modelo ya proces&oacute;, para pagar y esperar menos por lo mismo.',
+        'cuota': '<b>Rate limit / cuota:</b> l&iacute;mite de peticiones o tokens por ventana de tiempo. Es lo que de verdad te frena.',
+        'contexto': '<b>Contexto:</b> todo lo que el modelo tiene delante: reglas, conversaci&oacute;n, ficheros y resultados de herramientas.',
+        'ventana-contexto': '<b>Ventana de contexto:</b> cu&aacute;ntos tokens caben ah&iacute;. Al llenarse, la calidad baja y toca compactar.',
+        'token': '<b>Token:</b> unidad m&iacute;nima de texto con la que trabaja el modelo (&asymp; 4 caracteres). Todo se mide y se cobra en tokens.',
+        'compactar': '<b>Compactar / autocompact:</b> resumir la conversaci&oacute;n antigua para liberar espacio. Es <b>con p&eacute;rdida</b>.',
+        'agents-md': '<b>AGENTS.md / CLAUDE.md:</b> fichero de reglas que el agente lee al empezar: comandos de build y test, estilo, convenciones, avisos.',
+        'skill': '<b>Skill:</b> carpeta con un <span class="mono">SKILL.md</span> que el agente carga <b>a demanda</b> para hacer bien una tarea concreta.',
+        'progressive-disclosure': '<b>Progressive disclosure:</b> cargar por capas: primero solo nombre y descripci&oacute;n; el contenido completo, solo si hace falta.',
+        'frontmatter': '<b>Frontmatter:</b> la cabecera YAML entre <span class="mono">---</span> de un <span class="mono">SKILL.md</span> o un agente: <span class="mono">name</span>, <span class="mono">description</span>, <span class="mono">model</span>&hellip;',
+        'mcp': '<b>MCP:</b> <i>Model Context Protocol</i>. Est&aacute;ndar para conectar el agente a herramientas y datos externos.',
+        'subagente': '<b>Subagente:</b> agente con contexto, prompt, modelo y permisos <b>propios</b>, al que el principal le delega un trabajo.',
+        'worktree': '<b>Worktree:</b> copia de trabajo del mismo repositorio, con su carpeta y su rama. Deja que N agentes no se pisen.',
+        'modo-plan': '<b>Modo plan:</b> el agente investiga y propone, pero <b>no toca</b> los ficheros. La forma sana de empezar.',
+        'permiso': '<b>Permiso (allow / ask / deny):</b> regla que decide si una acci&oacute;n se permite, se pregunta o se bloquea.',
+        'modo-auto': '<b>Modo auto:</b> el agente ejecuta sin preguntar lo que considera seguro; t&uacute; revisas despu&eacute;s. Comodidad a cambio de control.',
+        'hook': '<b>Hook:</b> acci&oacute;n autom&aacute;tica al ocurrir un evento (antes o despu&eacute;s de una herramienta, al terminar), sin depender del modelo.',
+        'sdd': '<b>SDD:</b> <i>Spec-Driven Development</i>. La especificaci&oacute;n es el artefacto central y el c&oacute;digo la sirve.',
+        'rpi': '<b>RPI:</b> <i>Research &rarr; Plan &rarr; Implement</i>. Tres fases con criterios de salida claros entre ellas.',
+        'orquestador': '<b>Orquestador:</b> herramienta que lanza y vigila varios agentes en paralelo.',
+        'ade': '<b>ADE:</b> <i>Agent Development Environment</i>. Entorno que re&uacute;ne worktrees, terminales y revisi&oacute;n para varios agentes.'
+    };
+
+    var stage = document.getElementById('stage');
+    var all = Array.prototype.slice.call(document.querySelectorAll('.slide'));
+    var byId = {};
+    all.forEach(function (s) { byId[s.id] = s; });
+    var scale = 1;
+
+    // ── Escalado del escenario fijo ─────────────────────────────────────────
+    function fit() {
+        scale = Math.min(window.innerWidth / 1920, window.innerHeight / 1080);
+        var x = (window.innerWidth - 1920 * scale) / 2;
+        var y = (window.innerHeight - 1080 * scale) / 2;
+        stage.style.transform = 'translate(' + x + 'px,' + y + 'px) scale(' + scale + ')';
+    }
+    window.addEventListener('resize', fit);
+    fit();
+
+    // ── Cromo de la ventana (barra de pestañas y de estado) ─────────────────
+    // Va aquí y no en el HTML para que añadir una slide sea escribir su
+    // contenido: todo lo repetido se genera a partir de los data-*.
+    all.forEach(function (s, k) {
+        var win = s.querySelector('.win');
+        var file = s.dataset.file || 'slide';
+        var kind = s.dataset.kind === 'branch' ? 'branch' : 'main';
+        var n = String(k + 1).padStart(2, '0');
+
+        var tab = document.createElement('div');
+        tab.className = 'tabbar';
+        tab.innerHTML =
+            '<span class="lights"><i></i><i></i><i></i></span>' +
+            '<span class="tab">' + (kind === 'branch' ? '<span class="tri"></span>' : '') +
+            file + '.md <span class="ext">&middot;</span> ' + (s.dataset.ch || n) + '</span>' +
+            '<span class="spacer"></span>' +
+            '<span class="meta">' + (kind === 'branch' ? 'profundizaci&oacute;n' : 'flujo principal') + '</span>';
+        win.insertBefore(tab, win.firstChild);
+
+        var status = document.createElement('div');
+        status.className = 'statusbar';
+        if (s.dataset.ch === '00') {
+            status.innerHTML =
+                '<span><span class="dotg"></span> main</span>' +
+                '<span><b>' + all.length + '</b> slides &middot; <b>' + branchCount() + '</b> de profundizaci&oacute;n</span>' +
+                '<span class="spacer"></span>' +
+                '<span>' + DECK.version + ' &middot; actualizado ' + DECK.date + '</span>';
+        } else {
+            status.innerHTML =
+                '<span><span class="dotg"></span> main</span>' +
+                '<span>' + (s.dataset.chapter || '') + '</span>' +
+                '<span class="spacer"></span>' +
+                '<span>slide <b>' + (k + 1) + '</b> de <b>' + all.length + '</b> &middot; ' +
+                (kind === 'branch' ? 'profundizaci&oacute;n' : 'flujo principal') + '</span>';
+        }
+        win.appendChild(status);
+        s.setAttribute('aria-hidden', 'true');
+    });
+    function branchCount() { return all.filter(function (s) { return s.dataset.kind === 'branch'; }).length; }
+
+    // ── Glosario: numeración y tooltips ────────────────────────────────────
+    // La lista del glosario manda: su orden fija el número que aparece en
+    // todas las menciones del deck.
+    var numbers = {};
+    var gloss = document.querySelector('.gloss');
+    if (gloss) {
+        Array.prototype.forEach.call(gloss.querySelectorAll('.gitem'), function (it, k) {
+            var key = it.id.replace('glosario-', '');
+            numbers[key] = k + 1;
+            var gn = document.createElement('span');
+            gn.className = 'gn';
+            gn.textContent = String(k + 1).padStart(2, '0');
+            it.insertBefore(gn, it.firstChild);
+        });
+    }
+
+    var tipSeq = 0;
+    Array.prototype.forEach.call(document.querySelectorAll('.term[data-term]'), function (el) {
+        var key = el.dataset.term;
+        var def = GLOSARIO[key];
+        if (!def) { console.warn('Término sin definición en GLOSARIO:', key); return; }
+        var tip = document.createElement('span');
+        tip.className = 'tip';
+        tip.innerHTML = def;
+        tip.id = 'tip-' + key + '-' + (++tipSeq);
+        el.appendChild(tip);
+        el.setAttribute('aria-describedby', tip.id);
+    });
+
+    Array.prototype.forEach.call(document.querySelectorAll('.term-ref'), function (a) {
+        var key = (a.getAttribute('href') || '').replace('#glosario-', '');
+        if (numbers[key]) a.textContent = numbers[key];
+    });
+
+    // Coloca el tooltip para que no se salga de la ventana ni quede cortado.
+    function place(el) {
+        var tip = el.querySelector('.tip');
+        if (!tip) return;
+        var win = el.closest('.win');
+        var er = el.getBoundingClientRect();
+        var wr = win.getBoundingClientRect();
+        var below = (er.top - wr.top) < 230;
+        tip.classList.toggle('below', below);
+        tip.style.transform = 'translateX(-50%)';
+        var tr = tip.getBoundingClientRect();
+        var dx = 0;
+        if (tr.left < wr.left + 18) dx = (wr.left + 18 - tr.left) / scale;
+        else if (tr.right > wr.right - 18) dx = (wr.right - 18 - tr.right) / scale;
+        if (dx) tip.style.transform = 'translateX(calc(-50% + ' + dx + 'px))';
+    }
+    document.addEventListener('mouseover', function (e) {
+        var t = e.target.closest && e.target.closest('.term');
+        if (t) place(t);
+    });
+    document.addEventListener('focusin', function (e) {
+        var t = e.target.closest && e.target.closest('.term');
+        if (t) place(t);
+    });
+
+    // ── Modo charla ────────────────────────────────────────────────────────
+    // No reordena nada: esconde las slides de profundización para poder dar
+    // la charla corta sin saltarse pasos.
+    var charla = false;
+    function visible() {
+        return charla ? all.filter(function (s) { return s.dataset.kind !== 'branch'; }) : all;
+    }
+    function setCharla(on) {
+        charla = on;
+        document.body.classList.toggle('charla', on);
+        document.getElementById('mode').classList.toggle('on', on);
+        document.getElementById('mode').textContent = on ? 'charla' : 'lectura';
+        if (location) history.replaceState(null, '', on ? '#charla' : location.pathname + location.search);
+    }
+
+    // ── Navegación ─────────────────────────────────────────────────────────
+    var i = 0;
+    var list = visible();
+
+    function go(n, notHash) {
+        list = visible();
+        i = Math.max(0, Math.min(list.length - 1, n));
+        all.forEach(function (s) { s.classList.toggle('active', s === list[i]); s.setAttribute('aria-hidden', s === list[i] ? 'false' : 'true'); });
+        list[i].querySelectorAll('.reveal').forEach(function (el) {
+            el.style.animation = 'none';
+            void el.offsetWidth;
+            el.style.animation = '';
+        });
+        document.getElementById('bar').style.width = ((i + 1) / list.length * 100) + '%';
+        document.getElementById('num').textContent = (i + 1) + ' / ' + list.length;
+        if (!notHash && location) history.replaceState(null, '', '#' + list[i].id);
+        var now = document.querySelector('#mapGrid .now');
+        if (now) now.classList.remove('now');
+        var entry = document.querySelector('#mapGrid [data-go="' + list[i].id + '"]');
+        if (entry) entry.classList.add('now');
+    }
+
+    function goto(id, flashSelector) {
+        var t = byId[id];
+        if (!t) return;
+        var idx = visible().indexOf(t);
+        if (charla && idx === -1) { setCharla(false); idx = visible().indexOf(t); }
+        go(idx);
+        if (flashSelector) {
+            var f = document.getElementById(flashSelector);
+            if (f) { f.classList.remove('flash'); void f.offsetWidth; f.classList.add('flash'); }
+        }
+    }
+
+    document.getElementById('prev').addEventListener('click', function () { go(i - 1); });
+    document.getElementById('next').addEventListener('click', function () { go(i + 1); });
+    document.getElementById('mode').addEventListener('click', function () { setCharla(!charla); go(i); });
+    document.getElementById('map').addEventListener('click', function () { toggleMap(); });
+
+    // Superíndices: navegan al término del glosario y lo resaltan.
+    document.addEventListener('click', function (e) {
+        var a = e.target.closest && e.target.closest('a[href^="#"]');
+        if (!a) return;
+        var id = a.getAttribute('href').slice(1);
+        if (!document.getElementById(id)) return;
+        e.preventDefault();
+        goto(id, id);
+    });
+
+    // ── Mapa ───────────────────────────────────────────────────────────────
+    var overlay = document.getElementById('mapOverlay');
+    var grid = document.getElementById('mapGrid');
+    all.forEach(function (s, k) {
+        var b = document.createElement('button');
+        b.className = 'mi' + (s.dataset.kind === 'branch' ? ' branch' : '');
+        b.dataset.go = s.id;
+        b.innerHTML = '<span class="mn">' + String(k + 1).padStart(2, '0') + '</span><span>' +
+            (s.dataset.title || s.dataset.file) + '</span>';
+        b.addEventListener('click', function () { go(all.indexOf(s)); toggleMap(false); });
+        grid.appendChild(b);
+    });
+    document.getElementById('mapHint').textContent = all.length + ' slides · ' + branchCount() + ' de profundización';
+    function toggleMap(force) {
+        var on = force === undefined ? !overlay.classList.contains('on') : force;
+        overlay.classList.toggle('on', on);
+        document.getElementById('map').classList.toggle('on', on);
+    }
+
+    // ── Teclado ────────────────────────────────────────────────────────────
+    document.addEventListener('keydown', function (e) {
+        if (e.metaKey || e.ctrlKey || e.altKey) return;
+        var k = e.key;
+        if (k === 'ArrowRight' || k === ' ' || k === 'PageDown' || k === 'n') { e.preventDefault(); go(i + 1); }
+        else if (k === 'ArrowLeft' || k === 'PageUp' || k === 'p') { e.preventDefault(); go(i - 1); }
+        else if (k === 'Home') { e.preventDefault(); go(0); }
+        else if (k === 'End') { e.preventDefault(); go(list.length - 1); }
+        else if (k === 'c' || k === 'C') { setCharla(!charla); go(i); }
+        else if (k === 'm' || k === 'M') { toggleMap(); }
+        else if (k === 'g' || k === 'G') { goto('s-glosario'); }
+        else if (k === 'f' || k === 'F') {
+            if (document.fullscreenElement) document.exitFullscreen();
+            else document.documentElement.requestFullscreen();
+        } else if (k === 'Escape') {
+            if (overlay.classList.contains('on')) toggleMap(false);
+            else if (charla) { setCharla(false); go(i); }
+        }
+    });
+
+    // ── Estado inicial desde la URL ────────────────────────────────────────
+    if (location.hash === '#charla') { charla = true; document.getElementById('mode').classList.add('on'); document.getElementById('mode').textContent = 'charla'; }
+    var start = byId[location.hash.slice(1)];
+    if (start && visible().indexOf(start) !== -1) i = visible().indexOf(start);
+    go(i, true);
+})();
+</script>
+</body>
+</html>

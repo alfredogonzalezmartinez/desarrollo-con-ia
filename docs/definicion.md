@@ -36,14 +36,29 @@
 - **Herramienta**: skill `frontend-slides` (instalada en `~/.agents/skills/frontend-slides`).
 - **Entregable**: **un solo HTML autocontenido** (decisión tomada), navegable con teclado y ratón.
 - **Escenario fijo 16:9 (regla de la skill)**: cada slide se diseña a **1920×1080** y el conjunto se **escala** al viewport. En móvil no se reflowe: se mantiene el 16:9 (letterbox).
-- **Estructura de ficheros**:
+- **Estructura de ficheros** (implementada):
 
   ```
-  presentacion/
-  └── index.html      # todo el deck: flujo + ramas + glosario
+  src/index.html            # la fuente: aquí se edita todo
+  src/assets/fonts/         # IBM Plex recortada a los caracteres del deck
+  scripts/build.mjs         # compila src → dist (embebe fuentes, minifica, comprueba)
+  scripts/check-layout.mjs  # mide la maquetación de las 32 slides con Chromium
+  scripts/subset-fonts.sh   # regenera las fuentes (rara vez hace falta)
+  docs/definicion.md        # este documento
+  dist/index.html           # generado por el build; no se versiona
   ```
 
-  Sin carpetas de assets: al ser **autocontenido**, los diagramas son **SVG inline** y las imágenes, si las hay, van embebidas como *data URI*.
+  El deck final sigue siendo **un solo fichero**: `dist/index.html`. Lo que hay
+  separado es la *fuente*. Al ser autocontenido, los diagramas son **CSS y SVG
+  inline** y las fuentes van embebidas como *data URI*.
+
+- **Encaje a 1920×1080** (implementado): como cada slide es una ventana con
+  `overflow: hidden`, lo que no cabe se recorta en silencio. `npm run check` abre
+  el deck en un navegador de verdad, mide las 32 slides y avisa de las que se
+  salen. Cuando una slide no cabe, se comprime **solo esa** en el bloque
+  `encaje a 1920×1080` de `src/index.html` —márgenes y tamaños, sin tocar el
+  diseño de las demás— y se vuelve a medir. La regla de oro: **ninguna slide se
+  recorta**, y por eso este paso entra en el mantenimiento normal.
 
 - **Material gráfico: todo recreado** (decisión tomada). Las terminales se recrean con CSS/SVG —es lo que ya hace el estilo «Consola»— y las **salidas reales se pegan como texto**, no como imagen. Motivos: pesa 0 KB, se ve nítido a cualquier tamaño, se puede anotar (resaltar la línea que importa) y no envejece mal cuando cambie la interfaz. **No hay capturas PNG.**
 
@@ -250,22 +265,24 @@ Las definiciones de la columna *breve* son las que aparecen en el **tooltip** y 
 
 ## 4. Estilo visual y recursos
 
-**Estilo elegido: «Consola»** (variante D de `.frontend-slides/slide-previews/style-d.html`).
+**Estilo elegido: «Consola»** (era la variante D de las previews de exploración; las previews ya no están en el repo, el estilo está implementado en `src/index.html`).
 
 - **Concepto**: interfaz de herramienta de desarrollo. El deck se presenta como una **ventana** con pestañas y barra de estado, donde cada capítulo es un "fichero" abierto.
 - **Paleta**:
   - Fondo `#0b0e14` (casi negro azulado) con paneles `#12161f` y bordes `#232b38`.
   - Texto `#e6edf3`; secundario `#8b98a9`.
   - Acentos: azul `#79c0ff` (principal), verde `#7dd3a0`, ámbar `#ffb454`, violeta `#b392f0`.
-- **Tipografía**: `IBM Plex Sans` (titulares 600/700) + `IBM Plex Mono` (etiquetas, código, datos).
-- **Elementos firma**: barra de pestañas con el capítulo activo, prompt `❯` con cursor parpadeante, **barra de estado** inferior (rama, nº de slide, bloque), árbol de ficheros como diagrama de capas, y chips mono para conceptos.
-- **Por qué encaja**: los ejemplos del deck son de **OpenCode y Claude Code** (herramientas de terminal); el estilo y el contenido se refuerzan. El árbol `agente/ ├── modelo ├── harness └── subagentes` es literalmente el diagrama del capítulo 2.
-- **Densidad**: **alta / reading-first**. La presentación debe entenderse sin ponente, pero con jerarquía fuerte para que el ponente aporte valor encima. (Es la opción que permite que 33 slides cubran 8 bloques + 18 ramas.)
-- **Recursos por slide**: diagramas (árboles, flujos, comparativas), **terminales recreadas** con CSS/SVG y la salida real pegada como texto, tablas de especificación, bloques de código de ≤12 líneas, chips. Sin capturas de imagen (§1).
-- **Reglas de contenido**: ≤15 palabras por titular; una idea por slide; pie de slide con 1-2 referencias; código corto.
-- **Diagramas**: **SVG inline** (sin dependencias) o construidos con CSS, como en la preview.
+- **Tipografía**: `IBM Plex Sans` (titulares 600/700) + `IBM Plex Mono` (etiquetas, código, datos), **recortada a los caracteres del deck y embebida** (132 KB en siete subconjuntos). Sin Google Fonts.
+- **Elementos firma**: barra de pestañas con el capítulo activo, prompt con cursor parpadeante, **barra de estado** inferior (rama, slide, bloque), árbol de ficheros como diagrama de capas, y chips mono para conceptos.
+- **Regla de glifos**: solo se usan caracteres que **IBM Plex trae de verdad**. Los adornos que no están en la fuente —`▸` de rama, `●` de estado, `■` de flujo, el `❯` del prompt, el círculo del superíndice— **se dibujan con CSS** (`.tri`, `.sq`, `.dotg`, `.chev`). Motivo: si se dejan como texto, caen a la fuente del sistema y en otra máquina aparecen como cuadraditos.
+- **Por qué encaja**: los ejemplos del deck son de **OpenCode y Claude Code** (herramientas de terminal); el estilo y el contenido se refuerzan. El árbol `harness ├── modelo ├── contexto └── subagentes` es literalmente el diagrama del capítulo 2.
+- **Densidad**: **alta / reading-first**. La presentación debe entenderse sin ponente, pero con jerarquía fuerte para que el ponente aporte valor encima.
+- **Recursos por slide**: diagramas (árboles, flujos, comparativas), **terminales recreadas** con CSS y la salida real pegada como texto, tablas de especificación, bloques de código cortos, chips. Sin capturas de imagen (§1).
+- **Reglas de contenido**: ≤15 palabras por titular; una idea por slide; código corto.
+- **Diagramas**: construidos con CSS (rejillas, columnas y cajas anidadas). Nada de SVG externo.
 - **Movimiento**: revelado escalonado al entrar cada slide (~0,8 s), respetando `prefers-reduced-motion`.
-- **Referencia**: la preview D sirve como plantilla de partida para el HTML final.
+- **Implementado en**: `src/index.html`. El cromo de cada slide (barra de pestañas y de estado) se genera por JS a partir de los `data-*` de la `<section>`, para que añadir una slide sea escribir solo su contenido.
+
 ---
 
 ## 5. Apartados (detalle)
@@ -281,7 +298,7 @@ Las definiciones de la columna *breve* son las que aparecen en el **tooltip** y 
 - **Contenido**:
   - Título: **Desarrollo con IA**
   - Subtítulo: *Del chat al agente*
-  - **Versión y fecha**: `v1.0 · actualizado 2026-10-17` — sin autor y sin evento (decisión tomada: es un material para compartir y actualizar, no una ponencia concreta).
+  - **Versión y fecha**: `v1.1 · actualizado 2026-10-17` — sin autor y sin evento (decisión tomada: es un material para compartir y actualizar, no una ponencia concreta).
   - Referencia al repositorio: <https://github.com/alfredogonzalezmartinez/desarrollo-con-ia>
   - **Ayuda de navegación en la propia portada** (una línea, en tono gris): `← → avanzar · c modo charla · m mapa · hover sobre un término = definición`.
   - Cifras del deck: **32 slides** y **17 de profundización**, marcadas `▸`.
@@ -469,12 +486,13 @@ Las definiciones de la columna *breve* son las que aparecen en el **tooltip** y 
 |-------|----------|--------|
 | **frontend-slides** | Crear presentaciones HTML (es la que genera este deck) | <https://github.com/zarazhangrui/frontend-slides> |
 | **skills** (vercel-labs) | CLI para instalar y gestionar skills en distintos agentes (`npx skills`) | <https://github.com/vercel-labs/skills> |
+| **playwright-cli** (Microsoft) | Maneja un navegador real desde el agente; se instala como skill (`playwright-cli install --skills`). Con esta se revisó este deck | <https://playwright.dev/agent-cli/skills> |
 | **agent-harness** (CodelyTV) | Harness y skills del curso RPI | <https://github.com/CodelyTV/agent-harness> |
 | **security-audit-skill** (Cloudflare) | Auditoría de seguridad en varias fases, con hallazgos verificables | <https://github.com/cloudflare/security-audit-skill> |
 | **archify** | Convierte una idea, un plan o un código en un diagrama interactivo | <https://github.com/tt-a1i/archify> |
 | **anydoc** | Convierte Word, PowerPoint, Excel, PDF… a Markdown limpio (Rust; herramienta dentro de una skill, no una skill) | <https://github.com/firecrawl/anydoc> |
 
-> **Verificado 2026-10-17**: seis repos existen y están vivos. `archify` es un caso redondo para la charla: es una skill que **genera los diagramas** — justo lo que hace falta en este deck.
+> **Verificado 2026-10-17**: siete repos existen y están vivos. `archify` es un caso redondo para la charla: es una skill que **genera los diagramas** — justo lo que hace falta en este deck.
 
 ### 6. MCP
 
@@ -624,7 +642,7 @@ Las definiciones de la columna *breve* son las que aparecen en el **tooltip** y 
 
 ---
 
-## 6. Secuencia de slides (v0.9)
+## 6. Secuencia de slides (v1.0 — construida)
 
 **32 slides: 15 de flujo principal (■) + 17 de profundización (▸).** El orden es lineal e idéntico en los dos modos; el modo charla solo oculta las `▸`.
 
@@ -714,6 +732,7 @@ Las definiciones de la columna *breve* son las que aparecen en el **tooltip** y 
 
 **Skills**
 - Agent Skills specification — <https://agentskills.io/specification>
+- playwright-cli (skill de Playwright para agentes) — <https://playwright.dev/agent-cli/skills>
 
 **MCP**
 - Model Context Protocol — <https://modelcontextprotocol.io/>
@@ -746,7 +765,7 @@ Las definiciones de la columna *breve* son las que aparecen en el **tooltip** y 
 - Herdr — <https://herdr.dev/>
 - Orca — <https://www.onorca.dev/>
 
-> Verificación de enlaces: completa el **2026-10-17**. Los 60 enlaces del documento responden (los bloqueos de `claude.ai` y `gemini.google.com` son protección antibots, no enlaces roscos).
+> Verificación de enlaces: completa el **2026-10-17**. Todos los enlaces del documento responden (los bloqueos de `claude.ai` y `gemini.google.com` son protección antibots, no enlaces roscos).
 >
 > Esta sección es también la **última slide** del deck: allí aparecen la versión, la fecha de actualización y el enlace al repositorio, para que el material se pueda retomar y actualizar sin buscar nada.
 
@@ -756,10 +775,11 @@ Las definiciones de la columna *breve* son las que aparecen en el **tooltip** y 
 
 Ya cerradas en la **v1.0 de este documento**: **material gráfico** (todo recreado, salidas reales como texto), **portada** (sin autor ni evento; versión y fecha), **enlaces** (verificados 2026-10-17) y **estructura de la secuencia** (32 slides: 15 + 17).
 
+Implementado al construir el deck: **modo charla** (`c` y `#charla`), **glosario** con tooltips y numeración automática desde la lista, **cromo generado por slide** desde los `data-*`, y **comprobación de encaje a 1920×1080** (`npm run check`): ninguna de las 32 slides se recorta.
+
 Lo que queda:
 
-1. **Glosario**: las 33 definiciones breves están escritas (§3.3). Queda la **definición larga** de cada término (con ejemplo y referencia), que se redacta al generar el deck.
-2. **Modo charla**: implementar el atajo `c` y el hash `#charla` en el HTML.
-3. **Glosario en táctil** (§3.2): validar que el tap sobre un término muestra la definición sin navegar.
-4. **Verificación (8.c)**: decidir si la slide enseña un caso real de test rojo → verde del propio repositorio, o un ejemplo sintético. Con datos reales convence más, pero hay que prepararlo.
-5. **Caducidad de las cifras**: los ejemplos citan versión de herramienta (OpenCode V2) y las referencias llevan `verificado 2026-10-17`. Decidir cada cuánto se revisa —propuesta: **al publicar cada versión mayor**— y qué pasa si una herramienta cambia de nombre o desaparece.
+1. **Glosario**: las 33 definiciones breves están escritas (§3.3). Queda la **definición larga** de cada término (con ejemplo y referencia).
+2. **Glosario en táctil** (§3.2): validar que el tap sobre un término muestra la definición sin navegar.
+3. **Verificación (8.c)**: decidir si la slide enseña un caso real de test rojo → verde del propio repositorio, o un ejemplo sintético. Con datos reales convence más, pero hay que prepararlo.
+4. **Caducidad de las cifras**: los ejemplos citan versión de herramienta (OpenCode V2) y las referencias llevan `verificado 2026-10-17`. Decidir cada cuánto se revisa —propuesta: **al publicar cada versión mayor**— y qué pasa si una herramienta cambia de nombre o desaparece.

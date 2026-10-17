@@ -1,0 +1,21 @@
+{
+  "name": "desarrollo-con-ia",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Presentación «Desarrollo con IA»: un único HTML autocontenido, con dos ritmos de lectura.",
+  "license": "MIT",
+  "author": "Alfredo González Martínez",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "build:dev": "node scripts/build.mjs --no-minify",
+    "check": "node scripts/check-layout.mjs",
+    "preview": "node scripts/build.mjs --no-minify && python3 -m http.server 8811 --directory dist",
+    "pack": "node scripts/build.mjs && brotli -q 11 -f -k dist/index.html && gzip -9 -f -k dist/index.html && ls -lh dist",
+    "fonts": "bash scripts/subset-fonts.sh"
+  },
+  "devDependencies": {
+    "html-minifier-terser": "^7.2.0",
+    "playwright": "^1.64.1"
+  }
+}

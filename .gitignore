@@ -1,0 +1,9 @@
+# Artefacto generado por `npm run build` (no se versiona: se reconstruye)
+dist/
+
+# Dependencias
+node_modules/
+
+# Ruido del sistema
+.DS_Store
+Thumbs.db
