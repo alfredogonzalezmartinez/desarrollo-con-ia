@@ -80,6 +80,7 @@ la carpeta de salida.
 ```
 src/index.html            # LA FUENTE: las 32 slides, el CSS y el JS
 src/assets/fonts/         # IBM Plex recortada a los caracteres del deck (7 woff2)
+src/assets/icons/         # logos de la fila de proveedores (SVGL) + PROCEDENCIA.md
 scripts/build.mjs         # compila y valida (red, anclas, ids duplicados)
 scripts/check-layout.mjs  # mide la maquetación con Chromium
 scripts/shots.mjs         # capturas de revisión
@@ -117,6 +118,28 @@ crean por JS a partir de los `data-*` de la `<section>`.
   la pestaña, `data-chapter` el rótulo de la barra de estado, `data-title` el
   nombre en el mapa.
 - La **portada** (`data-ch="00"`) es la única que enseña versión y fecha.
+
+### La línea de tiempo de la slide 02
+
+Las paradas son `<div class="evo-node">` dentro de `.evo-tl`, en **orden
+cronológico**, y el eje es una sola línea horizontal. Los rótulos (año y nombre)
+**alternan arriba y abajo** del eje (`:nth-child(odd)` / `:nth-child(even)`): eso
+es lo que permite que las trece paradas quepan sin que los textos se pisen, así
+que si añades o quitas una, **los rótulos siguientes cambian de lado** y hay que
+volver a medir.
+
+Dos cosas dependen de cuántas paradas haya: la rejilla es `repeat(N, 1fr)` —hoy,
+`repeat(13, 1fr)`— y las fichas de la **segunda** y la **penúltima** se alinean
+a los bordes, como la primera y la última, para no salirse de la ventana. Todo
+está en las reglas `.evo-*` del CSS.
+
+### Los enlaces externos se abren en una pestaña nueva
+
+También por JS: al cargar, el script marca `target="_blank"` y
+`rel="noopener noreferrer"` en todo `<a href="http…">`. **No hace falta
+escribirlo en el HTML** —y no se escribe—, así que cualquier enlace que se añada
+hereda el comportamiento. Los enlaces internos (glosario, mapa) siguen
+abriéndose en la misma pestaña.
 
 ### El glosario tiene tres piezas que deben cuadrar
 
@@ -251,6 +274,22 @@ y Mono Regular/Medium/SemiBold). El juego vive en la variable `UNICODES` de
 **Si el deck estrena un carácter que no está en ese juego**, no aparecerá: hay
 que añadirlo a `UNICODES` y ejecutar `npm run fonts` (que descarga IBM Plex de
 Google Fonts y regenera los subconjuntos). El script avisa de esta regla.
+
+## Iconos
+
+La fila de proveedores del capítulo 2 usa **logotipos de verdad**, y salen de
+**SVGL** (<https://svgl.app/>, repositorio `pheralb/svgl`): se copian **sin
+retocar** a `src/assets/icons/` y el build los embebe como data URI, así que el
+deck sigue funcionando sin conexión.
+
+- **Los ficheros conservan su nombre original, y ahí manda SVGL**: el sufijo
+  `-dark` / `_dark` marca la variante **para fondo oscuro** (la que usamos),
+  **no** que el icono sea oscuro.
+- **Hermes Agent no está en SVGL**: su logo sale del favicon oficial de
+  `hermes-agent.nousresearch.com` (ojo: `hermes-agent.org`, sin
+  `nousresearch`, es otro sitio).
+- Fichero a fichero, licencia y el paso a paso para añadir uno:
+  **`src/assets/icons/PROCEDENCIA.md`**.
 
 ## Versionado
 
