@@ -1,6 +1,6 @@
 # Presentación: Desarrollo con IA
 
-> **Documento de definición (v1.0 — definición cerrada, lista para construir el deck)**
+> **Documento de definición (v1.1 — definición cerrada, deck construido y con harness de mantenimiento)**
 > Este es el documento vivo. `definicion.md` es una copia del borrador original; la fuente de verdad es este fichero.
 > Última actualización: 2026-10-17
 
@@ -39,18 +39,40 @@
 - **Estructura de ficheros** (implementada):
 
   ```
+  AGENTS.md                 # guía de trabajo para agentes: reglas, comandos, mapa
+  CLAUDE.md                 # puente para Claude Code (apunta a AGENTS.md)
+  .claude/skills/mantener-deck/  # skill con el procedimiento de mantenimiento
   src/index.html            # la fuente: aquí se edita todo
   src/assets/fonts/         # IBM Plex recortada a los caracteres del deck
   scripts/build.mjs         # compila src → dist (embebe fuentes, minifica, comprueba)
   scripts/check-layout.mjs  # mide la maquetación de las 32 slides con Chromium
+  scripts/shots.mjs         # capturas de las 32 slides, para revisar
   scripts/subset-fonts.sh   # regenera las fuentes (rara vez hace falta)
   docs/definicion.md        # este documento
   dist/index.html           # generado por el build; no se versiona
+  shots/                    # capturas de revisión; no se versiona
   ```
 
   El deck final sigue siendo **un solo fichero**: `dist/index.html`. Lo que hay
   separado es la *fuente*. Al ser autocontenido, los diagramas son **CSS y SVG
   inline** y las fuentes van embebidas como *data URI*.
+
+- **Harness del proyecto** (implementado): lo que hace falta para que el deck se
+  pueda mantener dentro de seis meses, por una persona o por un agente.
+  - **`AGENTS.md`** (raíz): las reglas de oro —ninguna slide se recorta, el deck
+    funciona sin conexión, solo glifos que IBM Plex trae, la versión la marca el
+    mantenedor—, los comandos, el mapa de ficheros y las trampas conocidas.
+    OpenCode V2 lee solo `AGENTS.md`, así que **`CLAUDE.md` es un puente de dos
+    líneas** que apunta a él para Claude Code: una sola copia, sin duplicar.
+  - **Skill `mantener-deck`** (`.claude/skills/mantener-deck/SKILL.md`): el
+    procedimiento paso a paso y las tareas típicas (cambiar una slide, añadir
+    una, tocar el glosario, comprimir una slide que se sale, un glifo nuevo).
+    Vive en `.claude/skills` a propósito: **la descubren OpenCode (por
+    compatibilidad) y Claude Code (de forma nativa), sin copias**.
+  - **Comprobaciones ejecutables**: `npm run build` (falla si hay dependencia de
+    red, ancla rota o id duplicado), `npm run check` (encaje de las 32 slides) y
+    `npm run shots` (capturas para revisar). Las reglas que se pueden comprobar
+    con un comando no dependen de que alguien se acuerde.
 
 - **Encaje a 1920×1080** (implementado): como cada slide es una ventana con
   `overflow: hidden`, lo que no cabe se recorta en silencio. `npm run check` abre
@@ -63,10 +85,10 @@
 - **Material gráfico: todo recreado** (decisión tomada). Las terminales se recrean con CSS/SVG —es lo que ya hace el estilo «Consola»— y las **salidas reales se pegan como texto**, no como imagen. Motivos: pesa 0 KB, se ve nítido a cualquier tamaño, se puede anotar (resaltar la línea que importa) y no envejece mal cuando cambie la interfaz. **No hay capturas PNG.**
 
 - **Versionado y fecha** (el deck es material vivo, no una ponencia):
-  - La **portada** lleva `vX.Y · actualizado AAAA-MM-DD`. La fecha cambia **siempre** que cambie el contenido; es lo que permite usar el deck meses después sabiendo de cuándo es.
+  - **La versión la marca el mantenedor**, no se sube sola. Empezamos en **`v0`**; pasará a **`v1` cuando el material se publique**. A partir de ahí, el mantenedor decide cuándo sube (mayor si cambia la estructura o se publica una revisión, menor si solo cambia contenido o estilo). Un agente **propone**, no versiona por su cuenta.
+  - La **fecha de actualización** sí sigue al contenido: se toca cada vez que cambie algo visible. Es lo que permite usar el deck meses después sabiendo de cuándo es.
   - Cada apartado con documentación externa lleva su **`verificado AAAA-MM-DD`** en las referencias (§5), para distinguir lo comprobado de lo heredado.
   - La última slide (Referencias) repite versión, fecha y enlace al repositorio: es el punto de entrada para actualizar.
-  - Criterio de versión: **mayor** si cambia la estructura (slides que entran o salen), **menor** si solo cambia contenido o estilo.
 
 - **Convenciones**:
   - Frases cortas. Una idea por slide. Sin párrafos largos.
@@ -298,7 +320,7 @@ Las definiciones de la columna *breve* son las que aparecen en el **tooltip** y 
 - **Contenido**:
   - Título: **Desarrollo con IA**
   - Subtítulo: *Del chat al agente*
-  - **Versión y fecha**: `v1.1 · actualizado 2026-10-17` — sin autor y sin evento (decisión tomada: es un material para compartir y actualizar, no una ponencia concreta).
+  - **Versión y fecha**: `v0 · actualizado 2026-10-18` — sin autor y sin evento (decisión tomada: es un material para compartir y actualizar, no una ponencia concreta). La versión la marca el mantenedor; la fecha sigue al contenido.
   - Referencia al repositorio: <https://github.com/alfredogonzalezmartinez/desarrollo-con-ia>
   - **Ayuda de navegación en la propia portada** (una línea, en tono gris): `← → avanzar · c modo charla · m mapa · hover sobre un término = definición`.
   - Cifras del deck: **32 slides** y **17 de profundización**, marcadas `▸`.

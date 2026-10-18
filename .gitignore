@@ -1,6 +1,9 @@
 # Artefacto generado por `npm run build` (no se versiona: se reconstruye)
 dist/
 
+# Capturas de revisión (`npm run shots`)
+shots/
+
 # Dependencias
 node_modules/
 

@@ -41,13 +41,23 @@ resalta el término.
 ## Estructura del repositorio
 
 ```
+AGENTS.md                 guía de trabajo para agentes: reglas, comandos, mapa
+CLAUDE.md                 puente para Claude Code (apunta a AGENTS.md)
+.claude/skills/mantener-deck/   skill con el procedimiento de mantenimiento
 src/index.html            la fuente: aquí se edita todo
 src/assets/fonts/         IBM Plex recortada a los caracteres del deck
 scripts/build.mjs         compila src → dist
+scripts/check-layout.mjs  mide el encaje de las 32 slides con Chromium
+scripts/shots.mjs         capturas de las slides, para revisar
 scripts/subset-fonts.sh   regenera las fuentes (rara vez hace falta)
 docs/definicion.md        qué lleva cada slide y por qué: el documento de definición
 dist/index.html           generado por el build, no se versiona
+shots/                    capturas de revisión, no se versiona
 ```
+
+Si vas a trabajar en el deck (tú o un agente), empieza por **`AGENTS.md`**: ahí
+están las reglas que no se pueden romper y las trampas conocidas. La skill
+`mantener-deck` empaqueta el procedimiento para que un agente lo siga solo.
 
 ## Trabajar en él
 
@@ -56,6 +66,7 @@ npm install
 npm run build      # dist/index.html: un solo fichero, sin dependencias de red
 npm run build:dev  # lo mismo pero sin minificar, para depurar
 npm run check      # mide la maquetación de las 32 slides con un navegador real
+npm run shots      # capturas de las 32 slides en shots/ (para revisar)
 npm run preview    # compila y sirve en http://127.0.0.1:8811
 npm run pack       # además genera .gz y .br, para compartirlo comprimido
 ```
@@ -117,11 +128,10 @@ El deck es material vivo, no la grabación de una charla. Por eso lleva versión
 fecha visibles, y una convención para que dentro de seis meses nadie tenga que
 adivinar de cuándo es:
 
-- La **portada** y la última slide llevan `vX.Y · actualizado AAAA-MM-DD`. La
-  fecha cambia siempre que cambie el contenido.
+- La **portada** y la última slide llevan la versión y la fecha (`v0 · actualizado AAAA-MM-DD`).
+- **La versión la marca el mantenedor**: un agente propone, no sube la versión por su cuenta. Estamos en `v0`; pasará a `v1` al publicar.
+- La **fecha de actualización** sí sigue al contenido: cambia siempre que cambie algo visible.
 - Cada apartado con documentación externa lleva su `verificado AAAA-MM-DD`.
-- **Versión mayor** si cambia la estructura (entran o salen slides);
-  **menor** si solo cambia el contenido o el estilo.
 - Si una herramienta cambia de nombre o desaparece, se corrige en la slide, en
   `docs/definicion.md` y en las referencias; el historial de git guarda la versión anterior.
 
