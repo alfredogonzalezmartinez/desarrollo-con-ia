@@ -295,9 +295,9 @@ deck sigue funcionando sin conexión.
 
 - La versión vive en el objeto `DECK` del script (`version`) y se repite, a mano,
   en el pie de la última slide (Referencias).
-- **Empezamos en `v0`.** El mantenedor marcará **`v1` cuando el material se
-  publique**, y decidirá las siguientes. Un agente **no sube la versión** salvo
-  que se lo pidan de forma explícita.
+- **Empezamos en `v0`**; la primera publicación en GitHub Pages es la **`v0.1`**
+  (2026-10-18), y el mantenedor decidirá las siguientes. Un agente **no sube la
+  versión** salvo que se lo pidan de forma explícita.
 - La **fecha de actualización** (`date` en `DECK`) sí sigue al contenido: se
   toca cada vez que cambie algo visible.
 - Las referencias llevan su `verificado AAAA-MM-DD` aparte, que solo cambia

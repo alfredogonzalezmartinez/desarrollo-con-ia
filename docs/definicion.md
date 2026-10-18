@@ -116,7 +116,7 @@
 - **Material gráfico: todo recreado** (decisión tomada). Las terminales se recrean con CSS/SVG —es lo que ya hace el estilo «Consola»— y las **salidas reales se pegan como texto**, no como imagen. Motivos: pesa 0 KB, se ve nítido a cualquier tamaño, se puede anotar (resaltar la línea que importa) y no envejece mal cuando cambie la interfaz. **No hay capturas PNG.**
 
 - **Versionado y fecha** (el deck es material vivo, no una ponencia):
-  - **La versión la marca el mantenedor**, no se sube sola. Empezamos en **`v0`**; pasará a **`v1` cuando el material se publique**. A partir de ahí, el mantenedor decide cuándo sube (mayor si cambia la estructura o se publica una revisión, menor si solo cambia contenido o estilo). Un agente **propone**, no versiona por su cuenta.
+  - **La versión la marca el mantenedor**, no se sube sola. Empezamos en **`v0`**; la **primera publicación** (GitHub Pages, 2026-10-18) es la **`v0.1`**. A partir de ahí el mantenedor decide cuándo sube (mayor si cambia la estructura o se publica una revisión, menor si solo cambia contenido o estilo). Un agente **propone**, no versiona por su cuenta.
   - La **fecha de actualización** sí sigue al contenido: se toca cada vez que cambie algo visible. Es lo que permite usar el deck meses después sabiendo de cuándo es.
   - Cada apartado con documentación externa lleva su **`verificado AAAA-MM-DD`** en las referencias (§5), para distinguir lo comprobado de lo heredado.
   - La última slide (Referencias) repite versión, fecha y enlace al repositorio: es el punto de entrada para actualizar.
@@ -356,7 +356,7 @@ Las definiciones de la columna *breve* son las que aparecen en el **tooltip** y 
 - **Contenido**:
   - Título: **Desarrollo con IA**
   - Subtítulo: *Del chat al agente*
-  - **Versión y fecha**: `v0 · actualizado 2026-10-18` — sin autor y sin evento (decisión tomada: es un material para compartir y actualizar, no una ponencia concreta). La versión la marca el mantenedor; la fecha sigue al contenido.
+  - **Versión y fecha**: `v0.1 · actualizado 2026-10-18` — sin autor y sin evento (decisión tomada: es un material para compartir y actualizar, no una ponencia concreta). La versión la marca el mantenedor; la fecha sigue al contenido.
   - Referencia al repositorio: <https://github.com/alfredogonzalezmartinez/desarrollo-con-ia>
   - **Ayuda de navegación en la propia portada** (una línea, en tono gris): `← → avanzar · c modo charla · m mapa · hover sobre un término = definición`.
   - Cifras del deck: **32 slides** y **18 de profundización**, marcadas `▸`.
@@ -832,7 +832,7 @@ Las **dos** filas de abajo funcionan igual, y comparten la misma ficha flotante:
 - Herdr — <https://herdr.dev/>
 - Orca — <https://www.onorca.dev/>
 
-> Verificación de enlaces: completa el **2026-10-18** — 84 enlaces (los 77 únicos del deck más los que solo están en este documento), más los **nueve que trajo la línea de tiempo ampliada** (Midjourney, Stable Diffusion, GPT-4, Llama, `llama.cpp`, o1, MCP, System One y `typesafe.ai`), comprobados el mismo día: responden todos menos el del repositorio (`github.com/alfredogonzalezmartinez/desarrollo-con-ia`, que da **404 porque aún no está publicado**). Los 403 de `chatgpt.com`, `claude.ai` y `openai.com/codex` son protección antibots, no enlaces roscos.
+> Verificación de enlaces: completa el **2026-10-18** — 84 enlaces (los 77 únicos del deck más los que solo están en este documento), más los **nueve que trajo la línea de tiempo ampliada** (Midjourney, Stable Diffusion, GPT-4, Llama, `llama.cpp`, o1, MCP, System One y `typesafe.ai`), comprobados el mismo día: responden todos, incluido el del repositorio (`github.com/alfredogonzalezmartinez/desarrollo-con-ia`), que entonces daba **404 porque aún no estaba publicado** y hoy ya es público. Los 403 de `chatgpt.com`, `claude.ai` y `openai.com/codex` son protección antibots, no enlaces roscos.
 >
 > Esta sección es también la **última slide** del deck: allí aparecen la versión, la fecha de actualización y el enlace al repositorio, para que el material se pueda retomar y actualizar sin buscar nada.
 

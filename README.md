@@ -137,8 +137,8 @@ El deck es material vivo, no la grabación de una charla. Por eso lleva versión
 fecha visibles, y una convención para que dentro de seis meses nadie tenga que
 adivinar de cuándo es:
 
-- La **portada** y la última slide llevan la versión y la fecha (`v0 · actualizado AAAA-MM-DD`).
-- **La versión la marca el mantenedor**: un agente propone, no sube la versión por su cuenta. Estamos en `v0`; pasará a `v1` al publicar.
+- La **portada** y la última slide llevan la versión y la fecha (`v0.1 · actualizado AAAA-MM-DD`).
+- **La versión la marca el mantenedor**: un agente propone, no sube la versión por su cuenta. La primera publicación en GitHub Pages es la `v0.1` (2026-10-18); las siguientes las decide el mantenedor.
 - La **fecha de actualización** sí sigue al contenido: cambia siempre que cambie algo visible.
 - Cada apartado con documentación externa lleva su `verificado AAAA-MM-DD`.
 - Si una herramienta cambia de nombre o desaparece, se corrige en la slide, en
