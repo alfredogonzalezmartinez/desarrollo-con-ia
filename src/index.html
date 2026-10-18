@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Desarrollo con IA — del chat al agente</title>
-<meta name="description" content="Presentación sobre desarrollo de software con agentes: modelo, contexto, skills, MCP, subagentes, flujos de trabajo y orquestación. 32 slides con ejemplos de OpenCode y Claude Code.">
+<meta name="description" content="Presentación sobre desarrollo de software con agentes: modelo, contexto, skills, MCP, subagentes, flujos de trabajo y orquestación. 31 slides con ejemplos de OpenCode y Claude Code.">
 <meta name="author" content="Alfredo González Martínez">
 <meta name="color-scheme" content="dark">
 <style>
@@ -210,6 +210,72 @@ h2.h-page .n { font-family: "IBM Plex Mono", monospace; color: var(--green); fon
 .rule { font-size: 34px; font-weight: 600; line-height: 1.3; letter-spacing: -.01em; margin: 0; }
 .rule .q { color: var(--amber); }
 
+/* --- evolución: chat vs agente, proveedores y línea de tiempo --- */
+.evo-top { display: grid; grid-template-columns: 1fr 84px 1fr; align-items: stretch; }
+.evo-col { background: #080b11; border: 1px solid var(--line); border-radius: 10px; padding: 20px 26px 22px; }
+.evo-col.on { border-color: rgba(125,211,160,.45); }
+.evo-h { font-family: "IBM Plex Mono", monospace; font-size: 17px; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
+.evo-col.on .evo-h { color: var(--green); }
+.evo-lead { margin: 6px 0 0; font-size: 31px; font-weight: 600; line-height: 1.2; letter-spacing: -.01em; color: var(--text); }
+.evo-col.on .evo-lead { color: var(--green); }
+.evo-col p { margin: 8px 0 0; font-size: 22px; line-height: 1.4; color: var(--muted); }
+.evo-col p b { color: var(--text); }
+.evo-sep { display: flex; align-items: center; justify-content: center; }
+.evo-sep .chev { width: 16px; height: 16px; border-width: 3px; }
+
+/* las dos filas de abajo: proveedores y línea de tiempo */
+.evo-row { margin-top: 22px; }
+.evo-rowlabel { font-family: "IBM Plex Mono", monospace; font-size: 15px; letter-spacing: .14em; text-transform: uppercase; color: var(--dim); margin-bottom: 10px; }
+
+/* proveedores: un icono por casa */
+.evo-tools { display: grid; grid-template-columns: repeat(8, 1fr); gap: 8px; }
+.tool { position: relative; display: flex; flex-direction: column; align-items: center; gap: 7px; padding: 9px 6px 8px; border: 1px solid transparent; border-radius: 10px; cursor: help; outline: none; }
+.tool img { width: 40px; height: 40px; object-fit: contain; opacity: .75; transition: opacity .15s; }
+.tool:hover img, .tool:focus img, .tool.on img { opacity: 1; }
+.tool:hover, .tool:focus, .tool.on { border-color: var(--line2); background: rgba(255,255,255,.02); }
+.tool-name { font-family: "IBM Plex Mono", monospace; font-size: 15px; color: var(--muted); }
+.tool:hover .tool-name, .tool.on .tool-name { color: var(--text); }
+
+/* línea de tiempo */
+.evo-tl { position: relative; display: grid; grid-template-columns: repeat(13, 1fr); height: 118px; }
+.evo-tl::before { content: ""; position: absolute; left: 1%; right: 1%; top: 59px; height: 2px; background: linear-gradient(90deg, var(--line2), rgba(121,192,255,.5)); }
+.evo-node { position: relative; text-align: center; cursor: help; outline: none; }
+.evo-dot { position: absolute; top: 52px; left: 50%; margin-left: -7px; width: 14px; height: 14px; border-radius: 50%; background: var(--blue); box-shadow: 0 0 0 5px var(--slide-bg); }
+.evo-node:hover .evo-dot, .evo-node:focus .evo-dot, .evo-node.on .evo-dot { box-shadow: 0 0 0 5px var(--slide-bg), 0 0 0 8px rgba(121,192,255,.28); }
+.evo-year, .evo-name { position: absolute; left: 50%; transform: translateX(-50%); width: max-content; max-width: 228px; }
+.evo-year { font-family: "IBM Plex Mono", monospace; font-size: 18px; line-height: 1; color: var(--blue); }
+.evo-name { font-size: 19px; line-height: 1.25; color: var(--text); }
+/* la línea es el eje: el rótulo de una parada va encima y el de la siguiente, debajo,
+   así caben trece paradas sin que los textos se pisen */
+.evo-node:nth-child(odd) .evo-year { top: 2px; }
+.evo-node:nth-child(odd) .evo-name { top: 22px; }
+.evo-node:nth-child(even) .evo-year { top: 72px; }
+.evo-node:nth-child(even) .evo-name { top: 92px; }
+
+/* la ficha que sale al pasar el ratón: la comparten proveedores y paradas */
+.evo-tip { position: absolute; left: 50%; margin-left: -264px; bottom: calc(100% + 14px); width: 528px; padding: 18px 20px; background: #161b25; border: 1px solid rgba(121,192,255,.45); border-radius: 10px; box-shadow: 0 24px 50px rgba(0,0,0,.55); text-align: left; opacity: 0; pointer-events: none; transition: opacity .18s ease; z-index: 7; }
+.evo-tip .tt { font-family: "IBM Plex Mono", monospace; font-size: 17px; color: var(--blue); margin-bottom: 8px; }
+.evo-tip p { margin: 0 0 8px; font-size: 19px; line-height: 1.4; color: var(--muted); }
+.evo-tip p b { color: var(--text); }
+.evo-tip .why { color: var(--text); }
+.evo-tip .why b { color: var(--amber); }
+.evo-tip .lnk { margin: 10px 0 0; font-size: 17px; }
+.evo-tip a { color: var(--blue); text-decoration: none; border-bottom: 1px solid rgba(121,192,255,.4); }
+.evo-tip a:hover { border-bottom-color: var(--blue); }
+.evo-node:hover .evo-tip, .evo-node:focus .evo-tip, .evo-node:focus-within .evo-tip, .evo-node.on .evo-tip,
+.tool:hover .evo-tip, .tool:focus .evo-tip, .tool:focus-within .evo-tip, .tool.on .evo-tip { opacity: 1; pointer-events: auto; }
+.evo-node:first-child .evo-tip, .tool:first-child .evo-tip { left: 0; margin-left: 0; }
+.evo-node:last-child .evo-tip, .tool:last-child .evo-tip { left: auto; right: 0; margin-left: 0; }
+/* la fila lleva trece paradas: la ficha de la segunda y la de la penúltima se saldrían de la ventana */
+.evo-node:nth-child(-n+2) .evo-tip { left: 0; margin-left: 0; }
+.evo-node:nth-child(n+12) .evo-tip { left: auto; right: 0; margin-left: 0; }
+/* la de un proveedor es más corta: no lleva «por qué importa» */
+.tool .evo-tip { width: 430px; margin-left: -215px; padding: 16px 18px; }
+.tool:first-child .evo-tip, .tool:last-child .evo-tip { margin-left: 0; }
+.tool .evo-tip .tt { font-size: 16px; margin-bottom: 6px; }
+.tool .evo-tip p { font-size: 18px; margin-bottom: 6px; }
+.tool .evo-tip .lnk { font-size: 16px; margin-top: 8px; }
+
 /* --- listas --- */
 .ticks { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 14px; }
 .ticks li { display: flex; gap: 14px; align-items: baseline; font-size: 21px; line-height: 1.4; }
@@ -312,11 +378,31 @@ a { color: var(--blue); }
 #s-api .mt32 { margin-top: 16px; }
 #s-api .rule { font-size: 23px !important; }
 #s-api table.cmp { font-size: 19px; }
+#s-decision .mt24 { margin-top: 16px; }
+#s-decision .lede { font-size: 25px !important; }
+#s-decision table.cmp { font-size: 19px; }
+#s-decision table.cmp td, #s-decision table.cmp th { padding: 12px 20px; }
+#s-decision table.cmp td:first-child, #s-decision table.cmp th:first-child { width: 130px; }
+#s-decision .split .panel { padding: 16px 22px; }
+#s-decision pre.code { font-size: 16px !important; }
 #s-catalogo .mt32 { margin-top: 14px; }
 #s-catalogo table.cmp { font-size: 18px !important; }
 #s-catalogo .cmp td, #s-catalogo .cmp th { padding: 9px 16px; }
 #s-catalogo .cmp .sub { font-size: 15px; margin-top: 2px; }
-#s-glosario .mt32 { margin-top: 20px; }
+#s-glosario .mt32 { margin-top: 8px; }
+/* el glosario es la slide más tupida: con 34 términos, la última definición de
+   cada columna quedaba a 7 px de la barra de estado, que es opaca y la tapa.
+   Se gana aire moviendo solo el ritmo (huecos y separación entre líneas), nunca
+   el tamaño de la letra: así aguanta también si el navegador cambia las
+   métricas de la fuente o aplica un zoom. */
+#s-glosario .gloss .gitem { margin-bottom: 6px; }
+#s-glosario .gloss h4 { margin-bottom: 6px; }
+#s-glosario .gloss .gterm { line-height: 1.15; }
+#s-glosario .gloss .gdef { line-height: 1.2; }
+/* slide 02: el aire sobrante se reparte entre las tres bandas y así la línea
+   de tiempo queda pegada al pie de la ventana */
+#s-agente .win-body { display: flex; flex-direction: column; }
+#s-agente .evo-row { margin-top: auto; }
 </style>
 </head>
 <body>
@@ -327,7 +413,7 @@ a { color: var(--blue); }
 <section class="slide" id="s-portada" data-ch="00" data-file="00-portada" data-kind="main" data-chapter="Portada">
     <div class="win">
         <div class="win-body">
-            <div class="prompt reveal d1"><span class="chev"></span><span class="cmd">presentar desarrollo-con-ia --slides 32 --profundizacion 17</span><span class="cursor"></span></div>
+            <div class="prompt reveal d1"><span class="chev"></span><span class="cmd">presentar desarrollo-con-ia --slides 31 --profundizacion 17</span><span class="cursor"></span></div>
             <h1 class="h-display reveal d2 mt32">Desarrollo<br>con <span class="accent">IA</span></h1>
             <p class="lede reveal d3 mt32">Del chat al agente: modelo, contexto, reglas, skills, MCP y flujos de trabajo. Ocho bloques, con diecisiete slides de profundización para quien quiera más.</p>
             <div class="chips reveal d4">
@@ -342,103 +428,275 @@ a { color: var(--blue); }
     </div>
 </section>
 
-<!-- ═══ 02 · ¿Qué es un agente? ════════════════════════════════════════════ -->
-<section class="slide" id="s-agente" data-ch="01" data-file="01-agente" data-kind="main" data-chapter="Fundamentos" data-title="¿Qué es un agente?">
+<!-- ═══ 02 · Evolución: del chat al agente ════════════════════════════════ -->
+<section class="slide" id="s-agente" data-ch="01" data-file="01-agente" data-kind="main" data-chapter="Fundamentos" data-title="Evolución: del chat al agente">
     <div class="win">
         <div class="win-body">
             <span class="eyebrow reveal d1"><span class="sq"></span> Bloque 01 · Fundamentos</span>
-            <h2 class="h-page reveal d2"><span class="n">01</span>¿Qué es un agente?</h2>
+            <h2 class="h-page reveal d2"><span class="n">01</span>Evolución: del chat al agente</h2>
 
-            <div class="split mt44">
-                <div>
-                    <p class="lede reveal d3" style="font-size:29px">Un modelo solo genera texto. Un <b>agente</b> además <b>actúa</b>: lee ficheros, ejecuta comandos, edita código y comprueba el resultado. Y vuelve a empezar.</p>
-                    <p class="lede reveal d4 mt24" style="font-size:29px">Todo lo demás — contexto, reglas, skills, MCP, subagentes — son piezas que se enchufan a ese bucle.</p>
-                    <div class="chips reveal d5">
-                        <span class="chip">leer</span>
-                        <span class="chip">editar</span>
-                        <span class="chip">ejecutar</span>
-                        <span class="chip">verificar</span>
+            <div class="evo-top reveal d3 mt32">
+                <div class="evo-col">
+                    <div class="evo-h">Chat</div>
+                    <p class="evo-lead">Responde y se para.</p>
+                    <p>Solo genera texto. La respuesta hay que copiarla, integrarla y comprobarla por tu cuenta.</p>
+                </div>
+                <div class="evo-sep"><span class="chev"></span></div>
+                <div class="evo-col on">
+                    <div class="evo-h">Agente</div>
+                    <p class="evo-lead">Actúa hasta terminar.</p>
+                    <p>El modelo dispone de <span class="term" data-term="herramienta">herramientas<a class="term-ref" href="#glosario-herramienta" title="Ver en el glosario"></a></span> que le permiten leer, editar y ejecutar por sí mismo; comprueba el resultado y continúa hasta terminar.</p>
+                </div>
+            </div>
+
+            <div class="evo-row reveal d4">
+                <div class="evo-rowlabel">Quién lo ofrece hoy</div>
+                <div class="evo-tools">
+                    <div class="tool" tabindex="0">
+                        <img src="assets/icons/openai_dark.svg" alt="">
+                        <span class="tool-name">OpenAI</span>
+                        <div class="evo-tip">
+                            <div class="tt">OpenAI</div>
+                            <p>Popularizó los modelos de lenguaje con ChatGPT y hoy ofrece Codex, su agente de código: chat y agente sobre el mismo modelo.</p>
+                            <p class="lnk"><a href="https://chatgpt.com/">ChatGPT</a> · <a href="https://openai.com/codex/">Codex</a></p>
+                        </div>
+                    </div>
+                    <div class="tool" tabindex="0">
+                        <img src="assets/icons/copilot_dark.svg" alt="">
+                        <span class="tool-name">Copilot</span>
+                        <div class="evo-tip">
+                            <div class="tt">GitHub Copilot</div>
+                            <p>El asistente de GitHub: sugiere mientras escribes y, como agente, toma una incidencia y abre la pull request.</p>
+                            <p class="lnk"><a href="https://github.com/features/copilot">Copilot</a> · <a href="https://docs.github.com/en/copilot/how-tos/agents/copilot-coding-agent">agente</a></p>
+                        </div>
+                    </div>
+                    <div class="tool" tabindex="0">
+                        <img src="assets/icons/claude-ai-icon.svg" alt="">
+                        <span class="tool-name">Claude</span>
+                        <div class="evo-tip">
+                            <div class="tt">Anthropic</div>
+                            <p>Claude responde en el navegador y Claude Code trabaja en tu terminal; fue el agente que estableció el modo de trabajo que hoy siguen los demás.</p>
+                            <p class="lnk"><a href="https://claude.ai/">Claude</a> · <a href="https://code.claude.com/docs/">Claude Code</a></p>
+                        </div>
+                    </div>
+                    <div class="tool" tabindex="0">
+                        <img src="assets/icons/gemini.svg" alt="">
+                        <span class="tool-name">Gemini</span>
+                        <div class="evo-tip">
+                            <div class="tt">Google</div>
+                            <p>Gemini responde en el chat y Antigravity es su entorno con agentes que trabajan en paralelo.</p>
+                            <p class="lnk"><a href="https://gemini.google.com/">Gemini</a> · <a href="https://antigravity.google/">Antigravity</a></p>
+                        </div>
+                    </div>
+                    <div class="tool" tabindex="0">
+                        <img src="assets/icons/opencode-dark.svg" alt="">
+                        <span class="tool-name">OpenCode</span>
+                        <div class="evo-tip">
+                            <div class="tt">OpenCode</div>
+                            <p>Agente de código abierto: se conecta a cualquier modelo, con suscripción o con la API que tú pagues. Además, ofrece <b>modelos gratuitos</b> y permite usar <b>modelos locales</b> en tu máquina.</p>
+                            <p class="lnk"><a href="https://opencode.ai/">opencode.ai</a></p>
+                        </div>
+                    </div>
+                    <div class="tool" tabindex="0">
+                        <img src="assets/icons/hermes-agent.png" alt="">
+                        <span class="tool-name">Hermes</span>
+                        <div class="evo-tip">
+                            <div class="tt">Hermes Agent · Nous Research</div>
+                            <p>Agente de código abierto que se ejecuta en tu máquina: recuerda tus proyectos, escribe sus propias skills y responde por Telegram, Discord o Slack.</p>
+                            <p class="lnk"><a href="https://hermes-agent.nousresearch.com/">hermes-agent.nousresearch.com</a></p>
+                        </div>
+                    </div>
+                    <div class="tool" tabindex="0">
+                        <img src="assets/icons/deepseek.svg" alt="">
+                        <span class="tool-name">DeepSeek</span>
+                        <div class="evo-tip">
+                            <div class="tt">DeepSeek</div>
+                            <p>Laboratorio chino de <b>modelos abiertos</b>: cualquiera puede descargarlos y ejecutarlos. Su chat es gratuito y <b>DeepSeek Harness</b>, también de código abierto, es su agente.</p>
+                            <p class="lnk"><a href="https://chat.deepseek.com/">chat.deepseek.com</a> · <a href="https://deepseek.com/en/harness/">DeepSeek Harness</a></p>
+                        </div>
+                    </div>
+                    <div class="tool" tabindex="0">
+                        <img src="assets/icons/qwen_dark.svg" alt="">
+                        <span class="tool-name">Qwen</span>
+                        <div class="evo-tip">
+                            <div class="tt">Alibaba</div>
+                            <p>Qwen Chat responde en el navegador y Qwen Code es su agente de terminal; ambos usan el modelo abierto, que puede descargarse.</p>
+                            <p class="lnk"><a href="https://chat.qwen.ai/">Qwen Chat</a> · <a href="https://github.com/QwenLM/qwen-code">Qwen Code</a></p>
+                        </div>
                     </div>
                 </div>
+            </div>
 
-                <div class="layers reveal d4">
-                    <div class="layer lv1"><span class="lname">harness</span><span class="lnote">el bucle: actúa y verifica</span></div>
-                    <div class="layer tree"><span class="gt">├─</span><span class="lname">modelo</span><span class="lnote">razona y genera</span><a class="lx" href="#s-modelos">03 &rarr;</a></div>
-                    <div class="layer tree"><span class="gt">├─</span><span class="lname">prompt</span><span class="lnote">qué debe hacer</span></div>
-                    <div class="layer tree"><span class="gt">├─</span><span class="lname">contexto</span><span class="lnote">qué puede ver</span><a class="lx" href="#s-contexto">04 &rarr;</a></div>
-                    <div class="layer tree"><span class="gt">├─</span><span class="lname">skills</span><span class="lnote">cómo hacerlo bien</span><a class="lx" href="#s-skills">06 &rarr;</a></div>
-                    <div class="layer tree"><span class="gt">├─</span><span class="lname">mcp / cli</span><span class="lnote">con qué se conecta</span><a class="lx" href="#s-mcp">07 &rarr;</a></div>
-                    <div class="layer tree"><span class="gt">└─</span><span class="lname">subagentes</span><span class="lnote">en paralelo</span><a class="lx" href="#s-subagentes">08 &rarr;</a></div>
+            <div class="evo-row reveal d5">
+                <div class="evo-rowlabel">Cómo hemos llegado aquí</div>
+                <div class="evo-tl">
+                    <div class="evo-node" tabindex="0">
+                        <span class="evo-dot"></span>
+                        <span class="evo-year">2017</span>
+                        <span class="evo-name">Transformer</span>
+                        <div class="evo-tip">
+                            <div class="tt">2017 · «Attention Is All You Need»</div>
+                            <p>Ocho investigadores de Google publican el <b>Transformer</b>: procesa todo el texto a la vez, en paralelo, y eso permite entrenar a gran escala.</p>
+                            <p>Es la base de todos los modelos de esta línea de tiempo: sin ese artículo no existirían GPT, Claude ni Gemini.</p>
+                            <p class="why"><b>Por qué importa:</b> no es un producto, es el <b>cimiento</b>. Todo esto empezó en un artículo, no en un chatbot.</p>
+                            <p class="lnk"><a href="https://en.wikipedia.org/wiki/Attention_Is_All_You_Need">el paper, en Wikipedia</a></p>
+                        </div>
+                    </div>
+                    <div class="evo-node" tabindex="0">
+                        <span class="evo-dot"></span>
+                        <span class="evo-year">2020</span>
+                        <span class="evo-name">GPT-3</span>
+                        <div class="evo-tip">
+                            <div class="tt">2020 · GPT-3</div>
+                            <p>OpenAI publica <b>GPT-3</b>: escribe, resume y programa sin que nadie lo entrene para esa tarea.</p>
+                            <p>Pero no hay interfaz: se usa por API, resulta caro y solo lo prueban unos pocos equipos.</p>
+                            <p class="why"><b>Por qué importa:</b> demuestra que <b>escalar el modelo funciona</b>. El camino será «más grande», no «más listo».</p>
+                            <p class="lnk"><a href="https://en.wikipedia.org/wiki/GPT-3">Wikipedia</a></p>
+                        </div>
+                    </div>
+                    <div class="evo-node" tabindex="0">
+                        <span class="evo-dot"></span>
+                        <span class="evo-year">jun 2021</span>
+                        <span class="evo-name">Copilot</span>
+                        <div class="evo-tip">
+                            <div class="tt">junio de 2021 · GitHub Copilot</div>
+                            <p><b>Copilot</b> sugiere la línea que estás escribiendo; en 2023, Copilot Chat y Cursor incorporan el chat al editor.</p>
+                            <p>Es el primer uso masivo de un modelo en el trabajo diario, y el primero que genera código que acaba en un repositorio.</p>
+                            <p class="why"><b>Por qué importa:</b> la IA ya escribe código, pero <b>propone</b>: decides tú qué entra.</p>
+                            <p class="lnk"><a href="https://en.wikipedia.org/wiki/GitHub_Copilot">Wikipedia</a></p>
+                        </div>
+                    </div>
+                    <div class="evo-node" tabindex="0">
+                        <span class="evo-dot"></span>
+                        <span class="evo-year">jul 2022</span>
+                        <span class="evo-name">Imagen</span>
+                        <div class="evo-tip">
+                            <div class="tt">julio de 2022 · Midjourney y Stable Diffusion</div>
+                            <p><b>Midjourney</b> abre su beta el 12 de julio de 2022 y <b>Stable Diffusion</b> llega ese mismo año, con los pesos abiertos: se puede descargar y ejecutar en casa.</p>
+                            <p>La ola generativa entra por las imágenes, unos meses antes de que ChatGPT haga lo mismo con el texto.</p>
+                            <p class="why"><b>Por qué importa:</b> el primer uso masivo no fue conversar, fue <b>crear imágenes</b> — y el modelo abierto ya estaba ahí.</p>
+                            <p class="lnk"><a href="https://en.wikipedia.org/wiki/Midjourney">Midjourney</a> · <a href="https://en.wikipedia.org/wiki/Stable_Diffusion">Stable Diffusion</a></p>
+                        </div>
+                    </div>
+                    <div class="evo-node" tabindex="0">
+                        <span class="evo-dot"></span>
+                        <span class="evo-year">nov 2022</span>
+                        <span class="evo-name">ChatGPT</span>
+                        <div class="evo-tip">
+                            <div class="tt">noviembre de 2022 · ChatGPT (GPT-3.5)</div>
+                            <p>Un chat que responde a cualquier pregunta. En semanas lo adoptan millones de personas: la IA sale del laboratorio.</p>
+                            <p>Es la primera vez que sirve para cualquiera, sin manual, y que el coste por respuesta deja de importar.</p>
+                            <p class="why"><b>Por qué importa:</b> pero solo devuelve <b>texto</b>: copiar, integrar y comprobar sigue dependiendo de ti.</p>
+                            <p class="lnk"><a href="https://en.wikipedia.org/wiki/ChatGPT">Wikipedia</a></p>
+                        </div>
+                    </div>
+                    <div class="evo-node" tabindex="0">
+                        <span class="evo-dot"></span>
+                        <span class="evo-year">2023</span>
+                        <span class="evo-name">Herramientas</span>
+                        <div class="evo-tip">
+                            <div class="tt">2023 · GPT-4 y las herramientas</div>
+                            <p><b>GPT-4</b> llega el 14 de marzo. Ese año, los plugins y el <b>function calling</b> permiten al modelo pedir herramientas y recibir su resultado.</p>
+                            <p>Deja de ser un cuadro de texto y pasa a ser algo que actúa sobre otros programas.</p>
+                            <p class="why"><b>Por qué importa:</b> aquí nace el agente. Sin herramientas, un modelo solo escribe; con ellas, <b>hace</b>.</p>
+                            <p class="lnk"><a href="https://en.wikipedia.org/wiki/GPT-4">GPT-4</a></p>
+                        </div>
+                    </div>
+                    <div class="evo-node" tabindex="0">
+                        <span class="evo-dot"></span>
+                        <span class="evo-year">2023</span>
+                        <span class="evo-name">Modelo local</span>
+                        <div class="evo-tip">
+                            <div class="tt">2023 · LLaMA y llama.cpp</div>
+                            <p>Meta publica <b>LLaMA</b> en febrero —al principio solo para investigadores— y <b>llama.cpp</b>, escrito en marzo, consigue ejecutar estos modelos en un ordenador corriente.</p>
+                            <p>De ahí salen Ollama y LM Studio: hoy un modelo cabe en un portátil.</p>
+                            <p class="why"><b>Por qué importa:</b> aparece la otra mitad del mercado. Con un modelo local, <b>tú</b> pones el límite: nada sale de tu máquina.</p>
+                            <p class="lnk"><a href="https://en.wikipedia.org/wiki/Llama_(language_model)">LLaMA</a> · <a href="https://en.wikipedia.org/wiki/Llama.cpp">llama.cpp</a></p>
+                        </div>
+                    </div>
+                    <div class="evo-node" tabindex="0">
+                        <span class="evo-dot"></span>
+                        <span class="evo-year">sep 2024</span>
+                        <span class="evo-name">Razonamiento</span>
+                        <div class="evo-tip">
+                            <div class="tt">septiembre de 2024 · o1</div>
+                            <p>OpenAI presenta <b>o1</b>: antes de responder, el modelo piensa y gasta más cómputo en los problemas difíciles.</p>
+                            <p>La respuesta ya no depende solo del modelo, sino de cuánto esfuerzo le dejas poner.</p>
+                            <p class="why"><b>Por qué importa:</b> aparece un mando nuevo, el <b>esfuerzo</b>: elegir modelo y elegir esfuerzo pasan a ser dos decisiones distintas.</p>
+                            <p class="lnk"><a href="https://en.wikipedia.org/wiki/OpenAI_o1">o1</a></p>
+                        </div>
+                    </div>
+                    <div class="evo-node" tabindex="0">
+                        <span class="evo-dot"></span>
+                        <span class="evo-year">nov 2024</span>
+                        <span class="evo-name">MCP</span>
+                        <div class="evo-tip">
+                            <div class="tt">noviembre de 2024 · Model Context Protocol</div>
+                            <p>Anthropic publica <b>MCP</b>, un estándar para conectar el modelo con herramientas y datos; después lo adoptan OpenAI y Google.</p>
+                            <p>La integración se escribe una vez y sirve para cualquier agente que hable el protocolo.</p>
+                            <p class="why"><b>Por qué importa:</b> las herramientas dejan de ser un añadido de cada producto y pasan a ser un <b>estándar</b>: el capítulo 6 de esta charla.</p>
+                            <p class="lnk"><a href="https://en.wikipedia.org/wiki/Model_Context_Protocol">MCP</a></p>
+                        </div>
+                    </div>
+                    <div class="evo-node" tabindex="0">
+                        <span class="evo-dot"></span>
+                        <span class="evo-year">ene 2025</span>
+                        <span class="evo-name">DeepSeek · Qwen</span>
+                        <div class="evo-tip">
+                            <div class="tt">enero de 2025 · DeepSeek y Qwen</div>
+                            <p><b>DeepSeek-R1</b> (20 de enero) y <b>Qwen</b> llegan con el <b>modelo abierto</b> —cualquiera puede descargarlo y usarlo— y precios muy bajos; la aplicación de DeepSeek es la más descargada en pocos días.</p>
+                            <p>Un laboratorio chino publica su modelo y explica cómo lo ha hecho; modelos que cuestan una fracción igualan a los de siempre.</p>
+                            <p class="why"><b>Por qué importa:</b> el estado del arte deja de ser <b>solo el más caro</b>: se puede ejecutar y ajustar en local.</p>
+                            <p class="lnk"><a href="https://en.wikipedia.org/wiki/DeepSeek_(AI)">DeepSeek</a> · <a href="https://en.wikipedia.org/wiki/Qwen">Qwen</a></p>
+                        </div>
+                    </div>
+                    <div class="evo-node" tabindex="0">
+                        <span class="evo-dot"></span>
+                        <span class="evo-year">2025</span>
+                        <span class="evo-name">Agentes</span>
+                        <div class="evo-tip">
+                            <div class="tt">2025 · los agentes bajan a la terminal</div>
+                            <p><b>Claude Code</b> (febrero) llega primero: no sugiere, <b>actúa</b> —lee, edita, ejecuta y comprueba—. Le siguen Codex (abril), OpenCode y Antigravity (noviembre).</p>
+                            <p>El modelo deja de ser un oráculo al que se pregunta y pasa a ser un colaborador al que se le entrega un objetivo y lo devuelve resuelto.</p>
+                            <p class="why"><b>Por qué importa:</b> aquí empieza esta charla: bucle + herramientas + verificación.</p>
+                            <p class="lnk"><a href="https://en.wikipedia.org/wiki/Claude_(AI)">Claude</a> · <a href="https://en.wikipedia.org/wiki/OpenAI_Codex">Codex</a> · <a href="https://en.wikipedia.org/wiki/OpenCode">OpenCode</a> · <a href="https://en.wikipedia.org/wiki/Google_Antigravity">Antigravity</a></p>
+                        </div>
+                    </div>
+                    <div class="evo-node" tabindex="0">
+                        <span class="evo-dot"></span>
+                        <span class="evo-year">2026</span>
+                        <span class="evo-name">Frontera</span>
+                        <div class="evo-tip">
+                            <div class="tt">2026 · los modelos frontera se igualan</div>
+                            <p><b>GPT-6.1 Sol</b> (29 de septiembre), Gemini 3.5, DeepSeek V4.1 y Qwen3.8 compiten por la primera posición.</p>
+                            <p>Unos publican el modelo y otros lo mantienen cerrado; el precio y la velocidad se separan, mientras la calidad converge.</p>
+                            <p class="why"><b>Por qué importa:</b> cada vez se parecen más. <b>La diferencia la marca el harness, no el modelo.</b></p>
+                            <p class="lnk"><a href="https://en.wikipedia.org/wiki/GPT-6.1">Wikipedia</a></p>
+                        </div>
+                    </div>
+                    <div class="evo-node" tabindex="0">
+                        <span class="evo-dot"></span>
+                        <span class="evo-year">2026</span>
+                        <span class="evo-name">System One</span>
+                        <div class="evo-tip">
+                            <div class="tt">15 de septiembre de 2026 · System One y Jev</div>
+                            <p>TypeSafe AI presenta <b>System One</b>, una clase de modelo que no escribe texto: recibe un estado y preguntas tipadas y devuelve valores y probabilidades que el código usa directamente.</p>
+                            <p>Su fundador trabajó en OpenAI, en los métodos que hicieron útil el chat. <b>Jev 1.14</b> llega el 14 de octubre.</p>
+                            <p class="why"><b>Por qué importa:</b> no todos los modelos son un chat. Algunos están para <b>decidir</b>, con una respuesta que el programa puede comprobar.</p>
+                            <p class="lnk"><a href="https://typesafe.ai/blog/introducing-system-one-models-and-jev">el anuncio</a> · <a href="https://typesafe.ai">typesafe.ai</a></p>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 </section>
-
-<!-- ═══ 03 · Chat vs agente ════════════════════════════════════════════════ -->
-<section class="slide" id="s-chat" data-ch="01" data-file="01-agente" data-kind="main" data-chapter="Fundamentos" data-title="Chat vs agente">
-    <div class="win">
-        <div class="win-body">
-            <span class="eyebrow reveal d1"><span class="sq"></span> Bloque 01 · Fundamentos</span>
-            <h2 class="h-page reveal d2"><span class="n">02</span>Chat vs agente</h2>
-
-            <table class="cmp reveal d3 mt32">
-                <thead>
-                    <tr>
-                        <th></th>
-                        <th>Chat</th>
-                        <th class="oc">Agente</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td>Le das</td>
-                        <td>una pregunta</td>
-                        <td>un <b>objetivo</b></td>
-                    </tr>
-                    <tr>
-                        <td>Obtienes</td>
-                        <td>texto que copias tú<span class="sub">la acción es tuya</span></td>
-                        <td>cambios en tu repositorio<span class="sub">lee, edita y ejecuta por su cuenta</span></td>
-                    </tr>
-                    <tr>
-                        <td>Mira</td>
-                        <td>solo lo que le pegas</td>
-                        <td>tu código, con herramientas<span class="sub">y decide qué necesita leer</span></td>
-                    </tr>
-                    <tr>
-                        <td>Verifica</td>
-                        <td>nada: compruebas tú</td>
-                        <td>ejecuta tests y comandos, y reintenta<span class="sub">hasta que sale o se atasca</span></td>
-                    </tr>
-                </tbody>
-            </table>
-
-            <div class="grid2 reveal d5 mt32">
-                <div class="panel">
-                    <div class="tiny">OpenCode</div>
-                    <div class="code mt8" style="font-size:19px"><span class="b">opencode</span>              <span class="cm"># abre la sesión</span>
-<span class="b">/agents</span>               <span class="cm"># elige agente: `plan` no edita ficheros</span></div>
-                </div>
-                <div class="panel">
-                    <div class="tiny">Claude Code</div>
-                    <div class="code mt8" style="font-size:19px"><span class="b">claude</span>                <span class="cm"># abre la sesión</span>
-<span class="cm">subagentes de fábrica: Explore, Plan (solo lectura),</span>
-<span class="cm">General-purpose (explorar y actuar)</span></div>
-                </div>
-            </div>
-
-            <p class="tiny reveal d6 mt24">La frontera se difumina: los chats también usan herramientas. La distinción útil es <b>objetivo y autonomía</b>, no el producto.</p>
-        </div>
-    </div>
-</section>
-
-<!-- ═══ 04 · Modelos ══════════════════════════════════════════════════════ -->
+<!-- ═══ 03 · Modelos ══════════════════════════════════════════════════════ -->
 <section class="slide" id="s-modelos" data-ch="02" data-file="02-modelos" data-kind="main" data-chapter="Modelos" data-title="Modelos">
     <div class="win">
         <div class="win-body">
             <span class="eyebrow reveal d1"><span class="sq"></span> Bloque 02 · Modelos</span>
-            <h2 class="h-page reveal d2"><span class="n">03</span>Modelos</h2>
+            <h2 class="h-page reveal d2"><span class="n">02</span>Modelos</h2>
 
             <p class="rule reveal d3 mt24">No hay «el mejor modelo». Hay <span class="q">el mejor modelo para esta tarea</span> — y al menor coste.</p>
 
@@ -447,7 +705,7 @@ a { color: var(--blue); }
                     <div class="card">
                         <span class="tag">frontera</span>
                         <h4>lo difícil</h4>
-                        <p>Arquitectura, bugs enrevesados, cambios que cruzan medio repo. Caro y lento: úsalo a propósito.</p>
+                        <p>Arquitectura, bugs enrevesados, cambios que cruzan varios módulos. Caro y lento: úsalo a propósito.</p>
                     </div>
                     <div class="card">
                         <span class="tag">medio</span>
@@ -478,18 +736,20 @@ anthropic/claude-sonnet-4-5<span class="a">#high</span>        <span class="cm">
                                         <span class="cm"># esfuerzo: low … max</span></pre>
 
                     <p class="small mt24">La misma tarea con dos esfuerzos distintos no da «mejor» y «peor»: da <b>distinto coste y distinto tiempo</b>. Mídelo en tu caso antes de decidir.</p>
+
+                    <p class="small mt24">Y no todo son chats: un <span class="term" data-term="modelo-decision">modelo de decisión<a class="term-ref" href="#glosario-modelo-decision" title="Ver en el glosario"></a></span> no escribe texto —devuelve valores y probabilidades que tu código comprueba—. Es la rama <b>3.e</b>.</p>
                 </div>
             </div>
         </div>
     </div>
 </section>
 
-<!-- ═══ 05 · Contexto ═════════════════════════════════════════════════════ -->
+<!-- ═══ 04 · Contexto ═════════════════════════════════════════════════════ -->
 <section class="slide" id="s-contexto" data-ch="03" data-file="03-contexto" data-kind="main" data-chapter="Contexto y memoria" data-title="Contexto">
     <div class="win">
         <div class="win-body">
             <span class="eyebrow reveal d1"><span class="sq"></span> Bloque 03 · Contexto y memoria</span>
-            <h2 class="h-page reveal d2"><span class="n">04</span>Contexto: lo que el agente ve</h2>
+            <h2 class="h-page reveal d2"><span class="n">03</span>Contexto: lo que el agente ve</h2>
 
             <p class="lede reveal d3 mt24" style="font-size:28px; max-width:none">El <span class="term" data-term="contexto">contexto<a class="term-ref" href="#glosario-contexto" title="Ver en el glosario"></a></span> es todo lo que el modelo tiene delante: las reglas, la conversación, los ficheros y los resultados de las herramientas. Es <b>finito</b> y <b>caro</b>.</p>
 
@@ -533,12 +793,12 @@ anthropic/claude-sonnet-4-5<span class="a">#high</span>        <span class="cm">
     </div>
 </section>
 
-<!-- ═══ 06 · Reglas ═══════════════════════════════════════════════════════ -->
+<!-- ═══ 05 · Reglas ═══════════════════════════════════════════════════════ -->
 <section class="slide" id="s-reglas" data-ch="03" data-file="03-contexto" data-kind="main" data-chapter="Contexto y memoria" data-title="Reglas: AGENTS.md / CLAUDE.md">
     <div class="win">
         <div class="win-body">
             <span class="eyebrow reveal d1"><span class="sq"></span> Bloque 03 · Contexto y memoria</span>
-            <h2 class="h-page reveal d2"><span class="n">05</span>Reglas: <span class="mono" style="font-size:46px; color:var(--blue)">AGENTS.md</span></h2>
+            <h2 class="h-page reveal d2"><span class="n">04</span>Reglas: <span class="mono" style="font-size:46px; color:var(--blue)">AGENTS.md</span></h2>
 
             <div class="split mt32">
                 <div class="reveal d3">
@@ -583,12 +843,12 @@ anthropic/claude-sonnet-4-5<span class="a">#high</span>        <span class="cm">
     </div>
 </section>
 
-<!-- ═══ 07 · Skills ════════════════════════════════════════════════════════ -->
+<!-- ═══ 06 · Skills ════════════════════════════════════════════════════════ -->
 <section class="slide" id="s-skills" data-ch="04" data-file="04-skills" data-kind="main" data-chapter="Skills" data-title="Skills">
     <div class="win">
         <div class="win-body">
             <span class="eyebrow reveal d1"><span class="sq"></span> Bloque 04 · Skills</span>
-            <h2 class="h-page reveal d2"><span class="n">06</span>Skills: conocimiento a demanda</h2>
+            <h2 class="h-page reveal d2"><span class="n">05</span>Skills: conocimiento a demanda</h2>
 
             <div class="split mt32">
                 <div class="reveal d3">
@@ -630,12 +890,12 @@ anthropic/claude-sonnet-4-5<span class="a">#high</span>        <span class="cm">
     </div>
 </section>
 
-<!-- ═══ 08 · MCP ══════════════════════════════════════════════════════════ -->
+<!-- ═══ 07 · MCP ══════════════════════════════════════════════════════════ -->
 <section class="slide" id="s-mcp" data-ch="05" data-file="05-mcp" data-kind="main" data-chapter="MCP" data-title="MCP: conectar con el mundo">
     <div class="win">
         <div class="win-body">
             <span class="eyebrow reveal d1"><span class="sq"></span> Bloque 05 · MCP</span>
-            <h2 class="h-page reveal d2"><span class="n">07</span>MCP: conectar el agente con el mundo</h2>
+            <h2 class="h-page reveal d2"><span class="n">06</span>MCP: conectar el agente con el mundo</h2>
 
             <div class="flow mt44 reveal d3">
                 <div class="step">
@@ -679,12 +939,12 @@ anthropic/claude-sonnet-4-5<span class="a">#high</span>        <span class="cm">
     </div>
 </section>
 
-<!-- ═══ 09 · Subagentes ═══════════════════════════════════════════════════ -->
+<!-- ═══ 08 · Subagentes ═══════════════════════════════════════════════════ -->
 <section class="slide" id="s-subagentes" data-ch="06" data-file="06-subagentes" data-kind="main" data-chapter="Subagentes" data-title="Subagentes: delegar y aislar">
     <div class="win">
         <div class="win-body">
             <span class="eyebrow reveal d1"><span class="sq"></span> Bloque 06 · Subagentes</span>
-            <h2 class="h-page reveal d2"><span class="n">08</span>Subagentes: delegar y aislar</h2>
+            <h2 class="h-page reveal d2"><span class="n">07</span>Subagentes: delegar y aislar</h2>
 
             <div class="split mt32">
                 <div class="reveal d3">
@@ -727,12 +987,12 @@ Revisa solo el diff. No edites ficheros.</pre>
     </div>
 </section>
 
-<!-- ═══ 10 · Flujos de trabajo ════════════════════════════════════════════ -->
+<!-- ═══ 09 · Flujos de trabajo ════════════════════════════════════════════ -->
 <section class="slide" id="s-flujos" data-ch="07" data-file="07-flujos" data-kind="main" data-chapter="Flujos de trabajo" data-title="Flujos: explorar, planificar, codificar, confirmar">
     <div class="win">
         <div class="win-body">
             <span class="eyebrow reveal d1"><span class="sq"></span> Bloque 07 · Flujos de trabajo</span>
-            <h2 class="h-page reveal d2"><span class="n">09</span>Un proceso que se repite</h2>
+            <h2 class="h-page reveal d2"><span class="n">08</span>Un proceso que se repite</h2>
 
             <div class="flow mt44 reveal d3">
                 <div class="step">
@@ -781,12 +1041,12 @@ Revisa solo el diff. No edites ficheros.</pre>
     </div>
 </section>
 
-<!-- ═══ 11 · Verificación ═════════════════════════════════════════════════ -->
+<!-- ═══ 10 · Verificación ═════════════════════════════════════════════════ -->
 <section class="slide" id="s-verificacion" data-ch="07" data-file="07-flujos" data-kind="main" data-chapter="Flujos de trabajo" data-title="Verificación: cómo sabes que está bien">
     <div class="win">
         <div class="win-body">
             <span class="eyebrow reveal d1"><span class="sq"></span> Bloque 07 · Flujos de trabajo</span>
-            <h2 class="h-page reveal d2"><span class="n">10</span>Verificación</h2>
+            <h2 class="h-page reveal d2"><span class="n">09</span>Verificación</h2>
 
             <div class="split mt32">
                 <div class="reveal d3">
@@ -828,12 +1088,12 @@ Revisa solo el diff. No edites ficheros.</pre>
     </div>
 </section>
 
-<!-- ═══ 12 · Orquestación ══════════════════════════════════════════════════ -->
+<!-- ═══ 11 · Orquestación ══════════════════════════════════════════════════ -->
 <section class="slide" id="s-orquestacion" data-ch="08" data-file="08-orquestacion" data-kind="main" data-chapter="Orquestación" data-title="Orquestación: muchos agentes a la vez">
     <div class="win">
         <div class="win-body">
             <span class="eyebrow reveal d1"><span class="sq"></span> Bloque 08 · Orquestación</span>
-            <h2 class="h-page reveal d2"><span class="n">11</span>Orquestación: de uno a muchos</h2>
+            <h2 class="h-page reveal d2"><span class="n">10</span>Orquestación: de uno a muchos</h2>
 
             <p class="lede reveal d3 mt24" style="font-size:28px; max-width:none">Se pasa de «un agente en una terminal» a un <b>entorno con varios agentes</b>. El límite deja de ser lo capaz que sea el modelo.</p>
 
@@ -862,19 +1122,19 @@ Revisa solo el diff. No edites ficheros.</pre>
                 </div>
             </div>
 
-            <p class="tiny reveal d5 mt24">Herramientas que montan ese entorno (matriz 2×2 en la slide 32): <b class="bl">Superset</b>, <b class="bl">Emdash</b>, <b class="bl">Claude Squad</b> — las tres admiten OpenCode explícitamente — y <b class="bl">Sculptor</b>, que encierra cada agente en un contenedor.</p>
+            <p class="tiny reveal d5 mt24">Herramientas que montan ese entorno (matriz 2×2 en la slide 31): <b class="bl">Superset</b>, <b class="bl">Emdash</b>, <b class="bl">Claude Squad</b> — las tres admiten OpenCode explícitamente — y <b class="bl">Sculptor</b>, que encierra cada agente en un contenedor.</p>
         </div>
     </div>
 </section>
 
-<!-- ═══ 13 · Cierre ═══════════════════════════════════════════════════════ -->
+<!-- ═══ 12 · Cierre ═══════════════════════════════════════════════════════ -->
 <section class="slide" id="s-cierre" data-ch="09" data-file="09-cierre" data-kind="main" data-chapter="Cierre" data-title="Empieza pequeño">
     <div class="win">
         <div class="win-body">
             <span class="eyebrow reveal d1"><span class="sq"></span> Bloque 09 · Cierre</span>
-            <h2 class="h-page reveal d2"><span class="n">12</span>Empieza pequeño, añade capas</h2>
+            <h2 class="h-page reveal d2"><span class="n">11</span>Empieza pequeño, añade capas</h2>
 
-            <p class="lede reveal d3 mt24" style="font-size:27px; max-width:none">Un agente con reglas y modo plan ya te cambia el día. Lo demás se añade <b>solo cuando aporte</b>, y se mide.</p>
+            <p class="lede reveal d3 mt24" style="font-size:27px; max-width:none">Un agente con reglas y modo plan ya cambia tu forma de trabajar. Lo demás se añade <b>solo cuando aporte</b>, y se mide.</p>
 
             <div class="split mt32">
                 <div class="reveal d4">
@@ -908,14 +1168,14 @@ Revisa solo el diff. No edites ficheros.</pre>
     </div>
 </section>
 
-<!-- ═══ 14 · Glosario ═════════════════════════════════════════════════════ -->
+<!-- ═══ 13 · Glosario ═════════════════════════════════════════════════════ -->
 <section class="slide" id="s-glosario" data-ch="10" data-file="10-glosario" data-kind="main" data-chapter="Glosario" data-title="Glosario">
     <div class="win">
         <div class="win-body">
             <div class="head">
                 <div>
                     <span class="eyebrow reveal d1"><span class="sq"></span> Referencia</span>
-                    <h2 class="h-page reveal d2"><span class="n">13</span>Glosario</h2>
+                    <h2 class="h-page reveal d2"><span class="n">12</span>Glosario</h2>
                 </div>
                 <p class="tiny reveal d3" style="text-align:right; max-width:520px">Pasa el ratón por cualquier término <span class="term" data-term="harness">subrayado<a class="term-ref" href="#glosario-harness" title="Ver en el glosario"></a></span> del deck para ver su definición. El superíndice te trae aquí.</p>
             </div>
@@ -934,10 +1194,11 @@ Revisa solo el diff. No edites ficheros.</pre>
                 <h4>Modelos</h4>
                 <div class="gitem" id="glosario-modelo-frontera"><span class="gterm">modelo frontera</span><span class="gdef">El más capaz (y caro) del momento. Para lo difícil, no para todo.</span></div>
                 <div class="gitem" id="glosario-modelo-local"><span class="gterm">modelo local</span><span class="gdef">Corre en tu máquina: privacidad y coste cero a cambio de calidad y hardware.</span></div>
+                <div class="gitem" id="glosario-modelo-decision"><span class="gterm">modelo de decisión</span><span class="gdef">No escribe texto: recibe preguntas con tipo y devuelve valores y probabilidades. Hoy, System One.</span></div>
                 <div class="gitem" id="glosario-reasoning-effort"><span class="gterm">reasoning effort</span><span class="gdef">Cuánto «piensa» el modelo antes de responder. Subirlo mejora lo difícil y encarece todo.</span></div>
                 <div class="gitem" id="glosario-enrutador"><span class="gterm">enrutador de modelos</span><span class="gdef">Una sola API delante de muchos modelos: ella decide a cuál va cada petición.</span></div>
                 <div class="gitem" id="glosario-cache-prompt"><span class="gterm">caché de prompt</span><span class="gdef">Reutilizar lo que el modelo ya procesó, para pagar y esperar menos por lo mismo.</span></div>
-                <div class="gitem" id="glosario-cuota"><span class="gterm">rate limit / cuota</span><span class="gdef">Límite de peticiones o tokens por ventana de tiempo. Es lo que de verdad te frena.</span></div>
+                <div class="gitem" id="glosario-cuota"><span class="gterm">rate limit / cuota</span><span class="gdef">Límite de peticiones o tokens por ventana de tiempo. Es lo que realmente limita el trabajo.</span></div>
 
                 <h4>Contexto y memoria</h4>
                 <div class="gitem" id="glosario-contexto"><span class="gterm">contexto</span><span class="gdef">Todo lo que el modelo tiene delante: reglas, conversación, ficheros y resultados de herramientas.</span></div>
@@ -974,21 +1235,27 @@ Revisa solo el diff. No edites ficheros.</pre>
     </div>
 </section>
 
-<!-- ═══ 15 · Referencias ══════════════════════════════════════════════════ -->
+<!-- ═══ 14 · Referencias ══════════════════════════════════════════════════ -->
 <section class="slide" id="s-referencias" data-ch="11" data-file="11-referencias" data-kind="main" data-chapter="Referencias" data-title="Referencias">
     <div class="win">
         <div class="win-body">
             <span class="eyebrow reveal d1"><span class="sq"></span> Para seguir</span>
-            <h2 class="h-page reveal d2"><span class="n">14</span>Referencias</h2>
+            <h2 class="h-page reveal d2"><span class="n">13</span>Referencias</h2>
 
             <div class="refs reveal d3 mt32">
+                <h4>Historia (la línea de tiempo del bloque 1)</h4>
+                <p class="r"><b>Transformer</b> (<a href="https://en.wikipedia.org/wiki/Attention_Is_All_You_Need">2017</a>) · <b>GPT-3</b> (<a href="https://en.wikipedia.org/wiki/GPT-3">2020</a>) · <b>Copilot</b> (<a href="https://en.wikipedia.org/wiki/GitHub_Copilot">2021</a>) · <b>Midjourney</b> (<a href="https://en.wikipedia.org/wiki/Midjourney">2022</a>) · <b>Stable Diffusion</b> (<a href="https://en.wikipedia.org/wiki/Stable_Diffusion">2022</a>)</p>
+                <p class="r"><b>ChatGPT</b> (<a href="https://en.wikipedia.org/wiki/ChatGPT">2022</a>) · <b>GPT-4</b> (<a href="https://en.wikipedia.org/wiki/GPT-4">2023</a>) · <b>LLaMA</b> (<a href="https://en.wikipedia.org/wiki/Llama_(language_model)">2023</a>) · <b>llama.cpp</b> (<a href="https://en.wikipedia.org/wiki/Llama.cpp">2023</a>) · <b>o1</b> (<a href="https://en.wikipedia.org/wiki/OpenAI_o1">2024</a>) · <b>MCP</b> (<a href="https://en.wikipedia.org/wiki/Model_Context_Protocol">2024</a>)</p>
+                <p class="r"><b>DeepSeek</b> (<a href="https://en.wikipedia.org/wiki/DeepSeek_(AI)">2025</a>) · <b>Qwen</b> (<a href="https://en.wikipedia.org/wiki/Qwen">2025</a>) · <b>Claude Code</b> (<a href="https://en.wikipedia.org/wiki/Claude_(AI)">2025</a>) · <b>Codex</b> (<a href="https://en.wikipedia.org/wiki/OpenAI_Codex">2025</a>) · <b>OpenCode</b> (<a href="https://en.wikipedia.org/wiki/OpenCode">2025</a>) · <b>Antigravity</b> (<a href="https://en.wikipedia.org/wiki/Google_Antigravity">2025</a>)</p>
+                <p class="r"><b>GPT-6.1 Sol</b> (<a href="https://en.wikipedia.org/wiki/GPT-6.1">2026</a>) · <b>System One</b> y <b>Jev</b>, de TypeSafe AI (<a href="https://typesafe.ai/blog/introducing-system-one-models-and-jev">2026</a>)</p>
+
                 <h4>Agentes y harness</h4>
                 <p class="r"><b>OpenCode</b> · <a href="https://opencode.ai/v2/docs/">docs V2</a> · <a href="https://opencode.ai/v2/docs/instructions/">instructions</a> · <a href="https://opencode.ai/v2/docs/compaction/">compaction</a> · <a href="https://opencode.ai/v2/docs/permissions/">permissions</a> · <a href="https://opencode.ai/v2/docs/skills/">skills</a> · <a href="https://opencode.ai/v2/docs/agents/">agents</a> · <a href="https://opencode.ai/v2/docs/models/">models</a></p>
                 <p class="r"><b>Claude Code</b> · <a href="https://code.claude.com/docs/">docs</a> · <a href="https://code.claude.com/docs/en/memory">memory</a> · <a href="https://code.claude.com/docs/en/permission-modes">permission modes</a> · <a href="https://code.claude.com/docs/en/model-config">model config</a> · <a href="https://code.claude.com/docs/en/hooks">hooks</a> · <a href="https://code.claude.com/docs/en/worktrees">worktrees</a> · <a href="https://code.claude.com/docs/en/sub-agents">subagents</a></p>
                 <p class="r"><b>AGENTS.md</b> — el formato abierto · <a href="https://agents.md/">agents.md</a></p>
                 <p class="r"><b>Aider</b> — <a href="https://aider.chat/">aider.chat</a></p>
                 <p class="r"><b>Codex</b> — <a href="https://openai.com/codex/">openai.com/codex</a> · <b>Gemini CLI</b> — <a href="https://github.com/google-gemini/gemini-cli">github</a></p>
-                <p class="r"><b>Cline</b> — <a href="https://github.com/cline/cline">github</a> · <b>Hermes Agent</b> — <a href="https://www.hermes-agent.org">hermes-agent.org</a></p>
+                <p class="r"><b>Cline</b> — <a href="https://github.com/cline/cline">github</a> · <b>Hermes Agent</b> — <a href="https://hermes-agent.nousresearch.com/">nousresearch.com</a></p>
 
                 <h4>Skills y MCP</h4>
                 <p class="r"><b>Agent Skills</b> — especificación · <a href="https://agentskills.io/specification">agentskills.io</a></p>
@@ -1002,6 +1269,7 @@ Revisa solo el diff. No edites ficheros.</pre>
                 <p class="r"><b>Aider leaderboards</b> · <a href="https://aider.chat/docs/leaderboards/">aider.chat</a> · <b>BenchLeader</b> · <a href="https://www.benchleader.com/best/llm-for-coding">benchleader.com</a></p>
                 <p class="r"><b>OpenRouter</b> · <a href="https://openrouter.ai/">openrouter.ai</a> · <b>LiteLLM</b> · <a href="https://docs.litellm.ai/">docs.litellm.ai</a></p>
                 <p class="r"><b>Ollama</b> · <a href="https://ollama.com/">ollama.com</a> · <b>LM Studio</b> · <a href="https://lmstudio.ai/">lmstudio.ai</a></p>
+                <p class="r"><b>System One</b> (Jev) — modelos de decisión de TypeSafe AI · <a href="https://typesafe.ai">typesafe.ai</a></p>
 
                 <h4>Flujos de trabajo</h4>
                 <p class="r"><b>Spec Kit</b> (SDD) · <a href="https://github.com/github/spec-kit/">github.com/github/spec-kit</a></p>
@@ -1016,7 +1284,7 @@ Revisa solo el diff. No edites ficheros.</pre>
 
             <div class="foot reveal d5">
                 <span><span class="sq"></span> flujo principal &middot; <span class="tri"></span> profundización</span>
-                <span>enlaces verificados el 2026-10-17</span>
+                <span>enlaces verificados el 2026-10-18</span>
                 <span class="spacer"></span>
                 <span>v0 &middot; actualizado 2026-10-18</span>
                 <span><a href="https://github.com/alfredogonzalezmartinez/desarrollo-con-ia">repositorio</a></span>
@@ -1025,7 +1293,7 @@ Revisa solo el diff. No edites ficheros.</pre>
     </div>
 </section>
 
-<!-- ═══ 16 ▸ Permisos y modos de trabajo ═══════════════════════════════════ -->
+<!-- ═══ 15 ▸ Permisos y modos de trabajo ═══════════════════════════════════ -->
 <section class="slide" id="s-permisos" data-ch="01" data-file="01-agente" data-kind="branch" data-chapter="Fundamentos" data-title="Permisos y modos de trabajo">
     <div class="win">
         <div class="win-body">
@@ -1078,7 +1346,7 @@ Revisa solo el diff. No edites ficheros.</pre>
     </div>
 </section>
 
-<!-- ═══ 17 ▸ Hooks ════════════════════════════════════════════════════════ -->
+<!-- ═══ 16 ▸ Hooks ════════════════════════════════════════════════════════ -->
 <section class="slide" id="s-hooks" data-ch="01" data-file="01-agente" data-kind="branch" data-chapter="Fundamentos" data-title="Hooks: lo que pasa solo">
     <div class="win">
         <div class="win-body">
@@ -1135,7 +1403,7 @@ Revisa solo el diff. No edites ficheros.</pre>
     </div>
 </section>
 
-<!-- ═══ 18 ▸ Benchmarks ═══════════════════════════════════════════════════ -->
+<!-- ═══ 17 ▸ Benchmarks ═══════════════════════════════════════════════════ -->
 <section class="slide" id="s-benchmarks" data-ch="02" data-file="02-modelos" data-kind="branch" data-chapter="Modelos" data-title="Benchmarks y cómo leerlos">
     <div class="win">
         <div class="win-body">
@@ -1191,7 +1459,7 @@ Revisa solo el diff. No edites ficheros.</pre>
     </div>
 </section>
 
-<!-- ═══ 19 ▸ Modelos locales ══════════════════════════════════════════════ -->
+<!-- ═══ 18 ▸ Modelos locales ══════════════════════════════════════════════ -->
 <section class="slide" id="s-locales" data-ch="02" data-file="02-modelos" data-kind="branch" data-chapter="Modelos" data-title="Modelos locales">
     <div class="win">
         <div class="win-body">
@@ -1229,7 +1497,7 @@ Revisa solo el diff. No edites ficheros.</pre>
     </div>
 </section>
 
-<!-- ═══ 20 ▸ Enrutadores ══════════════════════════════════════════════════ -->
+<!-- ═══ 19 ▸ Enrutadores ══════════════════════════════════════════════════ -->
 <section class="slide" id="s-routers" data-ch="02" data-file="02-modelos" data-kind="branch" data-chapter="Modelos" data-title="Enrutadores de modelos">
     <div class="win">
         <div class="win-body">
@@ -1280,7 +1548,7 @@ Revisa solo el diff. No edites ficheros.</pre>
     </div>
 </section>
 
-<!-- ═══ 21 ▸ API vs suscripción ═══════════════════════════════════════════ -->
+<!-- ═══ 20 ▸ API vs suscripción ═══════════════════════════════════════════ -->
 <section class="slide" id="s-api" data-ch="02" data-file="02-modelos" data-kind="branch" data-chapter="Modelos" data-title="API o suscripción">
     <div class="win">
         <div class="win-body">
@@ -1297,8 +1565,8 @@ Revisa solo el diff. No edites ficheros.</pre>
                     </tr>
                     <tr>
                         <td>El límite</td>
-                        <td>Ventanas de uso y <span class="term" data-term="cuota">cuotas<a class="term-ref" href="#glosario-cuota" title="Ver en el glosario"></a></span><span class="sub">es lo que de verdad te frena</span></td>
-                        <td>Presupuesto y concurrencia<span class="sub">no hay techo, hay sorpresa</span></td>
+                        <td>Ventanas de uso y <span class="term" data-term="cuota">cuotas<a class="term-ref" href="#glosario-cuota" title="Ver en el glosario"></a></span><span class="sub">es lo que realmente limita el trabajo</span></td>
+                        <td>Presupuesto y concurrencia<span class="sub">no hay techo, hay factura imprevisible</span></td>
                     </tr>
                     <tr>
                         <td>Automatizar</td>
@@ -1332,7 +1600,50 @@ Revisa solo el diff. No edites ficheros.</pre>
     </div>
 </section>
 
-<!-- ═══ 22 ▸ Ventana y compactación ═══════════════════════════════════════ -->
+<!-- ═══ 21 ▸ Modelos de decisión ══════════════════════════════════════════ -->
+<section class="slide" id="s-decision" data-ch="02" data-file="02-modelos" data-kind="branch" data-chapter="Modelos" data-title="Modelos de decisión">
+    <div class="win">
+        <div class="win-body">
+            <span class="eyebrow reveal d1"><span class="tri"></span> Profundización · Bloque 02</span>
+            <h2 class="h-page reveal d2"><span class="n">3.e</span>Modelos de decisión: los que no escriben</h2>
+
+            <p class="lede reveal d3 mt24" style="font-size:27px; max-width:none">Los modelos de esta charla reciben texto y devuelven texto. Un <span class="term" data-term="modelo-decision">modelo de decisión<a class="term-ref" href="#glosario-modelo-decision" title="Ver en el glosario"></a></span> no: devuelve <b>valores y probabilidades</b>.</p>
+
+            <div class="split mt24">
+                <div class="reveal d4">
+                    <p class="tiny">Los tres tipos de pregunta</p>
+                    <table class="cmp mt8" style="font-size:20px">
+                        <thead><tr><th>Tipo</th><th>Devuelve</th><th>Para qué</th></tr></thead>
+                        <tbody>
+                            <tr><td>noul</td><td>Sí o no<span class="sub">con su probabilidad</span></td><td>¿Es urgente? ¿Es un fallo o una función?</td></tr>
+                            <tr><td>choice</td><td>Una opción de la lista</td><td>Clasificar un ticket, elegir la herramienta.</td></tr>
+                            <tr><td>score</td><td>Una nota, según una rúbrica</td><td>Puntuar la calidad de un cambio.</td></tr>
+                        </tbody>
+                    </table>
+                    <div class="panel mt24">
+                        <div class="tiny">Dónde probarlo</div>
+                        <p class="small mt8" style="font-size:17px">En la consola de <b>OpenCode</b> —<span class="mono">jev-1.13</span>, con versión gratuita— y en su API propia · <a href="https://typesafe.ai">typesafe.ai</a></p>
+                    </div>
+                </div>
+                <div class="reveal d4">
+                    <div class="file">Jev 1.13, de TypeSafe AI</div>
+                    <pre class="code panel" style="font-size:17px">{
+  <span class="b">"model"</span>: "jev-1.13",
+  <span class="b">"state"</span>: "Los pagos llevan tres d&iacute;as fallando.",
+  <span class="b">"questions"</span>: {
+    <span class="b">"urgente"</span>: { <span class="b">"type"</span>: "<span class="a">noul</span>", <span class="b">"instructions"</span>: "&iquest;Es urgente?" }
+  }
+}</pre>
+                    <p class="tiny mt16">Varias preguntas en una sola llamada: una respuesta, varias decisiones.</p>
+                </div>
+            </div>
+
+            <p class="rule reveal d5 mt24" style="font-size:28px">Un chat te da una respuesta que hay que <b>leer</b>; un modelo de decisión, un valor que se puede <span class="q">comprobar</span>.</p>
+        </div>
+    </div>
+</section>
+
+<!-- ═══ 22 ▸ Ventana y compactación ══════════════════════════════════════ -->
 <section class="slide" id="s-ventana" data-ch="03" data-file="03-contexto" data-kind="branch" data-chapter="Contexto y memoria" data-title="La ventana de contexto por dentro">
     <div class="win">
         <div class="win-body">
@@ -1365,7 +1676,7 @@ Revisa solo el diff. No edites ficheros.</pre>
                         <tbody>
                             <tr><td class="mono">/clear</td><td>Empieza de cero.</td><td class="bad">Pierdes todo el hilo.</td></tr>
                             <tr><td class="mono">/compact</td><td>Resume lo antiguo.</td><td class="warn">Pierdes detalle, conservas el hilo.</td></tr>
-                            <tr><td class="mono">/autocompact</td><td>Lo decide el agente.</td><td>No te enteras de cuándo pasa.</td></tr>
+                            <tr><td class="mono">/autocompact</td><td>Lo decide el agente.</td><td>No hay aviso de cuándo ocurre.</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -1379,7 +1690,7 @@ Revisa solo el diff. No edites ficheros.</pre>
     </div>
 </section>
 
-<!-- ═══ 23 ▸ Memoria y eficiencia ═════════════════════════════════════════ -->
+<!-- ═══ 23 ▸ Memoria y eficiencia ════════════════════════════════════════ -->
 <section class="slide" id="s-memoria" data-ch="03" data-file="03-contexto" data-kind="branch" data-chapter="Contexto y memoria" data-title="Memoria persistente y eficiencia de contexto">
     <div class="win">
         <div class="win-body">
@@ -1416,14 +1727,14 @@ Revisa solo el diff. No edites ficheros.</pre>
                             </tr>
                         </tbody>
                     </table>
-                    <p class="tiny mt16">Existen y están vivos (comprobado el 2026-10-17). De <span class="mono">rtk</span>, quédate con la idea —recortar salidas— más que con sus cifras de ahorro, que su README exagera.</p>
+                    <p class="tiny mt16">Existen y están vivos (comprobado el 2026-10-17). De <span class="mono">rtk</span>, conviene retener la idea —recortar salidas— antes que sus cifras de ahorro: su README las exagera.</p>
                 </div>
             </div>
         </div>
     </div>
 </section>
 
-<!-- ═══ 24 ▸ Crear una skill ══════════════════════════════════════════════ -->
+<!-- ═══ 24 ▸ Crear una skill ═════════════════════════════════════════════ -->
 <section class="slide" id="s-crear-skill" data-ch="04" data-file="04-skills" data-kind="branch" data-chapter="Skills" data-title="Cómo crear una skill">
     <div class="win">
         <div class="win-body">
@@ -1467,7 +1778,7 @@ Revisa solo el diff. No edites ficheros.</pre>
     </div>
 </section>
 
-<!-- ═══ 25 ▸ Catálogo de skills ═══════════════════════════════════════════ -->
+<!-- ═══ 25 ▸ Catálogo de skills ══════════════════════════════════════════ -->
 <section class="slide" id="s-catalogo" data-ch="04" data-file="04-skills" data-kind="branch" data-chapter="Skills" data-title="Siete skills para mirar">
     <div class="win">
         <div class="win-body">
@@ -1508,12 +1819,12 @@ Revisa solo el diff. No edites ficheros.</pre>
                 </tbody>
             </table>
 
-            <p class="tiny reveal d4 mt24">Las siete existen y están vivas (comprobado el 2026-10-17). Fíjate en el patrón: casi ninguna sabe <i>hacer</i> algo nuevo; lo que hacen es <b>empaquetar criterio</b>.</p>
+            <p class="tiny reveal d4 mt24">Las siete existen y están vivas (comprobado el 2026-10-17). El patrón se repite: casi ninguna sabe <i>hacer</i> algo nuevo; lo que hacen es <b>empaquetar criterio</b>.</p>
         </div>
     </div>
 </section>
 
-<!-- ═══ 26 ▸ MCP vs CLI ═══════════════════════════════════════════════════ -->
+<!-- ═══ 26 ▸ MCP vs CLI ══════════════════════════════════════════════════ -->
 <section class="slide" id="s-mcp-cli" data-ch="05" data-file="05-mcp" data-kind="branch" data-chapter="MCP" data-title="MCP o CLI">
     <div class="win">
         <div class="win-body">
@@ -1567,7 +1878,7 @@ Revisa solo el diff. No edites ficheros.</pre>
     </div>
 </section>
 
-<!-- ═══ 27 ▸ Crear un MCP ═════════════════════════════════════════════════ -->
+<!-- ═══ 27 ▸ Crear un MCP ════════════════════════════════════════════════ -->
 <section class="slide" id="s-crear-mcp" data-ch="05" data-file="05-mcp" data-kind="branch" data-chapter="MCP" data-title="Cómo crear un MCP">
     <div class="win">
         <div class="win-body">
@@ -1614,7 +1925,7 @@ server.<span class="b">tool</span>(<span class="a">"listar_tareas"</span>,
     </div>
 </section>
 
-<!-- ═══ 28 ▸ Paralelismo y worktrees ══════════════════════════════════════ -->
+<!-- ═══ 28 ▸ Paralelismo y worktrees ═════════════════════════════════════ -->
 <section class="slide" id="s-worktrees" data-ch="06" data-file="06-subagentes" data-kind="branch" data-chapter="Subagentes" data-title="Paralelismo y worktrees">
     <div class="win">
         <div class="win-body">
@@ -1655,7 +1966,7 @@ server.<span class="b">tool</span>(<span class="a">"listar_tareas"</span>,
     </div>
 </section>
 
-<!-- ═══ 29 ▸ Crear un subagente ═══════════════════════════════════════════ -->
+<!-- ═══ 29 ▸ Crear un subagente ══════════════════════════════════════════ -->
 <section class="slide" id="s-crear-subagente" data-ch="06" data-file="06-subagentes" data-kind="branch" data-chapter="Subagentes" data-title="Cómo crear un subagente">
     <div class="win">
         <div class="win-body">
@@ -1696,7 +2007,7 @@ server.<span class="b">tool</span>(<span class="a">"listar_tareas"</span>,
     </div>
 </section>
 
-<!-- ═══ 30 ▸ SDD ══════════════════════════════════════════════════════════ -->
+<!-- ═══ 30 ▸ SDD ═════════════════════════════════════════════════════════ -->
 <section class="slide" id="s-sdd" data-ch="07" data-file="07-flujos" data-kind="branch" data-chapter="Flujos de trabajo" data-title="SDD: Spec-Driven Development">
     <div class="win">
         <div class="win-body">
@@ -1734,7 +2045,7 @@ server.<span class="b">tool</span>(<span class="a">"listar_tareas"</span>,
     </div>
 </section>
 
-<!-- ═══ 31 ▸ RPI ══════════════════════════════════════════════════════════ -->
+<!-- ═══ 31 ▸ RPI ═════════════════════════════════════════════════════════ -->
 <section class="slide" id="s-rpi" data-ch="07" data-file="07-flujos" data-kind="branch" data-chapter="Flujos de trabajo" data-title="RPI: Research, Plan, Implement">
     <div class="win">
         <div class="win-body">
@@ -1783,7 +2094,7 @@ server.<span class="b">tool</span>(<span class="a">"listar_tareas"</span>,
     </div>
 </section>
 
-<!-- ═══ 32 ▸ Herramientas y comparativa ═══════════════════════════════════ -->
+<!-- ═══ 32 ▸ Herramientas y comparativa ══════════════════════════════════ -->
 <section class="slide" id="s-herramientas" data-ch="08" data-file="08-orquestacion" data-kind="branch" data-chapter="Orquestación" data-title="Herramientas y comparativa">
     <div class="win">
         <div class="win-body">
@@ -1844,7 +2155,7 @@ server.<span class="b">tool</span>(<span class="a">"listar_tareas"</span>,
     <div class="ctl">
         <button id="prev" title="Anterior (←)">&larr;</button>
         <div class="track"><i id="bar"></i></div>
-        <span class="num" id="num">1 / 32</span>
+        <span class="num" id="num">1 / 31</span>
         <button id="next" title="Siguiente (→)">&rarr;</button>
         <button id="mode" title="Modo charla (c)">charla</button>
         <button id="map" title="Mapa (m)">mapa</button>
@@ -1890,10 +2201,11 @@ server.<span class="b">tool</span>(<span class="a">"listar_tareas"</span>,
         'cli': '<b>CLI:</b> interfaz de l&iacute;nea de comandos. Es la v&iacute;a universal para que el agente haga cosas.',
         'modelo-frontera': '<b>Modelo frontera:</b> el m&aacute;s capaz (y caro) del momento. Para lo dif&iacute;cil, no para todo.',
         'modelo-local': '<b>Modelo local:</b> corre en tu m&aacute;quina. Privacidad y coste cero a cambio de calidad y hardware.',
+        'modelo-decision': '<b>Modelo de decisi&oacute;n:</b> no escribe texto: recibe un estado y preguntas con tipo y devuelve valores y probabilidades que tu programa usa directamente. Hoy, System One (TypeSafe AI).',
         'reasoning-effort': '<b>Reasoning effort:</b> cu&aacute;nto &laquo;piensa&raquo; el modelo antes de responder. Subirlo mejora lo dif&iacute;cil y encarece todo.',
         'enrutador': '<b>Enrutador de modelos:</b> una sola API delante de muchos modelos; ella decide a cu&aacute;l va cada petici&oacute;n.',
         'cache-prompt': '<b>Cach&eacute; de prompt:</b> reutilizar lo que el modelo ya proces&oacute;, para pagar y esperar menos por lo mismo.',
-        'cuota': '<b>Rate limit / cuota:</b> l&iacute;mite de peticiones o tokens por ventana de tiempo. Es lo que de verdad te frena.',
+        'cuota': '<b>Rate limit / cuota:</b> l&iacute;mite de peticiones o tokens por ventana de tiempo. Es lo que realmente limita el trabajo.',
         'contexto': '<b>Contexto:</b> todo lo que el modelo tiene delante: reglas, conversaci&oacute;n, ficheros y resultados de herramientas.',
         'ventana-contexto': '<b>Ventana de contexto:</b> cu&aacute;ntos tokens caben ah&iacute;. Al llenarse, la calidad baja y toca compactar.',
         'token': '<b>Token:</b> unidad m&iacute;nima de texto con la que trabaja el modelo (&asymp; 4 caracteres). Todo se mide y se cobra en tokens.',
@@ -2030,6 +2342,25 @@ server.<span class="b">tool</span>(<span class="a">"listar_tareas"</span>,
         if (t) place(t);
     });
 
+    // ── Evolución: la ficha de cada parada de la línea de tiempo ───────────
+    // Con ratón basta el :hover del CSS. El clic está para el táctil, donde no
+    // hay hover: un toque abre la ficha, otro la cierra y tocar fuera también.
+    function evoCerrar(excepto) {
+        Array.prototype.forEach.call(document.querySelectorAll('.evo-node.on'), function (o) {
+            if (o !== excepto) o.classList.remove('on');
+        });
+    }
+    Array.prototype.forEach.call(document.querySelectorAll('.evo-node'), function (n) {
+        n.addEventListener('click', function (e) {
+            if (e.target.closest && e.target.closest('a')) return; // los enlaces del panel hacen lo suyo
+            var abierto = n.classList.contains('on');
+            evoCerrar(n);
+            n.classList.toggle('on', !abierto);
+            e.stopPropagation();
+        });
+    });
+    document.addEventListener('click', function () { evoCerrar(null); });
+
     // ── Modo charla ────────────────────────────────────────────────────────
     // No reordena nada: esconde las slides de profundización para poder dar
     // la charla corta sin saltarse pasos.
@@ -2131,6 +2462,15 @@ server.<span class="b">tool</span>(<span class="a">"listar_tareas"</span>,
             if (overlay.classList.contains('on')) toggleMap(false);
             else if (charla) { setCharla(false); go(i); }
         }
+    });
+
+    // ── Enlaces externos: se abren en una pestaña nueva ────────────────────
+    // Se marca aquí y no uno a uno en el HTML: así cualquier enlace que se
+    // añada mañana hereda el comportamiento. Los internos (glosario, mapa)
+    // siguen abriéndose en la misma pestaña.
+    document.querySelectorAll('a[href^="http"]').forEach(function (a) {
+        a.target = '_blank';
+        a.rel = 'noopener noreferrer';
     });
 
     // ── Estado inicial desde la URL ────────────────────────────────────────

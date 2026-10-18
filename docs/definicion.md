@@ -2,7 +2,7 @@
 
 > **Documento de definición (v1.1 — definición cerrada, deck construido y con harness de mantenimiento)**
 > Este es el documento vivo. `definicion.md` es una copia del borrador original; la fuente de verdad es este fichero.
-> Última actualización: 2026-10-17
+> Última actualización: 2026-10-18
 
 ---
 
@@ -14,7 +14,7 @@
 
 **Cómo**: presentación HTML generada con la skill [frontend-slides](https://github.com/zarazhangrui/frontend-slides).
 
-**Duración objetivo**: **~30 min** con las **15 slides** del flujo principal. El deck trae **32** en total: las **17 de profundización** (`▸`) se abren a demanda y dan material para una versión de 45-60 min. Se alternan con la tecla `c` (*modo charla* / *modo lectura*).
+**Duración objetivo**: **~30 min** con las **14 slides** del flujo principal. El deck trae **32** en total: las **18 de profundización** (`▸`) se abren a demanda y dan material para una versión de 45-60 min. Se alternan con la tecla `c` (*modo charla* / *modo lectura*).
 
 **Idea fuerza**: *El valor no está en el modelo, está en el harness y en cómo lo usas.*
 
@@ -135,15 +135,15 @@
 Se recorre con **→ / ←** (o click). Cada capítulo avanza al siguiente, de lo simple a lo complejo.
 
 > **Decisión de estructura (v0.9)**: la presentación tiene **dos capas**, pero **una sola secuencia lineal**.
-> - **Flujo principal: 15 slides** → es lo que se proyecta en la charla. A 2 min por slide, ~30 min.
-> - **Profundización: 17 slides** más, intercaladas en su sitio (no escondidas) y marcadas con `▸`.
+> - **Flujo principal: 14 slides** → es lo que se proyecta en la charla. A 2 min por slide, ~30 min.
+> - **Profundización: 18 slides** más, intercaladas en su sitio (no escondidas) y marcadas con `▸`.
 >
 > Así se resuelven las dos necesidades a la vez: **quien lee solo** recorre las 32 y lo entiende todo; **quien presenta** activa el **modo charla** y el deck salta las `▸`. Antes esto era incoherente: las ramas estaban en la secuencia lineal como si fueran obligatorias, y 33 slides no caben en 30 minutos con densidad de lectura (salían a ~55 s por slide, imposible).
 
 | # | Capítulo | Idea que deja | Complejidad |
 |---|----------|----------------|-------------|
 | 1 | Portada | Qué vamos a ver | — |
-| 2 | ¿Qué es un agente? | Modelo + harness = agente | ● |
+| 2 | Evolución: del chat al agente | Qué cambia al pasar de responder a actuar | ● |
 | 3 | Modelos | Qué es un LLM y cómo elegirlo | ●● |
 | 4 | Contexto y memoria | Lo que el agente "sabe" en cada momento | ●● |
 | 5 | Skills | Conocimiento reutilizable a demanda | ●●● |
@@ -171,6 +171,7 @@ Desde cada capítulo se puede **profundizar**. Las ramas son bidireccionales: se
 | 3.b | Modelos | Modelos locales |
 | 3.c | Modelos | Enrutadores de modelos |
 | 3.d | Modelos | API vs suscripción (coste) |
+| 3.e | Modelos | Modelos de decisión: los que no escriben texto (System One, de TypeSafe AI) |
 | 4.a | Contexto | Ficheros de reglas: `AGENTS.md`, `CLAUDE.md` |
 | 4.b | Contexto | Ventana de contexto: `clear`, `compact`, autocompact |
 | 4.c | Contexto | Memoria persistente y eficiencia de contexto |
@@ -192,10 +193,10 @@ Desde cada capítulo se puede **profundizar**. Las ramas son bidireccionales: se
 - **Avanzar / retroceder**: `→` `espacio` `PageDown` avanzan; `←` `PageUp` retroceden. También hay botones y puntos.
 - **Modo charla / modo lectura**: la tecla `c` (o un botón en la barra) alterna entre los dos.
   - **Modo lectura** (por defecto): las 32 slides. Es lo que recibe quien abre el enlace.
-  - **Modo charla**: se saltan las `▸` y quedan las 15 del flujo principal.
+  - **Modo charla**: se saltan las `▸` y quedan las 14 del flujo principal.
   - El modo se refleja en la URL (`#charla`) para poder abrir el deck ya configurado, sin tocar nada delante del público.
 - **Rama**: las slides de profundización llevan un **badge `▸`** y un color de acento distinto, para que se reconozcan de un vistazo aunque se estén viendo todas.
-- **Progreso**: el contador es consciente del modo — "12 / 15" en charla, "23 / 32" en lectura. Así el presentador no pierde la cuenta al saltar ramas.
+- **Progreso**: el contador es consciente del modo — "12 / 14" en charla, "23 / 32" en lectura. Así el presentador no pierde la cuenta al saltar ramas.
 - **Mapa**: la tecla `m` abre un índice con las dos capas (principal y profundización) y permite saltar.
 - **Volver**: `Esc` devuelve al flujo principal desde cualquier rama (útil si la profundización se alarga).
 - **Consistencia**: el modo charla **solo oculta, nunca reordena**; el orden de las slides es idéntico en los dos modos.
@@ -239,6 +240,8 @@ Desde cada capítulo se puede **profundizar**. Las ramas son bidireccionales: se
 
 **Revisión de v0.7**: la lista queda en **33 términos**, agrupados por bloque para que el glosario se pueda escanear igual que la presentación. Hay **seis nuevos**, marcados **(nuevo)**: salen de los ejemplos concretos de §5 (herramienta, sesión, frontmatter, modo auto, ADE) o del capítulo de coste (caché de prompt). Se han descartado tres por genéricos o poco útiles en un deck de agentes: *temperatura* (hoy el control real es el *reasoning effort*), *benchmark* y *alucinación*. Se mantiene **CLI** como contraste con MCP.
 
+> **Añadido el 2026-10-18**: **modelo de decisión** (`#glosario-modelo-decision`), en el bloque *Modelos* y justo detrás de *modelo local*, para poder hablar del tipo de modelo que estrena la rama 3.e. La lista queda en **34 términos**; el número de cada uno se recoloca solo, porque sale del orden en el `div.gloss`.
+
 Las definiciones de la columna *breve* son las que aparecen en el **tooltip** y no deben pasar de ~25 palabras. La **larga** (glosario, con ejemplo y referencias) se redacta al generar el deck; aquí se deja apuntada.
 
 #### Fundamentos
@@ -260,6 +263,7 @@ Las definiciones de la columna *breve* son las que aparecen en el **tooltip** y 
 |---------|-------|----------------------------|
 | modelo frontera | `#glosario-modelo-frontera` | El modelo más capaz (y caro) del momento. Para lo difícil, no para todo. |
 | modelo local | `#glosario-modelo-local` | Modelo que corre en tu máquina: privacidad y coste cero a cambio de calidad y hardware. |
+| modelo de decisión **(nuevo)** | `#glosario-modelo-decision` | No escribe texto: recibe preguntas con tipo y devuelve valores y probabilidades. Hoy, System One. |
 | reasoning effort | `#glosario-reasoning-effort` | Cuánto "piensa" el modelo antes de responder. Subirlo mejora lo difícil y encarece todo. |
 | enrutador de modelos | `#glosario-enrutador` | Una sola API delante de muchos modelos: ella decide a cuál va cada petición. |
 | caché de prompt **(nuevo)** | `#glosario-cache-prompt` | Reutilizar lo que el modelo ya procesó, para pagar y esperar menos por lo mismo. |
@@ -328,11 +332,12 @@ Las definiciones de la columna *breve* son las que aparecen en el **tooltip** y 
 - **Tipografía**: `IBM Plex Sans` (titulares 600/700) + `IBM Plex Mono` (etiquetas, código, datos), **recortada a los caracteres del deck y embebida** (132 KB en siete subconjuntos). Sin Google Fonts.
 - **Elementos firma**: barra de pestañas con el capítulo activo, prompt con cursor parpadeante, **barra de estado** inferior (rama, slide, bloque), árbol de ficheros como diagrama de capas, y chips mono para conceptos.
 - **Regla de glifos**: solo se usan caracteres que **IBM Plex trae de verdad**. Los adornos que no están en la fuente —`▸` de rama, `●` de estado, `■` de flujo, el `❯` del prompt, el círculo del superíndice— **se dibujan con CSS** (`.tri`, `.sq`, `.dotg`, `.chev`). Motivo: si se dejan como texto, caen a la fuente del sistema y en otra máquina aparecen como cuadraditos.
-- **Por qué encaja**: los ejemplos del deck son de **OpenCode y Claude Code** (herramientas de terminal); el estilo y el contenido se refuerzan. El árbol `harness ├── modelo ├── contexto └── subagentes` es literalmente el diagrama del capítulo 2.
+- **Por qué encaja**: los ejemplos del deck son de **herramientas de terminal** (OpenCode, Claude Code, Codex…); el estilo y el contenido se refuerzan.
 - **Densidad**: **alta / reading-first**. La presentación debe entenderse sin ponente, pero con jerarquía fuerte para que el ponente aporte valor encima.
-- **Recursos por slide**: diagramas (árboles, flujos, comparativas), **terminales recreadas** con CSS y la salida real pegada como texto, tablas de especificación, bloques de código cortos, chips. Sin capturas de imagen (§1).
+- **Recursos por slide**: diagramas (árboles, flujos, comparativas), **terminales recreadas** con CSS y la salida real pegada como texto, tablas de especificación, bloques de código cortos, chips y, **solo en el capítulo 2, ocho logotipos** (ver *Iconos*, abajo). Sin capturas de imagen (§1).
+- **Iconos**: la fila de proveedores del capítulo 2 usa **logotipos de verdad**: los de [SVGL](https://svgl.app/) —nos quedamos con la variante *para fondo oscuro* que marca cada nombre— y el de Hermes Agent, que no está en esa biblioteca y sale del favicon oficial de `hermes-agent.nousresearch.com`. Se copian **sin retocar** a `src/assets/icons/` y el build los embebe como data URI: el deck sigue sin conexión. Procedencia, licencia y cómo añadir uno: **`src/assets/icons/PROCEDENCIA.md`**.
 - **Reglas de contenido**: ≤15 palabras por titular; una idea por slide; código corto.
-- **Diagramas**: construidos con CSS (rejillas, columnas y cajas anidadas). Nada de SVG externo.
+- **Diagramas**: construidos con CSS (rejillas, columnas y cajas anidadas). Lo único que no se dibuja con CSS son los ocho logotipos de la fila de proveedores (*Iconos*).
 - **Movimiento**: revelado escalonado al entrar cada slide (~0,8 s), respetando `prefers-reduced-motion`.
 - **Implementado en**: `src/index.html`. El cromo de cada slide (barra de pestañas y de estado) se genera por JS a partir de los `data-*` de la `<section>`, para que añadir una slide sea escribir solo su contenido.
 
@@ -354,60 +359,33 @@ Las definiciones de la columna *breve* son las que aparecen en el **tooltip** y 
   - **Versión y fecha**: `v0 · actualizado 2026-10-18` — sin autor y sin evento (decisión tomada: es un material para compartir y actualizar, no una ponencia concreta). La versión la marca el mantenedor; la fecha sigue al contenido.
   - Referencia al repositorio: <https://github.com/alfredogonzalezmartinez/desarrollo-con-ia>
   - **Ayuda de navegación en la propia portada** (una línea, en tono gris): `← → avanzar · c modo charla · m mapa · hover sobre un término = definición`.
-  - Cifras del deck: **32 slides** y **17 de profundización**, marcadas `▸`.
+  - Cifras del deck: **32 slides** y **18 de profundización**, marcadas `▸`.
 - **Visuales**: título grande + *mock* de terminal con un agente trabajando (recreado, ver §4).
 - **Referencias**: [frontend-slides](https://github.com/zarazhangrui/frontend-slides) (cómo se hizo esta presentación).
 
-### 2. ¿Qué es un agente?
+### 2. Evolución: del chat al agente
 
-- **Objetivo**: fijar el modelo mental mínimo.
+- **Objetivo**: fijar el modelo mental mínimo (chat vs agente) y, de paso, situarlo en el tiempo.
 - **Mensajes clave**:
   - Un **agente** = un **modelo** (el "cerebro") + un **harness** (el entorno que le da herramientas, memoria y control).
-  - El **modelo** predice texto; el **harness** lo convierte en acciones sobre tu repo (leer, editar, ejecutar).
   - **Chat**: respondes preguntas → obtienes texto. **Agente**: le das un objetivo → ejecuta pasos, usa herramientas y verifica.
-- **Ejemplo (el bucle, en la práctica)**:
-  - *OpenCode*: `opencode` abre la sesión; `/agents` muestra los agentes y uno de ellos es el incorporado **plan** ("explora y planifica sin editar ficheros normales"; los comandos de shell siguen pasando por permisos).
-  - *Claude Code*: `claude`; trae subagentes incorporados **Explore** y **Plan** (solo lectura: escritura y edición denegadas) y **General-purpose** (explorar y actuar).
-  - *En pantalla*: la misma petición en dos columnas — "chat" devuelve texto; "agente" lee → edita → ejecuta → verifica y vuelve a empezar. Un contador de vueltas muestra el bucle.
-- **Visuales**:
-  - Tabla comparativa **Chat vs Agente**.
-  - **Diagrama interactivo** (ver §5.2.1).
-  - Fichas de ejemplos (ver §5.2.2).
+  - El modelo no ejecuta nada: **pide** herramientas (*tool calling*); quien las ejecuta es el harness.
+- **Lo que se ve en la slide** (tres bandas, de arriba abajo):
+  1. **Dos columnas**, chat ↔ agente, con un titular cada una (*Responde y se para.* / *Actúa hasta terminar.*) y la explicación debajo. La del agente enlaza al glosario en `herramienta (tool)`: es la primera vez que el deck manda a alguien al glosario.
+  2. **Fila de proveedores** (*Quién lo ofrece hoy*): ocho iconos —OpenAI, Copilot, Claude, Gemini, OpenCode, Hermes, DeepSeek y Qwen—. Al pasar el ratón, cada uno enseña una ficha con una frase y **los enlaces a su chat y a su agente**: casi todos los proveedores ya ofrecen los dos, y ese es justo el mensaje.
+  3. **Línea de tiempo** (*Cómo hemos llegado aquí*), pegada al pie de la ventana: **trece paradas** —2017 Transformer · 2020 GPT-3 · jun 2021 Copilot · jul 2022 Midjourney y Stable Diffusion · nov 2022 ChatGPT · 2023 GPT-4 y las herramientas · 2023 LLaMA y `llama.cpp` · sep 2024 o1 · nov 2024 MCP · ene 2025 DeepSeek y Qwen · 2025 agentes · 2026 frontera · sep 2026 System One (Jev)—, cada una con su ficha (frase + contexto + *por qué importa* + enlaces). El eje es una línea horizontal y los rótulos **alternan arriba y abajo**: eso es lo que permite que las trece quepan sin que los textos se pisen.
 - **Ramas**: 2.a Permisos y modos de trabajo · 2.b Hooks.
-- **Referencias**:
-  - OpenCode — Agents: <https://opencode.ai/v2/docs/agents/>
-  - Claude Code — Subagents: <https://code.claude.com/docs/en/sub-agents>
-  - AGENTS.md (formato abierto): <https://agents.md/>
+- **Referencias**: las de la línea de tiempo van agrupadas en la slide de Referencias (§7); los iconos y su procedencia, en `src/assets/icons/PROCEDENCIA.md`.
 
-#### 5.2.1 Diagrama interactivo del agente
+#### 5.2.1 Las fichas al pasar el ratón
 
-**Concepto**: se construye de dentro hacia fuera.
+Las **dos** filas de abajo funcionan igual, y comparten la misma ficha flotante:
 
-1. **Núcleo**: el **Modelo**.
-2. Se encapsula en el **Harness**.
-3. Se añaden, uno a uno y en orden lógico: **Prompt** → **Contexto** → **Skills** → **MCP/CLI** → **Subagentes**.
+- **Proveedores** y **paradas de la línea de tiempo** son elementos con foco (`tabindex="0"`): la ficha sale con el ratón **y** con el teclado.
+- La ficha se abre **encima** del elemento; en el primero se alinea a la izquierda y en el último a la derecha, para que no se salga de la ventana a 1920×1080 —y en la línea de tiempo, que va con trece columnas, también la segunda y la penúltima—.
+- En táctil no hay *hover*: al tocar se abre, y se cierra al tocar en cualquier otro sitio. Los enlaces de dentro de la ficha no la cierran.
 
-**Interacción**: al pasar el ratón por cada capa se muestra una frase breve y un enlace "ver apartado →" que salta al capítulo correspondiente de la presentación.
-**Implementación**: SVG con capas (`<g>`) + tooltips HTML; los enlaces usan anclas internas (`#capitulo-skills`, etc.).
-**Extra**: botón "auto-construir" que anima la aparición de las capas de dentro hacia fuera.
-
-#### 5.2.2 Ejemplos: agentes y chats
-
-| Tipo | Ejemplo | Qué es | Enlace |
-|------|---------|--------|--------|
-| Agente (CLI) | **OpenCode** | Agente de código open source, multi-modelo, con agentes y skills | <https://opencode.ai/> |
-| Agente (CLI) | **Claude Code** | Agente de código de Anthropic, con subagentes/skills/hooks | <https://code.claude.com/docs/> |
-| Agente (CLI) | **Codex** | Agente de OpenAI para terminal/IDE | <https://openai.com/codex/> |
-| Agente (CLI) | **Gemini CLI** | Agente de Google en terminal | <https://github.com/google-gemini/gemini-cli> |
-| Agente (CLI) | **Aider** | Edición de código en Git, muy orientado a diffs | <https://aider.chat/> |
-| Agente (extensión) | **Cline** | Agente open source en VS Code/JetBrains, también CLI y SDK | <https://github.com/cline/cline> |
-| Agente (autónomo) | **Hermes Agent** | Agente open source persistente y auto-mejorable (Nous Research) | <https://www.hermes-agent.org> |
-| Chat | **ChatGPT** | Asistente conversacional | <https://chatgpt.com/> |
-| Chat | **Gemini** | Asistente conversacional de Google | <https://gemini.google.com/> |
-| Chat | **Claude** | Asistente conversacional de Anthropic | <https://claude.ai/> |
-
-> Nota: la frontera se difumina (los chats también usan herramientas). La distinción útil es *objetivo y autonomía*, no el producto.
-> **Decisión tomada**: los ejemplos desarrollados serán **OpenCode** y **Claude Code**; el resto se mencionan como alternativas.
+> **Material que se descartó en la fusión** (decisión del mantenedor: no se sustituye): el diagrama de capas *modelo → harness → prompt → contexto → skills → MCP → subagentes* de la antigua slide 2, y la tabla comparativa chat/agente más la tabla de ejemplos (OpenCode, Claude Code, Codex, Gemini CLI, Aider, Cline, Hermes Agent, ChatGPT, Gemini, Claude) de la antigua slide 3. La distinción chat/agente se sigue contando, pero en dos columnas y una frase por lado.
 
 #### 5.2.a Rama — Permisos y modos de trabajo
 
@@ -440,7 +418,7 @@ Las definiciones de la columna *breve* son las que aparecen en el **tooltip** y 
   - *Claude Code*: `/model` con alias `sonnet`, `opus`, `haiku`, `opusplan` y `sonnet[1m]` (ventana de 1M). El **esfuerzo** va de `low` a `max` y existe el modo de *thinking* extendido.
   - *En pantalla*: la misma tarea ejecutada dos veces (barato/rápido vs caro/exhaustivo) con tiempo y coste medidos; no se afirma cuál es "mejor".
 - **Visuales**: eje **coste ↔ capacidad**; tabla "tarea → modelo/esfuerzo"; demo de la misma tarea con distinto esfuerzo.
-- **Ramas**: 3.a Benchmarks · 3.b Modelos locales · 3.c Enrutadores · 3.d API vs suscripción.
+- **Ramas**: 3.a Benchmarks · 3.b Modelos locales · 3.c Enrutadores · 3.d API vs suscripción · 3.e Modelos de decisión.
 - **Referencias**: Artificial Analysis (coding agents) <https://artificialanalysis.ai/agents/coding-agents>
 
 #### 5.3.a Rama — Benchmarks (y cómo leerlos)
@@ -473,6 +451,16 @@ Las definiciones de la columna *breve* son las que aparecen en el **tooltip** y 
 
 - **Mensajes clave**: suscripción = cuota fija, simple, límites por ventana; API = pago por uso, escalable, impredecible. Para aprender, suscripción; para automatizar en volumen, API.
 - **Visuales**: comparativa de modelos de coste + ejemplo de "optimizar la suscripción" (modelo grande para planificar, pequeño para lo mecánico).
+
+#### 5.3.e Rama — Modelos de decisión: los que no escriben **(nueva, 2026-10-18)**
+
+- **Idea**: casi todos los modelos del deck reciben texto y devuelven texto. Un **modelo de decisión** (System One, de TypeSafe AI) recibe un **estado** y **preguntas con tipo**, y devuelve **valores y probabilidades** que el programa usa directamente: no hay texto que leer ni que interpretar.
+- **Los tres tipos de pregunta**: `noul` (sí/no, con su probabilidad) · `choice` (una opción de una lista) · `score` (una nota, según una rúbrica). Se pueden pedir varias en una sola llamada.
+- **Para qué sirve**: clasificar, enrutar, puntuar o decidir dentro de un *pipeline*, sin un LLM redactando. **Para qué no**: escribir, resumir, conversar.
+- **Por qué está en el deck**: cierra la **idea fuerza 2** (*si no puedes comprobarlo, no lo puedes delegar*): la respuesta es un valor que se comprueba, no una frase en la que hay que confiar. Y es el contraejemplo exacto de «el chat solo genera texto».
+- **Visuales**: tabla de los tres tipos de pregunta + la llamada en crudo (JSON) + panel de dónde probarlo.
+- **Fechas**: System One se presentó el **15 de septiembre de 2026**; Jev 1.13 se usa desde la consola de OpenCode (`jev-1.13`, con versión gratuita) y Jev 1.14 llegó el **14 de octubre de 2026**.
+- **Referencias**: [el anuncio](https://typesafe.ai/blog/introducing-system-one-models-and-jev) · [typesafe.ai](https://typesafe.ai)
 
 ### 4. Contexto y memoria
 
@@ -697,37 +685,41 @@ Las definiciones de la columna *breve* son las que aparecen en el **tooltip** y 
 
 ## 6. Secuencia de slides (v1.0 — construida)
 
-**32 slides: 15 de flujo principal (■) + 17 de profundización (▸).** El orden es lineal e idéntico en los dos modos; el modo charla solo oculta las `▸`.
+**32 slides: 14 de flujo principal (■) + 18 de profundización (▸).** El orden es lineal e idéntico en los dos modos; el modo charla solo oculta las `▸`.
 
-### Flujo principal — 15 slides (modo charla, ~30 min)
+> **Cambio de esta revisión (2026-10-18)**: las antiguas slides **2** (*¿Qué es un agente?*) y **3** (*Chat vs agente*) se han fundido en una sola, **2 · Evolución: del chat al agente** — dos columnas (chat ↔ agente), la fila de proveedores y la línea de tiempo. El deck pasa de 32 a 31 slides y el flujo principal de 15 a 14; los números de estas listas ya son los nuevos.
+>
+> **Y en la misma fecha, después**: la **línea de tiempo** de la slide 2 pasa de 7 a **13 paradas** —imagen (2022), herramientas y modelo local (2023), razonamiento y MCP (2024) y System One (2026)—, y se añade la rama **3.e · Modelos de decisión**. El deck vuelve a **32 slides** (14 + 18) y el glosario pasa a **34 términos**.
+
+### Flujo principal — 14 slides (modo charla, ~30 min)
 
 ```
  1 ■ Portada
- 2 ■ ¿Qué es un agente?            definición + diagrama de capas en la misma slide
- 3 ■ Chat vs agente                con los ejemplos de OpenCode y Claude Code
- 4 ■ Modelos                       qué es un LLM y la gama (frontera → local)
- 5 ■ Contexto                      qué ve el agente en cada momento
- 6 ■ Reglas: AGENTS.md / CLAUDE.md  ▸ era la rama 4.a — el tema más accionable
- 7 ■ Skills                        qué son y por qué funcionan
- 8 ■ MCP                           qué es y para qué sirve
- 9 ■ Subagentes                    delegar y aislar contexto
-10 ■ Flujos                        explorar → planificar → codificar → confirmar
-11 ■ Verificación                  cómo sabes que está bien  ** NUEVA **
-12 ■ Orquestación                  varios agentes a la vez
-13 ■ Cierre + checklist            6 pasos con el comando real
-14 ■ Glosario                      33 términos
-15 ■ Referencias                   bibliografía completa
+ 2 ■ Evolución: del chat al agente  chat ↔ agente, quién lo ofrece y la línea de tiempo
+ 3 ■ Modelos                       qué es un LLM y la gama (frontera → local)
+ 4 ■ Contexto                      qué ve el agente en cada momento
+ 5 ■ Reglas: AGENTS.md / CLAUDE.md  ▸ era la rama 4.a — el tema más accionable
+ 6 ■ Skills                        qué son y por qué funcionan
+ 7 ■ MCP                           qué es y para qué sirve
+ 8 ■ Subagentes                    delegar y aislar contexto
+ 9 ■ Flujos                        explorar → planificar → codificar → confirmar
+10 ■ Verificación                  cómo sabes que está bien  ** NUEVA **
+11 ■ Orquestación                  varios agentes a la vez
+12 ■ Cierre + checklist            6 pasos con el comando real
+13 ■ Glosario                      34 términos
+14 ■ Referencias                   bibliografía completa
 ```
 
-### Profundización — 17 slides (modo lectura, en su sitio)
+### Profundización — 18 slides (modo lectura, en su sitio)
 
 ```
-16 ▸ Permisos y modos de trabajo       (cap. 2 · agentes)
-17 ▸ Hooks                              (cap. 2)
-18 ▸ Benchmarks y cómo leerlos          (cap. 3 · modelos)
-19 ▸ Modelos locales                    (cap. 3)
-20 ▸ Enrutadores de modelos             (cap. 3)
-21 ▸ API vs suscripción                 (cap. 3)
+15 ▸ Permisos y modos de trabajo       (cap. 2 · agentes)
+16 ▸ Hooks                              (cap. 2)
+17 ▸ Benchmarks y cómo leerlos          (cap. 3 · modelos)
+18 ▸ Modelos locales                    (cap. 3)
+19 ▸ Enrutadores de modelos             (cap. 3)
+20 ▸ API vs suscripción                 (cap. 3)
+21 ▸ Modelos de decisión                (cap. 3 · modelos)
 22 ▸ Ventana y compactación             (cap. 4 · contexto)
 23 ▸ Memoria y eficiencia de contexto   (cap. 4)
 24 ▸ Crear una skill                    (cap. 5 · skills)
@@ -752,9 +744,9 @@ Las definiciones de la columna *breve* son las que aparecen en el **tooltip** y 
 | **Ramas marcadas `▸` y modo charla** | Antes 18 de 33 slides eran "opcionales" pero estaban en la secuencia: imposible saltarlas de verdad |
 | **Slide de herramientas: matriz 2×2 con 4 nombres** | Nueve herramientas en una slide no se leen (§5.9.a) |
 
-> **Nota de tiempos**: 15 slides × 2 min = 30 min, que es el objetivo. Si se abren ramas, cada una suma ~45-60 s; con 17 disponibles, hay material para 45-60 min. Es deliberado: **el deck aguanta una charla corta y una larga**.
+> **Nota de tiempos**: 14 slides × 2 min = 28-30 min, que es el objetivo. Si se abren ramas, cada una suma ~45-60 s; con 18 disponibles, hay material para 45-60 min. Es deliberado: **el deck aguanta una charla corta y una larga**.
 >
-> **Nota de numeración**: los números de slide cambian respecto a v0.8. Si en algún momento se habla de "la slide 31", hay que referirse a la 13.
+> **Nota de numeración**: los números de slide cambiaron respecto a la v0.8 (33 slides). La tabla de arriba se refiere a aquella versión; para cualquier número actual, manda la lista de §6 (32 slides). Y ojo: el deck bajó de 33 a 31 al fundir las antiguas 2 y 3, y volvió a **32** al añadirse la rama 3.e; así que «la slide 32» hoy es una rama real (▸ Herramientas), no una referencia antigua.
 
 ---
 
@@ -762,6 +754,27 @@ Las definiciones de la columna *breve* son las que aparecen en el **tooltip** y 
 
 **Herramienta de la presentación**
 - frontend-slides — <https://github.com/zarazhangrui/frontend-slides>
+
+**Historia (la línea de tiempo del bloque 1)** *(verificado 2026-10-18)*
+- Transformer — <https://en.wikipedia.org/wiki/Attention_Is_All_You_Need> (2017)
+- GPT-3 — <https://en.wikipedia.org/wiki/GPT-3> (2020)
+- GitHub Copilot — <https://en.wikipedia.org/wiki/GitHub_Copilot> (2021)
+- Midjourney — <https://en.wikipedia.org/wiki/Midjourney> (2022)
+- Stable Diffusion — <https://en.wikipedia.org/wiki/Stable_Diffusion> (2022)
+- ChatGPT — <https://en.wikipedia.org/wiki/ChatGPT> (2022)
+- GPT-4 — <https://en.wikipedia.org/wiki/GPT-4> (2023)
+- Llama (familia de modelos de Meta) — <https://en.wikipedia.org/wiki/Llama_(language_model)> (2023)
+- llama.cpp — <https://en.wikipedia.org/wiki/Llama.cpp> (2023)
+- o1 — <https://en.wikipedia.org/wiki/OpenAI_o1> (2024)
+- Model Context Protocol (MCP) — <https://en.wikipedia.org/wiki/Model_Context_Protocol> (2024)
+- DeepSeek — <https://en.wikipedia.org/wiki/DeepSeek_(AI)> (2025)
+- Qwen — <https://en.wikipedia.org/wiki/Qwen> (2025)
+- Claude Code — <https://en.wikipedia.org/wiki/Claude_(AI)> (2025)
+- OpenAI Codex — <https://en.wikipedia.org/wiki/OpenAI_Codex> (2025)
+- OpenCode — <https://en.wikipedia.org/wiki/OpenCode> (2025)
+- Google Antigravity — <https://en.wikipedia.org/wiki/Google_Antigravity> (2025)
+- GPT-6.1 Sol — <https://en.wikipedia.org/wiki/GPT-6.1> (2026)
+- System One y Jev (TypeSafe AI) — <https://typesafe.ai/blog/introducing-system-one-models-and-jev> (2026) · <https://typesafe.ai>
 
 **Agentes y harness**
 - OpenCode V2 docs — <https://opencode.ai/v2/docs/>
@@ -780,7 +793,7 @@ Las definiciones de la columna *breve* son las que aparecen en el **tooltip** y 
 - OpenCode — Models — <https://opencode.ai/v2/docs/models/>
 - OpenCode — TUI (comandos `/models`, `/agents`…) — <https://opencode.ai/v2/docs/cli/tui>
 - AGENTS.md — <https://agents.md/>
-- Hermes Agent — <https://www.hermes-agent.org> · <https://github.com/NousResearch/hermes-agent>
+- Hermes Agent — <https://hermes-agent.nousresearch.com/> · <https://github.com/NousResearch/hermes-agent>
 - Aider — <https://aider.chat/>
 
 **Skills**
@@ -796,6 +809,7 @@ Las definiciones de la columna *breve* son las que aparecen en el **tooltip** y 
 - LiveCodeBench — <https://livecodebench.github.io/leaderboard>
 - Aider leaderboards — <https://aider.chat/docs/leaderboards/>
 - BenchLeader — <https://www.benchleader.com/best/llm-for-coding>
+- System One (Jev) — modelos de decisión de TypeSafe AI — <https://typesafe.ai> · [el anuncio](https://typesafe.ai/blog/introducing-system-one-models-and-jev)
 
 **Routers y modelos locales**
 - OpenRouter — <https://openrouter.ai/>
@@ -818,7 +832,7 @@ Las definiciones de la columna *breve* son las que aparecen en el **tooltip** y 
 - Herdr — <https://herdr.dev/>
 - Orca — <https://www.onorca.dev/>
 
-> Verificación de enlaces: completa el **2026-10-17**. Todos los enlaces del documento responden (los bloqueos de `claude.ai` y `gemini.google.com` son protección antibots, no enlaces roscos).
+> Verificación de enlaces: completa el **2026-10-18** — 84 enlaces (los 77 únicos del deck más los que solo están en este documento), más los **nueve que trajo la línea de tiempo ampliada** (Midjourney, Stable Diffusion, GPT-4, Llama, `llama.cpp`, o1, MCP, System One y `typesafe.ai`), comprobados el mismo día: responden todos menos el del repositorio (`github.com/alfredogonzalezmartinez/desarrollo-con-ia`, que da **404 porque aún no está publicado**). Los 403 de `chatgpt.com`, `claude.ai` y `openai.com/codex` son protección antibots, no enlaces roscos.
 >
 > Esta sección es también la **última slide** del deck: allí aparecen la versión, la fecha de actualización y el enlace al repositorio, para que el material se pueda retomar y actualizar sin buscar nada.
 
@@ -826,13 +840,13 @@ Las definiciones de la columna *breve* son las que aparecen en el **tooltip** y 
 
 ## 8. Preguntas abiertas
 
-Ya cerradas en la **v1.0 de este documento**: **material gráfico** (todo recreado, salidas reales como texto), **portada** (sin autor ni evento; versión y fecha), **enlaces** (verificados 2026-10-17) y **estructura de la secuencia** (32 slides: 15 + 17).
+Ya cerradas en la **v1.0 de este documento**: **material gráfico** (todo recreado, salidas reales como texto), **portada** (sin autor ni evento; versión y fecha), **enlaces** (verificados 2026-10-18) y **estructura de la secuencia** (32 slides: 14 + 18).
 
 Implementado al construir el deck: **modo charla** (`c` y `#charla`), **glosario** con tooltips y numeración automática desde la lista, **cromo generado por slide** desde los `data-*`, y **comprobación de encaje a 1920×1080** (`npm run check`): ninguna de las 32 slides se recorta.
 
 Lo que queda:
 
-1. **Glosario**: las 33 definiciones breves están escritas (§3.3). Queda la **definición larga** de cada término (con ejemplo y referencia).
+1. **Glosario**: las 34 definiciones breves están escritas (§3.3). Queda la **definición larga** de cada término (con ejemplo y referencia).
 2. **Glosario en táctil** (§3.2): validar que el tap sobre un término muestra la definición sin navegar.
 3. **Verificación (8.c)**: decidir si la slide enseña un caso real de test rojo → verde del propio repositorio, o un ejemplo sintético. Con datos reales convence más, pero hay que prepararlo.
-4. **Caducidad de las cifras**: los ejemplos citan versión de herramienta (OpenCode V2) y las referencias llevan `verificado 2026-10-17`. Decidir cada cuánto se revisa —propuesta: **al publicar cada versión mayor**— y qué pasa si una herramienta cambia de nombre o desaparece.
+4. **Caducidad de las cifras**: los ejemplos citan versión de herramienta (OpenCode V2) y las referencias llevan `verificado 2026-10-18`. Decidir cada cuánto se revisa —propuesta: **al publicar cada versión mayor**— y qué pasa si una herramienta cambia de nombre o desaparece.
