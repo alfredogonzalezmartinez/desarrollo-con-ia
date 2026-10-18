@@ -54,8 +54,17 @@ await page.addStyleTag({
 const ids = await page.evaluate(() => [...document.querySelectorAll('.slide')].map((s) => s.id));
 fs.mkdirSync(outDir, { recursive: true });
 
-const desde = only ? Math.max(1, only) : 1;
+const desde = only ? Math.max(1, Math.min(only, ids.length)) : 1;
 const hasta = only ? Math.min(only, ids.length) : ids.length;
+
+// El deck arranca siempre en la primera slide, así que con `--only=N` hay que
+// llegar hasta la N antes de disparar la primera captura. (Antes no se hacía y
+// `--only=N` fotografiaba la slide 1 con el nombre de la N.)
+for (let k = 1; k < desde; k++) {
+    await page.click('#next');
+    await page.waitForTimeout(60);
+}
+
 for (let k = desde; k <= hasta; k++) {
     const name = String(k).padStart(2, '0') + '-' + ids[k - 1].replace(/^s-/, '');
     await page.screenshot({ path: path.join(outDir, name + '.png') });
