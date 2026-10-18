@@ -43,11 +43,14 @@ resalta el término.
 ```
 AGENTS.md                 guía de trabajo para agentes: reglas, comandos, mapa
 CLAUDE.md                 puente para Claude Code (apunta a AGENTS.md)
-.claude/skills/mantener-deck/   skill con el procedimiento de mantenimiento
+.agents/skills/           las 4 skills del proyecto: la copia de verdad
+.claude/skills/           enlaces simbólicos a las anteriores, para Claude Code
+skills-lock.json          de dónde vienen las skills externas (origen y hash)
 src/index.html            la fuente: aquí se edita todo
 src/assets/fonts/         IBM Plex recortada a los caracteres del deck
 scripts/build.mjs         compila src → dist
 scripts/check-layout.mjs  mide el encaje de las 32 slides con Chromium
+scripts/check-skills.mjs  comprueba las skills del proyecto y sus enlaces
 scripts/shots.mjs         capturas de las slides, para revisar
 scripts/subset-fonts.sh   regenera las fuentes (rara vez hace falta)
 docs/definicion.md        qué lleva cada slide y por qué: el documento de definición
@@ -59,6 +62,11 @@ Si vas a trabajar en el deck (tú o un agente), empieza por **`AGENTS.md`**: ah�
 están las reglas que no se pueden romper y las trampas conocidas. La skill
 `mantener-deck` empaqueta el procedimiento para que un agente lo siga solo.
 
+Las **skills** viajan dentro del repositorio, en `.agents/skills/`, con un puente
+de enlaces simbólicos en `.claude/skills/` para Claude Code: clonar el repositorio
+basta, no hay que instalar nada. `npm run skills:check` comprueba que las cuatro
+están y que los enlaces apuntan donde deben.
+
 ## Trabajar en él
 
 ```bash
@@ -69,6 +77,7 @@ npm run check      # mide la maquetación de las 32 slides con un navegador real
 npm run shots      # capturas de las 32 slides en shots/ (para revisar)
 npm run preview    # compila y sirve en http://127.0.0.1:8811
 npm run pack       # además genera .gz y .br, para compartirlo comprimido
+npm run skills:check  # comprueba que las skills del proyecto están en su sitio
 ```
 
 El build hace tres cosas y **falla si alguna no se cumple**:
@@ -137,7 +146,15 @@ adivinar de cuándo es:
 
 ## Créditos y licencia
 
-- Hecho con la skill [frontend-slides](https://github.com/zarazhangrui/frontend-slides).
+- Hecho con la skill [frontend-slides](https://github.com/zarazhangrui/frontend-slides)
+  (MIT, © Zara Zhang), copiada en `.agents/skills/frontend-slides/`; ver su
+  [`PROCEDENCIA.md`](.agents/skills/frontend-slides/PROCEDENCIA.md).
+- La skill [playwright-cli](https://github.com/microsoft/playwright-cli) se copia
+  del paquete `@playwright/cli` (Apache-2.0, © Microsoft), en
+  `.agents/skills/playwright-cli/`.
+- La skill [codely-git-conventional-commit](https://github.com/CodelyTV/agent-harness)
+  (MIT, © Codely) viene del harness de agentes de CodelyTV, en
+  `.agents/skills/codely-git-conventional-commit/`.
 - Tipografía **IBM Plex**, bajo SIL Open Font License 1.1
   (ver [`src/assets/fonts/LICENSE-IBMPlex.txt`](src/assets/fonts/LICENSE-IBMPlex.txt)).
 - Contenido y código: **MIT** (ver [`LICENSE`](LICENSE)).

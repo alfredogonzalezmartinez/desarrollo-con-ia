@@ -33,7 +33,7 @@
 
 ## 1. Cómo se construye
 
-- **Herramienta**: skill `frontend-slides` (instalada en `~/.agents/skills/frontend-slides`).
+- **Herramienta**: skill `frontend-slides`, copiada dentro del repositorio en `.agents/skills/frontend-slides/` (viaja con el clon; ver su `PROCEDENCIA.md`).
 - **Entregable**: **un solo HTML autocontenido** (decisión tomada), navegable con teclado y ratón.
 - **Escenario fijo 16:9 (regla de la skill)**: cada slide se diseña a **1920×1080** y el conjunto se **escala** al viewport. En móvil no se reflowe: se mantiene el 16:9 (letterbox).
 - **Estructura de ficheros** (implementada):
@@ -41,11 +41,14 @@
   ```
   AGENTS.md                 # guía de trabajo para agentes: reglas, comandos, mapa
   CLAUDE.md                 # puente para Claude Code (apunta a AGENTS.md)
-  .claude/skills/mantener-deck/  # skill con el procedimiento de mantenimiento
+  .agents/skills/           # las 4 skills del proyecto: la copia de verdad
+  .claude/skills/           # enlaces simbólicos a las anteriores, para Claude Code
+  skills-lock.json          # de dónde vienen las skills externas (origen y hash)
   src/index.html            # la fuente: aquí se edita todo
   src/assets/fonts/         # IBM Plex recortada a los caracteres del deck
   scripts/build.mjs         # compila src → dist (embebe fuentes, minifica, comprueba)
   scripts/check-layout.mjs  # mide la maquetación de las 32 slides con Chromium
+  scripts/check-skills.mjs  # comprueba las skills del proyecto y sus enlaces
   scripts/shots.mjs         # capturas de las 32 slides, para revisar
   scripts/subset-fonts.sh   # regenera las fuentes (rara vez hace falta)
   docs/definicion.md        # este documento
@@ -61,18 +64,46 @@
   pueda mantener dentro de seis meses, por una persona o por un agente.
   - **`AGENTS.md`** (raíz): las reglas de oro —ninguna slide se recorta, el deck
     funciona sin conexión, solo glifos que IBM Plex trae, la versión la marca el
-    mantenedor—, los comandos, el mapa de ficheros y las trampas conocidas.
-    OpenCode V2 lee solo `AGENTS.md`, así que **`CLAUDE.md` es un puente de dos
-    líneas** que apunta a él para Claude Code: una sola copia, sin duplicar.
-  - **Skill `mantener-deck`** (`.claude/skills/mantener-deck/SKILL.md`): el
-    procedimiento paso a paso y las tareas típicas (cambiar una slide, añadir
-    una, tocar el glosario, comprimir una slide que se sale, un glifo nuevo).
-    Vive en `.claude/skills` a propósito: **la descubren OpenCode (por
-    compatibilidad) y Claude Code (de forma nativa), sin copias**.
+    mantenedor—, los comandos, el mapa de ficheros y las trampas conocidas. Y,
+    lo primero, **cómo trabajar aquí**: preguntar cuando el enunciado admita
+    dudas, proponer y esperar el visto bueno antes de un cambio no trivial, no
+    hacer cambios que nadie ha pedido y **no hacer `git commit`** si no lo piden
+    en ese momento. OpenCode V2 lee solo `AGENTS.md`, así que **`CLAUDE.md` es un
+    puente de dos líneas** que apunta a él para Claude Code: una sola copia, sin
+    duplicar.
+  - **Skills del proyecto** (`.agents/skills/`): las cuatro que necesita el deck
+    **viajan dentro del repositorio**, así que clonarlo basta: no hay
+    `postinstall` ni descargas de red, igual que el deck.
+    - `codely-git-conventional-commit` (externa, MIT © Codely): el formato de los
+      commits y su línea de co-autoría.
+    - `frontend-slides` (externa, MIT © Zara Zhang): crear y ampliar slides.
+    - `playwright-cli` (externa, Apache-2.0 © Microsoft): revisar el deck en un
+      navegador de verdad.
+    - `mantener-deck` (propia): el procedimiento paso a paso y las tareas típicas
+      (cambiar una slide, añadir una, tocar el glosario, comprimir una slide que
+      se sale, un glifo nuevo).
+    Las externas llevan su **`PROCEDENCIA.md`** (origen, versión, fecha y
+    licencia) para saber de dónde vienen y cómo actualizarlas, y `skills-lock.json`
+    guarda el origen y el hash de las que llegan por el instalador de *skills.sh*.
+    `.claude/skills/<id>` son **enlaces simbólicos** a `.agents/skills/<id>`:
+    `.agents/skills` es el estándar (lo lee OpenCode sin configurar nada) y el
+    puente existe para que Claude Code, que solo mira `.claude/skills`, vea la
+    misma copia **sin duplicar nada**. En Windows hacen falta el Modo
+    desarrollador o `core.symlinks`.
+  - **Convención de commits** (en `AGENTS.md`): **Conventional Commits**
+    (`tipo: resumen`, imperativo, sin punto final) y **una sola** línea de
+    co-autoría, la de la herramienta que hizo el commit, con herramienta,
+    modelo y **esfuerzo de razonamiento**. La skill de Codely trae los tipos y
+    el formato, pero **no define OpenCode**, así que la identidad de cada
+    herramienta —y la advertencia de que OpenCode V2 ya no la añade solo, a
+    diferencia de la V1— se fija en el repositorio. En OpenCode el esfuerzo es el
+    `variant` de la sesión: **no aparece en el prompt del agente**, pero la API lo
+    devuelve (`data.model.variant`).
   - **Comprobaciones ejecutables**: `npm run build` (falla si hay dependencia de
-    red, ancla rota o id duplicado), `npm run check` (encaje de las 32 slides) y
-    `npm run shots` (capturas para revisar). Las reglas que se pueden comprobar
-    con un comando no dependen de que alguien se acuerde.
+    red, ancla rota o id duplicado), `npm run check` (encaje de las 32 slides),
+    `npm run shots` (capturas para revisar) y `npm run skills:check` (las skills
+    y sus enlaces). Las reglas que se pueden comprobar con un comando no dependen
+    de que alguien se acuerde.
 
 - **Encaje a 1920×1080** (implementado): como cada slide es una ventana con
   `overflow: hidden`, lo que no cabe se recorta en silencio. `npm run check` abre

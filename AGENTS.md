@@ -3,6 +3,24 @@
 Guía para cualquier agente (o persona) que trabaje en este repositorio. Léela
 antes de tocar nada.
 
+## Cómo trabajar aquí (lo primero)
+
+**Este repositorio no se toca por iniciativa propia.** Antes de nada:
+
+- **Confirma antes de actuar.** Si el enunciado admite más de una lectura, o
+  falta un detalle (un texto, un orden, un enlace, un nombre), **pregunta**. No
+  elijas por tu cuenta ni rellenes huecos con suposiciones.
+- **Propón y espera.** Para cualquier cambio que no sea trivial, di primero qué
+  vas a hacer y por qué, y espera el visto bueno.
+- **No hagas `git commit`** —ni `amend`, ni `push`— si no te lo piden
+  explícitamente **en ese momento**. Un commit anterior no autoriza el siguiente.
+- **Nada de cambios de propina.** No arregles, renombres o reformatees cosas que
+  nadie te ha pedido; si ves algo raro, dilo y espera.
+- **Ve poco a poco.** Es mejor un cambio pequeño confirmado que cinco cambios
+  grandes por confirmar.
+- Al terminar, resume qué has hecho, qué queda pendiente y **pregunta cómo
+  seguir**.
+
 ## Qué es esto
 
 Una presentación sobre desarrollo de software con agentes, publicada como
@@ -50,6 +68,8 @@ npm run shots      # capturas de las 32 slides en shots/ (para revisar)
 npm run preview    # compila y sirve en http://127.0.0.1:8811
 npm run pack       # además genera .gz y .br, para compartirlo comprimido
 npm run fonts      # regenera los subconjuntos de IBM Plex (rara vez hace falta)
+
+npm run skills:check  # comprueba que las skills del proyecto están en su sitio
 ```
 
 `npm run shots -- --only=14` captura solo la slide 14. `--out=/tmp/deck` cambia
@@ -64,8 +84,11 @@ scripts/build.mjs         # compila y valida (red, anclas, ids duplicados)
 scripts/check-layout.mjs  # mide la maquetación con Chromium
 scripts/shots.mjs         # capturas de revisión
 scripts/subset-fonts.sh   # regenera las fuentes desde Google Fonts
+scripts/check-skills.mjs  # comprueba las skills del proyecto y sus enlaces
 docs/definicion.md        # fuente de verdad del contenido
-.claude/skills/mantener-deck/   # skill con el procedimiento de mantenimiento
+.agents/skills/           # las 4 skills del proyecto: la copia de verdad
+.claude/skills/           # enlaces simbólicos a las anteriores (para Claude Code)
+skills-lock.json          # de dónde vienen las skills externas (origen y hash)
 .github/workflows/pages.yml     # build en CI y publicación en GitHub Pages
 dist/                     # generado; ignorado por git
 shots/                    # capturas; ignorado por git
@@ -120,6 +143,104 @@ slide ahí —márgenes, tamaños o, si hace falta, quitando texto— y se vuelv
 medir. Ese bloque es el único sitio donde se toca el ritmo vertical de una
 slide concreta.
 
+## Skills
+
+El proyecto trabaja con **cuatro skills**, y las cuatro viajan dentro del
+repositorio: quien lo clone las tiene, sin instalar nada ni tocar `npm install`
+(no hay `postinstall` ni descargas: como el deck, esto funciona sin conexión).
+
+| Skill | Para qué | Origen |
+|---|---|---|
+| `codely-git-conventional-commit` | Escribir los commits: formato y co-autoría (ver *Commits*). | Externa |
+| `frontend-slides` | Crear o ampliar diapositivas: diseño, plantillas, animación. | Externa |
+| `playwright-cli` | Automatizar un navegador para revisar el deck. | Externa |
+| `mantener-deck` | El procedimiento de mantenimiento de este deck. | Propia |
+
+### Dónde viven
+
+- **La copia de verdad está en `.agents/skills/<id>/`.** Es el estándar, y
+  OpenCode la lee sin configurar nada.
+- **`.claude/skills/<id>` es un enlace simbólico** a la anterior, para que Claude
+  Code (que solo mira `.claude/skills`) vea la misma copia. Una copia real, dos
+  puertas; nada duplicado.
+- Las skills **externas** llevan un `PROCEDENCIA.md` (origen, versión, fecha y
+  licencia) y su `LICENSE`. **No se editan a mano**: se actualizan desde su
+  origen, como explica ese mismo fichero.
+
+Para comprobar que todo está en su sitio: `npm run skills:check`. Avisa de una
+skill que falta, de un enlace roto o de un clon hecho sin enlaces simbólicos.
+
+### Añadir o actualizar una skill
+
+1. Copia la skill en `.agents/skills/<id>/`. Si viene de un clon, **sin su
+   `.git/`**: un repositorio embebido deja de versionarse (git lo anota como
+   *gitlink* y no guarda el contenido).
+   Si está publicada en el instalador de *skills.sh*, se puede traer con él:
+   `npx skills@latest add <owner>/<repo> -s <id> -y`. Deja el rastro en
+   `skills-lock.json`.
+   > Ojo: `--skill=<id>` **con `=` se ignora** y te instala *todas* las skills
+   > del repositorio. Hay que usar `-s <id>` o `--skill <id>`.
+2. Si es externa, añade su `PROCEDENCIA.md` y su licencia: el fichero `LICENSE`
+   o, si el repositorio de origen no trae ninguno, un `license:` en el
+   frontmatter del `SKILL.md`.
+3. Enlázala: `cd .claude/skills && ln -s ../../.agents/skills/<id> <id>`
+   (el instalador de *skills.sh* no crea este enlace).
+4. Añádela a la lista de `scripts/check-skills.mjs` y pasa `npm run skills:check`.
+
+### En Windows
+
+Los enlaces simbólicos necesitan **Modo desarrollador** (o `git config
+core.symlinks true` **antes** de clonar). Sin eso, `.claude/skills/` se llena de
+ficheros sueltos y Claude Code no encuentra las skills; `npm run skills:check` lo
+detecta y lo dice.
+
+## Commits
+
+Los commits siguen **Conventional Commits** y llevan **una** línea de
+co-autoría. El detalle de los tipos y del resumen lo trae la skill
+`codely-git-conventional-commit`; lo que **no** trae es la identidad de OpenCode,
+así que se fija aquí.
+
+Formato: `tipo[!]: resumen`, con `feat`, `fix`, `docs`, `style`, `refactor`,
+`perf`, `build`, `ci`, `chore`, `revert` o `test`. Resumen en imperativo, en
+minúscula y sin punto final. El cuerpo, si hace falta, explica **por qué**, no
+**qué**.
+
+Y **una sola** línea de co-autoría, la de la herramienta que ha hecho el commit:
+
+```text
+Co-Authored-By: {herramienta} - {modelo} ({esfuerzo}) <{email}>
+```
+
+| Herramienta | Email |
+|---|---|
+| OpenCode | `noreply@opencode.ai` |
+| Claude Code | `noreply@anthropic.com` |
+| Cursor | `cursoragent@cursor.com` |
+| Copilot | `copilot@github.com` |
+| Codex | `codex@openai.com` |
+
+- `{modelo}` es el modelo que ha hecho el cambio. En OpenCode lo tienes en la
+  sección **«# Your Model»** de tu propio prompt (`- Name: …`); ese nombre ya
+  lleva la versión, así que no se repite en un campo aparte.
+- `{esfuerzo}` es el esfuerzo de razonamiento. **En OpenCode no sale en tu
+  prompt**, pero sí en la sesión:
+
+  ```bash
+  opencode api get "/api/session/$OPENCODE_SESSION_ID"   # mira data.model.variant
+  ```
+
+  Ese `variant` **es** el esfuerzo (`low`, `high`, `max`… los que admita el
+  modelo). En una sesión real sale, por ejemplo,
+  `{ id: 'deepseek-v4.1-flash-free', providerID: 'opencode', variant: 'high' }`.
+- **Ninguna herramienta lo añade sola por nosotros.** OpenCode lo hacía en la V1
+  —`Co-Authored-By: opencode <noreply@opencode.ai>`, y no se podía desactivar—,
+  pero **en la V2 ya no lo hace**: no queda nada de eso en su código. Claude Code
+  sí lo añade por su cuenta. Por eso la regla vive aquí, en el repositorio.
+- Si el modelo no tiene variantes, o la herramienta no expone el esfuerzo, **no
+  se inventa**: se omite el paréntesis.
+- Y sigue valiendo lo de arriba: **aquí no se commitea sin permiso explícito**.
+
 ## Fuentes
 
 Las fuentes están **recortadas a un juego de caracteres acotado** para que el
@@ -150,7 +271,8 @@ Google Fonts y regenera los subconjuntos). El script avisa de esta regla.
 3. Si has tocado contenido, `npm run shots` y **mira las capturas** de las slides
    afectadas: el check detecta recortes, no fealdad.
 4. Si has cambiado la estructura o el contenido, actualiza `docs/definicion.md`.
-5. Revisa que las fechas que has tocado sigan siendo verdad.
+5. Si has tocado las skills o sus enlaces, `npm run skills:check`.
+6. Revisa que las fechas que has tocado sigan siendo verdad.
 
 ## Qué no hacer
 
@@ -158,4 +280,6 @@ Google Fonts y regenera los subconjuntos). El script avisa de esta regla.
 - No añadir dependencias de red (CDN, Google Fonts, imágenes remotas).
 - No usar caracteres que IBM Plex no traiga.
 - No renumerar slides a mano: el cromo y el mapa salen de los `data-*`.
+- No editar a mano las skills de `.agents/skills/`: las externas se actualizan
+  desde su origen (ver su `PROCEDENCIA.md`).
 - No subir la versión por iniciativa propia.
