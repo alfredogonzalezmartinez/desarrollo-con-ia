@@ -152,7 +152,8 @@ adivinar de cuándo es:
   dejar mergear nada.
 - Con `/preview` en un comentario de la pull request se compila el deck de esa
   PR y se publica en una URL pública, que deja de funcionar al mergear o
-  descartar la PR.
+  descartar la PR. Solo lo puede pedir quien tenga acceso de escritura (se
+  amplía con la variable `PREVIEW_AUTORIZADOS` del repositorio).
 
 ## Créditos y licencia
 
