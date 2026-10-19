@@ -261,8 +261,15 @@ sitio: **la URL muere con la PR**.
 | De **este repositorio** | El deck publicado en `https://<owner>.github.io/<repo>/previews/pr-<n>/`, para verlo en el navegador. |
 | De un **fork** | El deck compilado como **artefacto**, para descargarlo y abrirlo en local. |
 
-La vista previa es **una foto del momento**: no se refresca sola. Después de un
-commit nuevo hay que volver a pedirla con `/preview`.
+La vista previa se **refresca sola** cuando la PR ya la tiene pedida: cada
+commit nuevo vuelve a compilar el deck y a republicarlo, así que la URL siempre
+enseña el último commit. Pero **solo se refresca lo que ya se pidió**: abrir una
+PR no compila nada, porque pedirla es cosa de alguien, con `/preview`. Un
+commit nuevo en una PR sin vista previa tampoco la genera: se queda sin pedir
+hasta que alguien la pida.
+
+En las PR de un **fork** el refresco automático no funciona (el evento da un
+token de solo lectura): hay que volver a pedirla con `/preview`.
 
 Cada petición deja un commit en la rama `previews/pr-<n>`: la rama cuenta la
 secuencia de vistas previas y se actualiza con un *fast-forward*, sin reescribir
