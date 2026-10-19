@@ -14,6 +14,14 @@ antes de tocar nada.
   vas a hacer y por qué, y espera el visto bueno.
 - **No hagas `git commit`** —ni `amend`, ni `push`— si no te lo piden
   explícitamente **en ese momento**. Un commit anterior no autoriza el siguiente.
+- **Antes de hacer push, rebasea sobre `origin/main`.** Una rama desfasada
+  nace con `mergeable_state: behind` y GitHub no la deja mergear aunque la CI
+  esté en verde. El orden es: `git pull` (para tener `main` al día), `git rebase
+  origin/main` y solo entonces el push. Con la política estricta del ruleset
+  («require branches to be up to date before merging») es obligatorio.
+- **Una pull request no se mergea sola.** Si te pido una PR, la abro y la dejo
+  lista —con la CI en verde y la descripción puesta—, pero **el merge es del
+  mantenedor**. Tampoco la mergeas por tu cuenta si la has creado tú.
 - **Nada de cambios de propina.** No arregles, renombres o reformatees cosas que
   nadie te ha pedido; si ves algo raro, dilo y espera.
 - **Ve poco a poco.** Es mejor un cambio pequeño confirmado que cinco cambios
