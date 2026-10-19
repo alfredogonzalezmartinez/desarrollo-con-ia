@@ -42,8 +42,6 @@ on:
         type: number
   issue_comment:
     types: [created]
-  pull_request:
-    types: [synchronize]
   pull_request_target:
     types: [closed]
 
@@ -70,9 +68,7 @@ jobs:
         && (
           contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.comment.author_association)
           || contains(format(',{0},', vars.PREVIEW_AUTORIZADOS), format(',{0},', github.event.comment.user.login))
-        )) ||
-      (github.event_name == 'pull_request'
-        && github.event.pull_request.head.repo.full_name == github.repository)
+        ))
     runs-on: ubuntu-latest
     # Aquí se ejecuta el código de la PR: solo lectura, y sin credenciales de
     # git en el checkout.
@@ -143,8 +139,8 @@ jobs:
       - name: Subir el HTML compilado
         uses: actions/upload-artifact@v4
         with:
-          # El nombre lleva el id de la ejecución: con el refresco automático
-          # hay un artefacto por commit, y todos deben poder convivir.
+          # El nombre lleva el id de la ejecución: cada petición deja su propio
+          # artefacto, y todos pueden convivir.
           name: deck-preview-pr-${{ steps.pr.outputs.n }}-${{ github.run_id }}
           path: deck/dist/index.html
           retention-days: 7
@@ -201,7 +197,7 @@ jobs:
             cuerpo=$(printf '<!-- deck-preview -->\n### Vista previa del deck (descarga)\n\nEsta pull request viene de un fork, así que el deck compilado **no se publica** en el sitio del proyecto: sería código de otro repositorio ejecutándose en el dominio del proyecto.\n\nEl HTML compilado está en el artefacto `deck-preview-pr-%s-%s` de esta ejecución:\n\n[Descargar el HTML compilado (%s)](%s)\n\nEs un único fichero autocontenido: descárgalo y ábrelo en el navegador. Para refrescarlo tras un commit nuevo, pide otra vez `/preview`.\n' "$NUM" "$GITHUB_RUN_ID" "$tam" "$ejecucion")
           else
             url="https://${GITHUB_REPOSITORY_OWNER}.github.io/${GITHUB_REPOSITORY#*/}/previews/pr-${NUM}/"
-            cuerpo=$(printf '<!-- deck-preview -->\n### Vista previa del deck\n\n[Ver el deck compilado de esta PR](%s) · %s\n\n- Se compila el `merge` de la PR con `main` (o su `head`, si no se puede hacer merge).\n- Se refresca sola con cada commit nuevo de la PR: la URL siempre enseña el último.\n- Al mergear o descartar la PR, la rama se borra y el sitio se vuelve a publicar: la URL deja de funcionar.\n- El HTML también está en el [artefacto de esta ejecución](%s) (`deck-preview-pr-%s-%s`).\n- Cualquiera con acceso de escritura puede pedirla otra vez con `/preview`.\n' "$url" "$tam" "$ejecucion" "$NUM" "$GITHUB_RUN_ID")
+            cuerpo=$(printf '<!-- deck-preview -->\n### Vista previa del deck\n\n[Ver el deck compilado de esta PR](%s) · %s\n\n- Se compila el `merge` de la PR con `main` (o su `head`, si no se puede hacer merge).\n- Es una foto del momento: tras un commit nuevo, hay que pedirla otra vez con `/preview`.\n- Al mergear o descartar la PR, la rama se borra y el sitio se vuelve a publicar: la URL deja de funcionar.\n- El HTML también está en el [artefacto de esta ejecución](%s) (`deck-preview-pr-%s-%s`).\n- Cualquiera con acceso de escritura puede pedirla otra vez con `/preview`.\n' "$url" "$tam" "$ejecucion" "$NUM" "$GITHUB_RUN_ID")
           fi
           id=$(gh api "repos/${GITHUB_REPOSITORY}/issues/${NUM}/comments" --paginate \
             --jq '[.[] | select((.body? // "") | contains("<!-- deck-preview -->"))] | .[0].id // empty' | head -1)
@@ -232,8 +228,8 @@ jobs:
           GH_REPO: ${{ github.repository }}
           NUM: ${{ github.event.pull_request.number }}
         run: |
-          # Con el refresco automático hay un artefacto por commit: se borran
-          # todos los de esta PR.
+          # Puede haber más de un artefacto, uno por petición: se borran todos
+          # los de esta PR.
           ids=$(gh api "repos/${GITHUB_REPOSITORY}/actions/artifacts" --paginate \
             --jq ".artifacts[] | select(.name | startswith(\"deck-preview-pr-${NUM}-\")) | .id")
           if [ -n "$ids" ]; then

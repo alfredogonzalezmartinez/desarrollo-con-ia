@@ -244,10 +244,13 @@ escritura— o desde la pestaña Actions, el deck de esa PR se compila. Al merge
 o descartar la PR, se borra la rama de la vista previa y se vuelve a publicar el
 sitio: **la URL muere con la PR**.
 
-| De dónde viene la PR | Qué se entrega | ¿Se refresca sola? |
-|---|---|---|
-| De **este repositorio** | El deck publicado en `https://<owner>.github.io/<repo>/previews/pr-<n>/`, para verlo en el navegador. | **Sí**: cada commit nuevo vuelve a compilarlo y republicarlo. |
-| De un **fork** | El deck compilado como **artefacto**, para descargarlo y abrirlo en local. | No: hay que pedirla otra vez con `/preview`. |
+| De dónde viene la PR | Qué se entrega |
+|---|---|
+| De **este repositorio** | El deck publicado en `https://<owner>.github.io/<repo>/previews/pr-<n>/`, para verlo en el navegador. |
+| De un **fork** | El deck compilado como **artefacto**, para descargarlo y abrirlo en local. |
+
+La vista previa es **una foto del momento**: no se refresca sola. Después de un
+commit nuevo hay que volver a pedirla con `/preview`.
 
 Hay **un solo publicador** (`pages.yml`). El preview no despliega nada: deja el
 HTML en la rama `previews/pr-<n>` y pide a `pages.yml` que lo recoja. Por eso el
@@ -266,9 +269,6 @@ Y dos cuidados con el código de la PR, que no es de fiar:
 - **El deck de un fork no se publica en el sitio.** El dominio del sitio es el
   dominio del deck, y no va a servir código ejecutable de otro repositorio. De
   ahí que su entrega sea el artefacto.
-- **Una PR de un fork tampoco se refresca sola.** El evento `pull_request` de
-  un fork entrega un token de solo lectura, y actualizar el comentario o
-  publicar necesita escribir: hay que pedirla otra vez con `/preview`.
 
 ## Skills
 
