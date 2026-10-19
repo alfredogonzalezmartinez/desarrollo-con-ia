@@ -68,7 +68,7 @@ jobs:
         && github.event.issue.pull_request
         && startsWith(github.event.comment.body, '/preview')
         && (
-          github.event.comment.author_association in ('OWNER', 'MEMBER', 'COLLABORATOR')
+          contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.comment.author_association)
           || contains(format(',{0},', vars.PREVIEW_AUTORIZADOS), format(',{0},', github.event.comment.user.login))
         )) ||
       (github.event_name == 'pull_request'
