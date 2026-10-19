@@ -100,6 +100,7 @@ jobs:
         id: origen
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
           NUM: ${{ steps.pr.outputs.n }}
         run: |
           repo=$(gh api "repos/${GITHUB_REPOSITORY}/pulls/${NUM}" --jq '.head.repo.full_name')
@@ -171,6 +172,7 @@ jobs:
         if: needs.compilar.outputs.fork == 'false'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
           NUM: ${{ needs.compilar.outputs.pr }}
         run: |
           node ci/scripts/previews.mjs publicar "$NUM" html/index.html \
@@ -180,12 +182,14 @@ jobs:
         if: needs.compilar.outputs.fork == 'false'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
         run: |
           gh workflow run pages.yml --ref main -f ref=main
 
       - name: Comentar en la PR
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
           NUM: ${{ needs.compilar.outputs.pr }}
           ES_FORK: ${{ needs.compilar.outputs.fork }}
         run: |
@@ -199,8 +203,8 @@ jobs:
             url="https://${GITHUB_REPOSITORY_OWNER}.github.io/${GITHUB_REPOSITORY#*/}/previews/pr-${NUM}/"
             cuerpo=$(printf '<!-- deck-preview -->\n### Vista previa del deck\n\n[Ver el deck compilado de esta PR](%s) · %s\n\n- Se compila el `merge` de la PR con `main` (o su `head`, si no se puede hacer merge).\n- Se refresca sola con cada commit nuevo de la PR: la URL siempre enseña el último.\n- Al mergear o descartar la PR, la rama se borra y el sitio se vuelve a publicar: la URL deja de funcionar.\n- El HTML también está en el [artefacto de esta ejecución](%s) (`deck-preview-pr-%s-%s`).\n- Cualquiera con acceso de escritura puede pedirla otra vez con `/preview`.\n' "$url" "$tam" "$ejecucion" "$NUM" "$GITHUB_RUN_ID")
           fi
-          id=$(gh api "repos/${GITHUB_REPOSITORY}/issues/${NUM}/comments" --paginate --slurp \
-            --jq '[.. | objects | select((.body? // "") | contains("<!-- deck-preview -->"))] | .[0].id // empty')
+          id=$(gh api "repos/${GITHUB_REPOSITORY}/issues/${NUM}/comments" --paginate \
+            --jq '[.[] | select((.body? // "") | contains("<!-- deck-preview -->"))] | .[0].id // empty' | head -1)
           if [ -n "$id" ]; then
             gh api -X PATCH "repos/${GITHUB_REPOSITORY}/issues/comments/${id}" -f body="$cuerpo" --silent
           else
@@ -216,6 +220,7 @@ jobs:
       - name: Borrar la rama de la vista previa
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
           NUM: ${{ github.event.pull_request.number }}
         run: |
           gh api -X DELETE "repos/${GITHUB_REPOSITORY}/git/refs/heads/previews/pr-${NUM}" --silent \
@@ -224,12 +229,13 @@ jobs:
       - name: Borrar los artefactos de la vista previa
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
           NUM: ${{ github.event.pull_request.number }}
         run: |
           # Con el refresco automático hay un artefacto por commit: se borran
           # todos los de esta PR.
-          ids=$(gh api "repos/${GITHUB_REPOSITORY}/actions/artifacts" --paginate --slurp \
-            --jq "add | map(select(.name | startswith(\"deck-preview-pr-${NUM}-\"))) | .[].id")
+          ids=$(gh api "repos/${GITHUB_REPOSITORY}/actions/artifacts" --paginate \
+            --jq ".artifacts[] | select(.name | startswith(\"deck-preview-pr-${NUM}-\")) | .id")
           if [ -n "$ids" ]; then
             for id in $ids; do
               gh api -X DELETE "repos/${GITHUB_REPOSITORY}/actions/artifacts/${id}" --silent
@@ -242,20 +248,22 @@ jobs:
       - name: Volver a publicar el sitio
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
         run: |
           gh workflow run pages.yml --ref main -f ref=main
 
       - name: Dejar constancia en la PR
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
           NUM: ${{ github.event.pull_request.number }}
         run: |
           # El comentario de la vista previa se sustituye por una nota: el
           # enlace ya no funciona y conviene decirlo. Si la PR nunca tuvo
           # vista previa, no se crea ningún comentario.
           cuerpo=$(printf '<!-- deck-preview -->\n### Vista previa retirada\n\nEsta pull request se ha cerrado, así que la vista previa se ha retirado: su rama y su artefacto se han borrado y la URL ya no funciona.\n')
-          id=$(gh api "repos/${GITHUB_REPOSITORY}/issues/${NUM}/comments" --paginate --slurp \
-            --jq '[.. | objects | select((.body? // "") | contains("<!-- deck-preview -->"))] | .[0].id // empty')
+          id=$(gh api "repos/${GITHUB_REPOSITORY}/issues/${NUM}/comments" --paginate \
+            --jq '[.[] | select((.body? // "") | contains("<!-- deck-preview -->"))] | .[0].id // empty' | head -1)
           if [ -n "$id" ]; then
             gh api -X PATCH "repos/${GITHUB_REPOSITORY}/issues/comments/${id}" -f body="$cuerpo" --silent
           fi
