@@ -74,17 +74,27 @@ export function publicar(pr, fichero, remoto = 'origin', token = '') {
     const rama = PREFIJO + pr;
     const tmp = mkdtempSync(path.join(os.tmpdir(), 'previews-'));
     try {
-        git(['init', '--quiet'], tmp);
+        // Un remoto que sea una URL necesita credenciales; un path local no.
+        const url = remoto.startsWith('http')
+            ? 'https://x-access-token:' + token + '@' + remoto.replace(/^https?:\/\//, '')
+            : remoto;
+
+        // Si la rama ya existe se clona y se le añade un commit encima: la
+        // historia de la vista previa queda en línea y el push es un
+        // fast-forward. Nada de force push, ni aquí ni en el repo.
+        if (git(['ls-remote', url, 'refs/heads/' + rama], tmp).trim()) {
+            git(['clone', '--quiet', '--branch', rama, url, tmp], tmp);
+        } else {
+            git(['init', '--quiet'], tmp);
+            git(['remote', 'add', 'origin', url], tmp);
+            git(['checkout', '--quiet', '-b', rama], tmp);
+        }
         git(['config', 'user.name', 'github-actions[bot]'], tmp);
         git(['config', 'user.email', '41898282+github-actions[bot]@users.noreply.github.com'], tmp);
         copyFileSync(fichero, path.join(tmp, 'index.html'));
         git(['add', 'index.html'], tmp);
         git(['commit', '--quiet', '-m', 'Vista previa de la PR #' + pr], tmp);
-        // Un remoto que sea una URL necesita credenciales; un path local no.
-        const url = remoto.startsWith('http')
-            ? 'https://x-access-token:' + token + '@' + remoto.replace(/^https?:\/\//, '')
-            : remoto;
-        git(['push', '--force', '--quiet', url, 'HEAD:refs/heads/' + rama], tmp);
+        git(['push', '--quiet', 'origin', 'HEAD:refs/heads/' + rama], tmp);
     } finally {
         rmSync(tmp, { recursive: true, force: true });
     }
