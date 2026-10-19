@@ -256,20 +256,14 @@ escritura— o desde la pestaña Actions, el deck de esa PR se compila. Al merge
 o descartar la PR, se borra la rama de la vista previa y se vuelve a publicar el
 sitio: **la URL muere con la PR**.
 
-| De dónde viene la PR | Qué se entrega |
-|---|---|
-| De **este repositorio** | El deck publicado en `https://<owner>.github.io/<repo>/previews/pr-<n>/`, para verlo en el navegador. |
-| De un **fork** | El deck compilado como **artefacto**, para descargarlo y abrirlo en local. |
+| De dónde viene la PR | Qué se entrega | ¿Se refresca sola? |
+|---|---|---|
+| De **este repositorio** | El deck publicado en `https://<owner>.github.io/<repo>/previews/pr-<n>/`, para verlo en el navegador. | **Sí**, si ya se pidió: cada commit nuevo vuelve a compilarlo y republicarlo. |
+| De un **fork** | El deck compilado como **artefacto**, para descargarlo y abrir en local. | No: hay que pedirla otra vez con `/preview`. |
 
-La vista previa se **refresca sola** cuando la PR ya la tiene pedida: cada
-commit nuevo vuelve a compilar el deck y a republicarlo, así que la URL siempre
-enseña el último commit. Pero **solo se refresca lo que ya se pidió**: abrir una
-PR no compila nada, porque pedirla es cosa de alguien, con `/preview`. Un
-commit nuevo en una PR sin vista previa tampoco la genera: se queda sin pedir
-hasta que alguien la pida.
-
-En las PR de un **fork** el refresco automático no funciona (el evento da un
-token de solo lectura): hay que volver a pedirla con `/preview`.
+Solo se refresca **lo que ya se pidió**: abrir una PR no compila nada, porque
+pedirla es cosa de alguien, con `/preview`. Un commit nuevo en una PR sin vista
+previa tampoco la genera: se queda sin pedir hasta que alguien la pida.
 
 Cada petición deja un commit en la rama `previews/pr-<n>`: la rama cuenta la
 secuencia de vistas previas y se actualiza con un *fast-forward*, sin reescribir
@@ -282,7 +276,7 @@ siguen abiertas, y la de la PR que se acaba de mergear desaparece sola, porque
 su rama ya no está. `scripts/previews.mjs` se encarga de las ramas; el sitio lo
 publica `pages.yml`.
 
-Y dos cuidados con el código de la PR, que no es de fiar:
+Y tres cuidados con el código de la PR, que no es de fiar:
 
 - **El código de la PR corre en un job con un token de solo lectura.** El token
   con permisos de escritura vive en otro job, donde no se ejecuta nada de la
@@ -292,6 +286,9 @@ Y dos cuidados con el código de la PR, que no es de fiar:
 - **El deck de un fork no se publica en el sitio.** El dominio del sitio es el
   dominio del deck, y no va a servir código ejecutable de otro repositorio. De
   ahí que su entrega sea el artefacto.
+- **Una PR de un fork tampoco se refresca sola.** El evento `pull_request` de
+  un fork entrega un token de solo lectura, y actualizar el comentario o
+  publicar necesita escribir: hay que pedirla otra vez con `/preview`.
 
 ## Skills
 
