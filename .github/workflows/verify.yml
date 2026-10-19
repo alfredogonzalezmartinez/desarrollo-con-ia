@@ -1,0 +1,43 @@
+name: Validar el deck
+
+# Solo en pull requests que apunten a main. No publica nada: comprueba que lo
+# que se va a mergear compila y encaja. La publicación la sigue haciendo
+# pages.yml cuando el merge llega a main.
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: verify-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      # El build falla si queda una dependencia de red, un ancla rota o un id
+      # duplicado.
+      - run: npm run build
+
+      # `check` mide las 32 slides a 1920×1080 leyendo dist/, así que va
+      # después del build. Necesita el navegador de Playwright.
+      - run: npx playwright install --with-deps chromium
+      - run: npm run check
+
+      # La malla de los propios scripts: comprueba que cada regla sigue
+      # detectando lo que tiene que detectar.
+      - run: npm test
+
+      - run: npm run skills:check

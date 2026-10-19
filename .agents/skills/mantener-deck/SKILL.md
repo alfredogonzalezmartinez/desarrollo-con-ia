@@ -1,6 +1,6 @@
 ---
 name: Mantener el deck «Desarrollo con IA»
-description: Editar, ampliar o revisar las diapositivas del deck (src/index.html) —cambiar el texto de una slide, añadir o quitar slides, tocar el glosario, las referencias o el estilo— y dejarlo verificado con el build y la comprobación de encaje. Úsala cuando haya que trabajar en las diapositivas o en el contenido de este repositorio.
+description: Editar, ampliar o revisar las diapositivas del deck (src/index.html) —cambiar el texto de una slide, añadir o quitar slides, tocar el glosario, las referencias o el estilo— y dejarlo verificado con el build, la comprobación de encaje y los tests. Úsala cuando haya que trabajar en las diapositivas o en el contenido de este repositorio.
 ---
 
 # Mantener el deck «Desarrollo con IA»
@@ -13,7 +13,9 @@ Procedimiento para trabajar en el deck. Las reglas del repositorio están en
 1. Lee `AGENTS.md`.
 2. Si el cambio es de **contenido** (qué dice una slide, un término, un enlace),
    la fuente de verdad es `docs/definicion.md`: decide ahí, luego construye.
-3. Ten a mano `npm run check` y `npm run shots`: son tus ojos.
+3. Ten a mano `npm run check` y `npm run shots`: son tus ojos. Las
+   comprobaciones **salen con 1** cuando encuentran algo, así que fíjate en el
+   código de salida, no solo en lo que se imprime.
 
 ## El ciclo de trabajo
 
@@ -22,7 +24,8 @@ Siempre el mismo, sin saltarse pasos:
 ```bash
 npm run build      # 1. compila y valida (red, anclas, ids duplicados)
 npm run check      # 2. ¿alguna slide se recorta?  ← obligatorio
-npm run shots      # 3. capturas en shots/ para mirar el resultado
+npm test           # 3. los tests de los scripts: las reglas siguen mordiendo
+npm run shots      # 4. capturas en shots/ para mirar el resultado
 ```
 
 Y después **mira las capturas** de las slides que has tocado (`shots/14-*.png`).
@@ -97,6 +100,10 @@ carácter.
 
 - `npm run build` sin errores.
 - `npm run check` → *«Ninguna slide se sale de su ventana»*.
+- `npm test` en verde.
+- Las comprobaciones salen con **0** si todo está bien y con **1** si algo
+  falla: aunque el informe se vea tranquilo, el código de salida manda. En la
+  CI es lo que para el merge.
 - Capturas miradas de las slides tocadas.
 - `docs/definicion.md` coherente con lo construido.
 - Fechas al día: `date` en `DECK` si cambió el contenido; `verificado` solo si se

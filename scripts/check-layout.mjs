@@ -7,14 +7,23 @@
  * el deck, mide cada slide y dice qué elementos se salen de la ventana.
  *
  * Uso:  npm run check
+ *       npm run check -- --deck=/tmp/otro-deck.html   → mide otro fichero
  * Requiere:  npx playwright install chromium
+ *
+ * Sale con 1 si alguna slide se sale de su ventana o si el cromo que genera el
+ * JS (modo charla, tooltips, mapa) se ha quedado a medias. Los tests de
+ * `tests/` se apoyan en ese código de salida y en `--deck=`.
  */
 import { chromium } from 'playwright';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 
 const ROOT = path.resolve(import.meta.dirname, '..');
-const DECK = path.join(ROOT, 'dist', 'index.html');
+const arg = (name, def) => {
+    const hit = process.argv.find((a) => a.startsWith('--' + name + '='));
+    return hit ? hit.split('=').slice(1).join('=') : def;
+};
+const DECK = path.resolve(arg('deck', path.join(ROOT, 'dist', 'index.html')));
 
 // `install chromium` puede haber dejado solo el navegador completo o solo el
 // *headless shell* según la versión de Playwright; vale cualquiera de los dos.
@@ -114,10 +123,25 @@ for (const s of report.slides) {
     }
 }
 
+// El cromo y el comportamiento los genera el JS del deck: si esa parte se
+// rompe, la presentación aún se ve, pero deja de funcionar. Eso también es un
+// fallo, no una línea más del informe.
+const cromo = [];
+if (!report.charla) cromo.push('el modo charla no se activa');
+if (!report.tieneTip) cromo.push('los tooltips del glosario no se generan');
+if (!report.mapa) cromo.push('el mapa sale vacío');
+
 console.log('\n  ' + '-'.repeat(52));
 console.log('  modo charla: ' + (report.charla ? 'activa y se apaga' : 'NO FUNCIONA') + ' · deja ' + report.visibles + ' slides visibles');
 console.log('  tooltips: ' + (report.tieneTip ? 'generados — "' + report.tipTexto + '…"' : 'NO SE GENERAN'));
 console.log('  numeración del glosario: primer superíndice = "' + report.numeroSuperindice + '"');
 console.log('  mapa: ' + report.mapa + ' entradas');
-console.log(fallos ? '\n  ' + fallos + ' slide(s) con desbordamiento\n' : '\n  Ninguna slide se sale de su ventana\n');
-process.exit(0);
+
+if (fallos) console.error('\n  ' + fallos + ' slide(s) con desbordamiento');
+if (cromo.length) {
+    console.error('\n  El cromo generado por JS está a medias:');
+    for (const p of cromo) console.error('   · ' + p);
+}
+if (!fallos && !cromo.length) console.log('\n  Ninguna slide se sale de su ventana');
+console.log('');
+process.exit(fallos || cromo.length ? 1 : 0);

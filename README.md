@@ -53,6 +53,8 @@ scripts/check-layout.mjs  mide el encaje de las 32 slides con Chromium
 scripts/check-skills.mjs  comprueba las skills del proyecto y sus enlaces
 scripts/shots.mjs         capturas de las slides, para revisar
 scripts/subset-fonts.sh   regenera las fuentes (rara vez hace falta)
+tests/                    los tests de los scripts: cada regla, comprobada
+.github/workflows/        CI: valida cada pull request y publica el deck
 docs/definicion.md        qué lleva cada slide y por qué: el documento de definición
 dist/index.html           generado por el build, no se versiona
 shots/                    capturas de revisión, no se versiona
@@ -74,6 +76,7 @@ npm install
 npm run build      # dist/index.html: un solo fichero, sin dependencias de red
 npm run build:dev  # lo mismo pero sin minificar, para depurar
 npm run check      # mide la maquetación de las 32 slides con un navegador real
+npm test           # los tests de los scripts (node --test, sin dependencias)
 npm run shots      # capturas de las 32 slides en shots/ (para revisar)
 npm run preview    # compila y sirve en http://127.0.0.1:8811
 npm run pack       # además genera .gz y .br, para compartirlo comprimido
@@ -92,7 +95,8 @@ El resultado ronda los **270 KB** (unos 145 KB comprimido con brotli).
 
 El escenario es fijo (1920×1080) y cada slide es una ventana con
 `overflow: hidden`: lo que no cabe **se recorta sin avisar**. `npm run check`
-abre el deck en un navegador de verdad, mide cada slide y dice cuál se sale:
+abre el deck en un navegador de verdad, mide cada slide y dice cuál se sale: si
+alguna se sale, **sale con 1** y en la CI se para el merge.
 
 ```bash
 npx playwright install chromium   # una sola vez
@@ -143,6 +147,9 @@ adivinar de cuándo es:
 - Cada apartado con documentación externa lleva su `verificado AAAA-MM-DD`.
 - Si una herramienta cambia de nombre o desaparece, se corrige en la slide, en
   `docs/definicion.md` y en las referencias; el historial de git guarda la versión anterior.
+- Los cambios entran por **pull request**: `main` está protegida y la CI ejecuta
+  las mismas comprobaciones (`build`, `check`, `test`, `skills:check`) antes de
+  dejar mergear nada.
 
 ## Créditos y licencia
 

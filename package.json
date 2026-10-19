@@ -10,6 +10,7 @@
     "build": "node scripts/build.mjs",
     "build:dev": "node scripts/build.mjs --no-minify",
     "check": "node scripts/check-layout.mjs",
+    "test": "node --test tests/",
     "shots": "node scripts/build.mjs && node scripts/shots.mjs",
     "preview": "node scripts/build.mjs --no-minify && python3 -m http.server 8811 --directory dist",
     "pack": "node scripts/build.mjs && brotli -q 11 -f -k dist/index.html && gzip -9 -f -k dist/index.html && ls -lh dist",

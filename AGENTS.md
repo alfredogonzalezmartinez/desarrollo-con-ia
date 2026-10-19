@@ -39,7 +39,8 @@ vivo** que se revisa y amplía con el tiempo, sin autor ni evento en la portada.
 
 1. **Ninguna slide se recorta.** Cada slide es una ventana con `overflow: hidden`
    a 1920×1080: lo que no cabe desaparece **en silencio**. Después de cualquier
-   cambio, `npm run check` debe decir *«Ninguna slide se sale de su ventana»*.
+   cambio, `npm run check` debe decir *«Ninguna slide se sale de su ventana»* —y si
+   no lo dice, **sale con 1** y la CI se para.
 2. **El deck funciona sin conexión.** Nada de CDN, ni fuentes remotas, ni
    `url(http…)`. Las fuentes y las imágenes van embebidas. El build **falla** si
    detecta una dependencia de red, un ancla interna rota o un `id` duplicado.
@@ -64,6 +65,7 @@ npx playwright install chromium  # el navegador, una sola vez
 npm run build      # src/index.html → dist/index.html (embebe, minifica, valida)
 npm run build:dev  # igual, sin minificar: para depurar el HTML resultante
 npm run check      # mide las 32 slides a 1920×1080 con Chromium
+npm test           # los tests de los propios scripts (tests/)
 npm run shots      # capturas de las 32 slides en shots/ (para revisar)
 npm run preview    # compila y sirve en http://127.0.0.1:8811
 npm run pack       # además genera .gz y .br, para compartirlo comprimido
@@ -74,6 +76,11 @@ npm run skills:check  # comprueba que las skills del proyecto están en su sitio
 
 `npm run shots -- --only=14` captura solo la slide 14. `--out=/tmp/deck` cambia
 la carpeta de salida.
+
+Los tres scripts que comprueban algo aceptan un destino, para poder lanzarlos
+contra un árbol de prueba sin tocar el repositorio: `--root=<dir>` en
+`build.mjs` y `check-skills.mjs`, y `--deck=<fichero>` en `check-layout.mjs`.
+Los tests de `tests/` se apoyan en eso; a mano no hace falta.
 
 ## Mapa del repositorio
 
@@ -91,6 +98,8 @@ docs/definicion.md        # fuente de verdad del contenido
 .claude/skills/           # enlaces simbólicos a las anteriores (para Claude Code)
 skills-lock.json          # de dónde vienen las skills externas (origen y hash)
 .github/workflows/pages.yml     # build en CI y publicación en GitHub Pages
+.github/workflows/verify.yml    # valida cada pull request hacia main
+tests/                    # los tests de los propios scripts (npm test)
 dist/                     # generado; ignorado por git
 shots/                    # capturas; ignorado por git
 ```
@@ -165,6 +174,54 @@ Si una slide se sale, **no se cambia el diseño de las demás**. Al final del
 slide ahí —márgenes, tamaños o, si hace falta, quitando texto— y se vuelve a
 medir. Ese bloque es el único sitio donde se toca el ritmo vertical de una
 slide concreta.
+
+## Comprobaciones y CI
+
+Cada regla que protege el deck tiene su comprobación, y cada comprobación tiene
+su **test**. Todas ellas **salen con 1** cuando encuentran algo: no basta con
+leer el informe.
+
+- **`npm run build`** — que nada dependa de la red, que ningún `href="#…"` apunte
+  al vacío y que no haya `id` duplicados.
+- **`npm run check`** — que ninguna slide se salga de su ventana a 1920×1080, y
+  que el cromo que genera el JS (modo charla, tooltips, mapa) se haya construido
+  entero. Falla tanto con un desbordamiento como con el cromo a medias.
+- **`npm run skills:check`** — que las 4 skills estén en su sitio, con su
+  procedencia y su licencia, y que el puente de `.claude/skills/` apunte bien.
+- **`npm test`** — que **las tres anteriores sigan detectando lo que dicen**.
+  Falla si una regla ha dejado de morder.
+
+Los tests viven en `tests/` y corren con el runner de Node (`node --test`): no
+añaden ninguna dependencia. Montan un árbol de prueba en un directorio temporal,
+lanzan el script de verdad y miran el **código de salida** y el mensaje, no sus
+tripas. Por eso cada regla nueva necesita sus dos mitades: una plantilla que
+**deba** fallar y otra válida que **no** deba quejarse. Una malla que da falsos
+positivos se acaba ignorando.
+
+Si dudas de si un test sirve para algo, **rompe la regla a propósito** y mira si
+se pone rojo: un test que no puede fallar no protege nada.
+
+### En GitHub
+
+`.github/workflows/verify.yml` corre `build`, `check`, `test` y `skills:check` en
+cada pull request hacia `main`; `pages.yml` publica después, cuando el merge ya
+está en `main`. El job se llama **`validar`**: ese es el nombre del check.
+
+Que la CI mida no basta si se puede escribir directamente en `main`. La rama
+está protegida con un **ruleset de GitHub** (Settings → Rules → Rulesets), que no
+vive en el repositorio y hay que configurar a mano:
+
+- *Require a pull request before merging*, con **0 aprobaciones** (GitHub no deja
+  aprobar tu propio PR; la regla ya impide el push directo).
+- *Require status checks to pass* con el check `validar`, y **«Require branches
+  to be up to date before merging»**: eso es lo que evita que dos PRs verdes por
+  separado rompan `main` al juntarse.
+- *Block force pushes* y *Restrict deletions*, sin lista de excepciones.
+
+> El check solo se puede marcar como obligatorio **después** de que el workflow
+> esté en `main`. Y una regla de encaje que imprima los fallos pero salga con 0
+> es decorativa: si algún día ves un informe con `✗` y un exit code 0, eso es un
+> fallo del script, no del deck.
 
 ## Skills
 
@@ -307,11 +364,13 @@ deck sigue funcionando sin conexión.
 
 1. `npm run build` sin errores (red, anclas, ids).
 2. `npm run check` → *«Ninguna slide se sale de su ventana»*.
-3. Si has tocado contenido, `npm run shots` y **mira las capturas** de las slides
+3. `npm test` → la suite en verde: es lo que comprueba que las tres
+   comprobaciones anteriores siguen sirviendo para algo.
+4. Si has tocado contenido, `npm run shots` y **mira las capturas** de las slides
    afectadas: el check detecta recortes, no fealdad.
-4. Si has cambiado la estructura o el contenido, actualiza `docs/definicion.md`.
-5. Si has tocado las skills o sus enlaces, `npm run skills:check`.
-6. Revisa que las fechas que has tocado sigan siendo verdad.
+5. Si has cambiado la estructura o el contenido, actualiza `docs/definicion.md`.
+6. Si has tocado las skills o sus enlaces, `npm run skills:check`.
+7. Revisa que las fechas que has tocado sigan siendo verdad.
 
 ## Qué no hacer
 
@@ -321,4 +380,6 @@ deck sigue funcionando sin conexión.
 - No renumerar slides a mano: el cromo y el mapa salen de los `data-*`.
 - No editar a mano las skills de `.agents/skills/`: las externas se actualizan
   desde su origen (ver su `PROCEDENCIA.md`).
+- No dejar una comprobación que no pueda fallar: si una regla vigila algo, tiene
+  que **salir con 1** y tener su test en `tests/` (ver *Comprobaciones y CI*).
 - No subir la versión por iniciativa propia.

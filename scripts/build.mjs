@@ -8,15 +8,23 @@
  *   3. Minifica HTML, CSS y JS.
  *
  * Uso:
- *   npm run build            → dist/index.html minificado
- *   npm run build:dev        → dist/index.html sin minificar (para depurar)
+ *   npm run build                          → dist/index.html minificado
+ *   npm run build:dev                      → dist/index.html sin minificar (para depurar)
+ *   npm run build -- --root=/tmp/prueba     → compila otra copia (lo usan los tests)
  */
 import { readFileSync, existsSync } from 'node:fs';
 import { mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import zlib from 'node:zlib';
 
-const ROOT = path.resolve(import.meta.dirname, '..');
+const arg = (name, def) => {
+    const hit = process.argv.find((a) => a.startsWith('--' + name + '='));
+    return hit ? hit.split('=').slice(1).join('=') : def;
+};
+
+// `--root=` permite compilar otra copia en lugar de este repositorio: los tests
+// de `tests/` compilan plantillas de prueba en un directorio temporal.
+const ROOT = path.resolve(arg('root', path.resolve(import.meta.dirname, '..')));
 const SRC = path.join(ROOT, 'src', 'index.html');
 const OUT_DIR = path.join(ROOT, 'dist');
 const OUT = path.join(OUT_DIR, 'index.html');

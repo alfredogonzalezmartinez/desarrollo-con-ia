@@ -8,11 +8,19 @@
  * mal copiada rompen esto en silencio: el agente simplemente no la encuentra.
  *
  * Uso:  npm run skills:check
+ *       npm run skills:check -- --root=/tmp/prueba   → revisa otra copia
+ *
+ * Sale con 1 si algo falta. Los tests de `tests/` montan árboles de prueba en
+ * un directorio temporal y los revisan con `--root=`.
  */
 import { readFileSync, readdirSync, lstatSync, readlinkSync, existsSync } from 'node:fs';
 import path from 'node:path';
 
-const ROOT = path.resolve(import.meta.dirname, '..');
+const arg = (name, def) => {
+    const hit = process.argv.find((a) => a.startsWith('--' + name + '='));
+    return hit ? hit.split('=').slice(1).join('=') : def;
+};
+const ROOT = path.resolve(arg('root', path.resolve(import.meta.dirname, '..')));
 const REAL = path.join(ROOT, '.agents', 'skills');    // donde vive la copia de verdad
 const PUENTE = path.join(ROOT, '.claude', 'skills');  // donde Claude Code las busca
 

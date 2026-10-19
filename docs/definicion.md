@@ -101,9 +101,10 @@
     devuelve (`data.model.variant`).
   - **Comprobaciones ejecutables**: `npm run build` (falla si hay dependencia de
     red, ancla rota o id duplicado), `npm run check` (encaje de las 32 slides),
-    `npm run shots` (capturas para revisar) y `npm run skills:check` (las skills
-    y sus enlaces). Las reglas que se pueden comprobar con un comando no dependen
-    de que alguien se acuerde.
+    `npm run shots` (capturas para revisar), `npm run skills:check` (las skills
+    y sus enlaces) y `npm test` (que las comprobaciones anteriores sigan
+    detectando lo que dicen). Las reglas que se pueden comprobar con un comando
+    no dependen de que alguien se acuerde.
 
 - **Encaje a 1920×1080** (implementado): como cada slide es una ventana con
   `overflow: hidden`, lo que no cabe se recorta en silencio. `npm run check` abre
@@ -112,6 +113,12 @@
   `encaje a 1920×1080` de `src/index.html` —márgenes y tamaños, sin tocar el
   diseño de las demás— y se vuelve a medir. La regla de oro: **ninguna slide se
   recorta**, y por eso este paso entra en el mantenimiento normal.
+
+- **Pull requests y CI** (implementado): `main` está protegida con un ruleset de
+  GitHub, así que los cambios entran por pull request y no se puede mergear nada
+  que no haya pasado la CI. `.github/workflows/verify.yml` corre las
+  comprobaciones anteriores en cada pull request hacia `main`, y `pages.yml`
+  publica el deck cuando el merge ya está en `main`.
 
 - **Material gráfico: todo recreado** (decisión tomada). Las terminales se recrean con CSS/SVG —es lo que ya hace el estilo «Consola»— y las **salidas reales se pegan como texto**, no como imagen. Motivos: pesa 0 KB, se ve nítido a cualquier tamaño, se puede anotar (resaltar la línea que importa) y no envejece mal cuando cambie la interfaz. **No hay capturas PNG.**
 
