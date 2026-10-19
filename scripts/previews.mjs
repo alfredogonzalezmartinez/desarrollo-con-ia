@@ -10,6 +10,8 @@
  *                                 `dist/previews/<n>/index.html`, que es lo
  *                                 que GitHub Pages publica.
  *   - `listar`                 → dice qué PR tienen vista previa.
+ *   - `pedir [--autorizados=…]` → dice si una PR ya tiene la vista previa
+ *                                 pedida (un comentario `/preview`).
  *
  * El sitio lo publica **solo** `pages.yml`, que llama a este script. Así hay un
  * único publicador: el despliegue al mergear en `main` no pisa las vistas
@@ -17,7 +19,7 @@
  * desaparece sola, porque su rama ya no está.
  */
 import { execFileSync } from 'node:child_process';
-import { copyFileSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { copyFileSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -30,6 +32,9 @@ const arg = (nombre, def) => {
     const hit = process.argv.find((a) => a.startsWith('--' + nombre + '='));
     return hit ? hit.split('=').slice(1).join('=') : def;
 };
+
+/** El n-ésimo argumento que no es una opción (`--nombre=valor`). */
+const posicional = (n) => process.argv.slice(3).filter((a) => !a.startsWith('--'))[n - 1];
 
 const git = (args, cwd = RAIZ) =>
     execFileSync('git', args, { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] });
@@ -100,6 +105,32 @@ export function publicar(pr, fichero, remoto = 'origin', token = '') {
     }
 }
 
+/**
+ * ¿Está ya pedida la vista previa de esta PR?
+ *
+ * La pide un comentario que empieza por `/preview`, y solo cuenta si lo ha
+ * escrito alguien con acceso de escritura: el owner, un miembro o un
+ * colaborador del repositorio, o quien esté en la lista de autorizados.
+ *
+ * El comentario del bot (el que lleva la vista previa) no cuenta: empieza por
+ * otra cosa.
+ *
+ * @param {object[]} comentarios  comentarios de la PR, con `body`,
+ *   `author_association` y `login`
+ * @param {string[]} autorizados  logins con permiso, aparte de los de la org
+ * @returns {boolean}
+ */
+export function pideVistaPrevia(comentarios, autorizados = []) {
+    const conPermiso = new Set(['OWNER', 'MEMBER', 'COLLABORATOR', ...autorizados]);
+    return comentarios.some((c) => {
+        const cuerpo = (c && c.body) || '';
+        if (!cuerpo.startsWith('/preview')) return false;
+        const asoc = (c && c.author_association) || '';
+        const login = (c && c.login) || '';
+        return conPermiso.has(asoc) || conPermiso.has(login);
+    });
+}
+
 // ---------------------------------------------------------------------------
 // Línea de órdenes
 // ---------------------------------------------------------------------------
@@ -119,8 +150,19 @@ if (esPrincipal) {
         console.log('  ' + recoger(raiz, remoto) + ' vista(s) previa(s) en dist/previews');
     } else if (comando === 'listar') {
         for (const rama of ramas(remoto, raiz)) console.log('  ' + rama);
+    } else if (comando === 'pedir') {
+        // Lee los comentarios de una PR (uno por línea, en JSON) y dice si la
+        // vista previa ya está pedida: "si" o "no". Los autorizados van en
+        // `--autorizados=uno,dos`.
+        const autorizados = (arg('autorizados', '')).split(',').map((s) => s.trim()).filter(Boolean);
+        const comentarios = readFileSync(posicional(1), 'utf8')
+            .split('\n')
+            .map((l) => l.trim())
+            .filter(Boolean)
+            .map((l) => JSON.parse(l));
+        console.log(pideVistaPrevia(comentarios, autorizados) ? 'si' : 'no');
     } else {
-        console.error('  Uso: previews.mjs <publicar|recoger|listar> [...]');
+        console.error('  Uso: previews.mjs <publicar|recoger|listar|pedir> [...]');
         process.exit(1);
     }
 }

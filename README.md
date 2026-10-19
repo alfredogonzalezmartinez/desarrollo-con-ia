@@ -153,7 +153,9 @@ adivinar de cuándo es:
 - Con `/preview` en un comentario de la pull request se compila el deck de esa
   PR y se publica en una URL pública, que deja de funcionar al mergear o
   descartar la PR. Solo lo puede pedir quien tenga acceso de escritura (se
-  amplía con la variable `PREVIEW_AUTORIZADOS` del repositorio).
+  amplía con la variable `PREVIEW_AUTORIZADOS` del repositorio). Una vez
+  pedida, la URL se refresca sola con cada commit nuevo de la PR; abrir una PR
+  sin pedirla no compila nada.
 
 ## Créditos y licencia
 

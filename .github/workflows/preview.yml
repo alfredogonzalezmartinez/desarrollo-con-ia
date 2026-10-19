@@ -17,9 +17,10 @@ name: Vista previa del deck
 #
 # Y se refresca solo: cada commit nuevo en una PR de este repositorio vuelve a
 # compilar el deck y a republicarlo, así que la URL siempre enseña el último
-# commit. En las PR de un fork hay que volver a pedirla con `/preview`: el
-# comentario se actualiza con un token de escritura, y en el evento
-# `pull_request` de un fork ese token es de solo lectura.
+# commit. Pero **solo si esa PR ya tenía la vista previa pedida**: una PR
+# nueva, sin pedir, no compila nada. En las PR de un fork hay que volver a
+# pedirla con `/preview`: el comentario se actualiza con un token de escritura,
+# y en el evento `pull_request` de un fork ese token es de solo lectura.
 #
 # Cómo se cubre cada caso:
 #
@@ -42,6 +43,8 @@ on:
         type: number
   issue_comment:
     types: [created]
+  pull_request:
+    types: [synchronize]
   pull_request_target:
     types: [closed]
 
@@ -56,10 +59,82 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  comprobar:
+    name: Comprobar
+    # El refresco automático solo se activa si la PR **ya** tiene la vista
+    # previa pedida: al abrir una PR no se compila nada. Pedirla es cosa de
+    # alguien, con `/preview`.
+    #
+    # Este job se salta solo al cerrar la PR, donde no hay nada que compilar.
+    # En el resto de los casos se ejecuta siempre: así `compilar` nunca depende
+    # de un job saltado (un job que necesita a otro saltado se salta).
+    if: github.event_name != 'pull_request_target'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: read
+      pull-requests: read
+    outputs:
+      pedida: ${{ steps.mirar.outputs.pedida }}
+    steps:
+      # El script sale del propio merge de la PR, como en `compilar`: aquí no
+      # hay ningún token de escritura, así que su código no puede hacer daño.
+      - name: Traer el script que decide
+        id: cojer
+        if: github.event_name == 'pull_request'
+        continue-on-error: true
+        uses: actions/checkout@v4
+        with:
+          ref: refs/pull/${{ github.event.pull_request.number }}/merge
+          path: ci
+          persist-credentials: false
+
+      - name: Traer el script que decide (head, si no se puede hacer merge)
+        if: github.event_name == 'pull_request' && steps.cojer.outcome != 'success'
+        uses: actions/checkout@v4
+        with:
+          ref: refs/pull/${{ github.event.pull_request.number }}/head
+          path: ci
+          persist-credentials: false
+
+      - name: ¿Hay ya una vista previa pedida?
+        id: mirar
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          EVENTO: ${{ github.event_name }}
+          NUM: ${{ github.event.pull_request.number }}
+          AUTORIZADOS: ${{ vars.PREVIEW_AUTORIZADOS }}
+        run: |
+          if [ "$EVENTO" != "pull_request" ]; then
+            # A mano no hay nada que comprobar: la petición ya está autorizada
+            # por quien la ha hecho.
+            echo "pedida=true" >> "$GITHUB_OUTPUT"
+            echo "  petición a mano: no hay nada que comprobar"
+            exit 0
+          fi
+          gh api "repos/${GITHUB_REPOSITORY}/issues/${NUM}/comments" --paginate \
+            --jq '.[] | {body: .body, author_association: .author_association, login: .user.login}' \
+            > comentarios.jsonl
+          # Si el script no puede decidir, no se publica nada: la puerta se
+          # queda cerrada.
+          if [ "$(node ci/scripts/previews.mjs pedir --autorizados="$AUTORIZADOS" comentarios.jsonl || echo no)" = "si" ]; then
+            echo "pedida=true" >> "$GITHUB_OUTPUT"
+            echo "  la PR #$NUM ya tenía la vista previa pedida: se refresca"
+          else
+            echo "pedida=false" >> "$GITHUB_OUTPUT"
+            echo "  la PR #$NUM no tiene ninguna vista previa pedida: no se compila nada"
+          fi
+
   compilar:
     name: Compilar
-    # A mano, solo el owner y quien tenga acceso de escritura. Y solo, de este
-    # repositorio, cuando llega un commit nuevo: un fork se deja para `/preview`.
+    # A mano, solo el owner y quien tenga acceso de escritura. Y en el
+    # refresco automático, solo si la PR ya tenía la vista previa pedida.
+    #
+    # Ojo: `comprobar` se salta al cerrar la PR, y entonces este job también
+    # (un job que necesita a otro saltado se salta). Aquí no pasa nada: al
+    # cerrar una PR no hay nada que compilar.
+    needs: comprobar
     if: |
       github.event_name == 'workflow_dispatch' ||
       (github.event_name == 'issue_comment'
@@ -68,7 +143,10 @@ jobs:
         && (
           contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.comment.author_association)
           || contains(format(',{0},', vars.PREVIEW_AUTORIZADOS), format(',{0},', github.event.comment.user.login))
-        ))
+        )) ||
+      (github.event_name == 'pull_request'
+        && github.event.pull_request.head.repo.full_name == github.repository
+        && needs.comprobar.outputs.pedida == 'true')
     runs-on: ubuntu-latest
     # Aquí se ejecuta el código de la PR: solo lectura, y sin credenciales de
     # git en el checkout.
@@ -84,10 +162,12 @@ jobs:
           EVENTO: ${{ github.event_name }}
           DEL_INPUT: ${{ inputs.pr }}
           DEL_COMENTARIO: ${{ github.event.issue.number }}
+          DE_LA_PR: ${{ github.event.pull_request.number }}
         run: |
           case "$EVENTO" in
             workflow_dispatch) n="$DEL_INPUT" ;;
             issue_comment) n="$DEL_COMENTARIO" ;;
+            pull_request) n="$DE_LA_PR" ;;
             *) echo "Evento no previsto"; exit 1 ;;
           esac
           echo "n=$n" >> "$GITHUB_OUTPUT"
@@ -197,7 +277,7 @@ jobs:
             cuerpo=$(printf '<!-- deck-preview -->\n### Vista previa del deck (descarga)\n\nEsta pull request viene de un fork, así que el deck compilado **no se publica** en el sitio del proyecto: sería código de otro repositorio ejecutándose en el dominio del proyecto.\n\nEl HTML compilado está en el artefacto `deck-preview-pr-%s-%s` de esta ejecución:\n\n[Descargar el HTML compilado (%s)](%s)\n\nEs un único fichero autocontenido: descárgalo y ábrelo en el navegador. Para refrescarlo tras un commit nuevo, pide otra vez `/preview`.\n' "$NUM" "$GITHUB_RUN_ID" "$tam" "$ejecucion")
           else
             url="https://${GITHUB_REPOSITORY_OWNER}.github.io/${GITHUB_REPOSITORY#*/}/previews/pr-${NUM}/"
-            cuerpo=$(printf '<!-- deck-preview -->\n### Vista previa del deck\n\n[Ver el deck compilado de esta PR](%s) · %s\n\n- Se compila el `merge` de la PR con `main` (o su `head`, si no se puede hacer merge).\n- Es una foto del momento: tras un commit nuevo, hay que pedirla otra vez con `/preview`.\n- Al mergear o descartar la PR, la rama se borra y el sitio se vuelve a publicar: la URL deja de funcionar.\n- El HTML también está en el [artefacto de esta ejecución](%s) (`deck-preview-pr-%s-%s`).\n- Cualquiera con acceso de escritura puede pedirla otra vez con `/preview`.\n' "$url" "$tam" "$ejecucion" "$NUM" "$GITHUB_RUN_ID")
+            cuerpo=$(printf '<!-- deck-preview -->\n### Vista previa del deck\n\n[Ver el deck compilado de esta PR](%s) · %s\n\n- Se compila el `merge` de la PR con `main` (o su `head`, si no se puede hacer merge).\n- Si la pediste con un comentario `/preview`, se refresca sola con cada commit nuevo: la URL siempre enseña el último.\n- Al mergear o descartar la PR, la rama se borra y el sitio se vuelve a publicar: la URL deja de funcionar.\n- El HTML también está en el [artefacto de esta ejecución](%s) (`deck-preview-pr-%s-%s`).\n- Cualquiera con acceso de escritura puede pedirla otra vez con `/preview`.\n' "$url" "$tam" "$ejecucion" "$NUM" "$GITHUB_RUN_ID")
           fi
           id=$(gh api "repos/${GITHUB_REPOSITORY}/issues/${NUM}/comments" --paginate \
             --jq '[.[] | select((.body? // "") | contains("<!-- deck-preview -->"))] | .[0].id // empty' | head -1)

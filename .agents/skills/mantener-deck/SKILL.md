@@ -89,6 +89,10 @@ lo publica en `https://<owner>.github.io/<repo>/previews/pr-<n>/`, donde se ve
 el deck entero, tal como quedará al mergear. La URL deja de funcionar al
 mergear o descartar la PR.
 
+Una vez pedida, la URL **se refresca sola** con cada commit nuevo de la PR: no
+hay que volver a pedirla. Pero abrir una PR no la genera: sin un `/preview`
+nadie ve nada.
+
 Es para **mirarlo en un navegador**. Para medir, sigue mandando
 `npm run check`.
 
