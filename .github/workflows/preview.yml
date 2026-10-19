@@ -65,10 +65,14 @@ jobs:
     # previa pedida: al abrir una PR no se compila nada. Pedirla es cosa de
     # alguien, con `/preview`.
     #
-    # Este job se salta solo al cerrar la PR, donde no hay nada que compilar.
-    # En el resto de los casos se ejecuta siempre: así `compilar` nunca depende
-    # de un job saltado (un job que necesita a otro saltado se salta).
-    if: github.event_name != 'pull_request_target'
+    # Este job se salta al cerrar la PR (donde no hay nada que compilar) y en
+    # las PR de un fork (que no se pueden publicar). En los dos casos
+    # `compilar` tampoco tiene nada que hacer, así que su `if` no depende de
+    # un job saltado.
+    if: |
+      github.event_name != 'pull_request_target' &&
+      (github.event_name != 'pull_request' ||
+       github.event.pull_request.head.repo.full_name == github.repository)
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -77,15 +81,33 @@ jobs:
     outputs:
       pedida: ${{ steps.mirar.outputs.pedida }}
     steps:
-      # El script sale del propio merge de la PR, como en `compilar`: aquí no
-      # hay ningún token de escritura, así que su código no puede hacer daño.
+      - name: Número de la PR
+        id: pr
+        env:
+          EVENTO: ${{ github.event_name }}
+          DEL_INPUT: ${{ inputs.pr }}
+          DEL_COMENTARIO: ${{ github.event.issue.number }}
+          DE_LA_PR: ${{ github.event.pull_request.number }}
+        run: |
+          case "$EVENTO" in
+            workflow_dispatch) n="$DEL_INPUT" ;;
+            issue_comment) n="$DEL_COMENTARIO" ;;
+            pull_request) n="$DE_LA_PR" ;;
+            *) echo "Evento no previsto"; exit 1 ;;
+          esac
+          echo "n=$n" >> "$GITHUB_OUTPUT"
+
+      # El script sale del propio merge de la PR, como en `compilar`. Aquí no
+      # hay ningún token de escritura, así que su código no puede hacer daño:
+      # lo único que decide es si esta PR se publica, y solo pueden llegar
+      # hasta aquí las de este repositorio.
       - name: Traer el script que decide
         id: cojer
         if: github.event_name == 'pull_request'
         continue-on-error: true
         uses: actions/checkout@v4
         with:
-          ref: refs/pull/${{ github.event.pull_request.number }}/merge
+          ref: refs/pull/${{ steps.pr.outputs.n }}/merge
           path: ci
           persist-credentials: false
 
@@ -93,7 +115,7 @@ jobs:
         if: github.event_name == 'pull_request' && steps.cojer.outcome != 'success'
         uses: actions/checkout@v4
         with:
-          ref: refs/pull/${{ github.event.pull_request.number }}/head
+          ref: refs/pull/${{ steps.pr.outputs.n }}/head
           path: ci
           persist-credentials: false
 
@@ -103,7 +125,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GH_REPO: ${{ github.repository }}
           EVENTO: ${{ github.event_name }}
-          NUM: ${{ github.event.pull_request.number }}
+          NUM: ${{ steps.pr.outputs.n }}
           AUTORIZADOS: ${{ vars.PREVIEW_AUTORIZADOS }}
         run: |
           if [ "$EVENTO" != "pull_request" ]; then
@@ -116,14 +138,22 @@ jobs:
           gh api "repos/${GITHUB_REPOSITORY}/issues/${NUM}/comments" --paginate \
             --jq '.[] | {body: .body, author_association: .author_association, login: .user.login}' \
             > comentarios.jsonl
-          # Si el script no puede decidir, no se publica nada: la puerta se
-          # queda cerrada.
-          if [ "$(node ci/scripts/previews.mjs pedir --autorizados="$AUTORIZADOS" comentarios.jsonl || echo no)" = "si" ]; then
-            echo "pedida=true" >> "$GITHUB_OUTPUT"
-            echo "  la PR #$NUM ya tenía la vista previa pedida: se refresca"
+          if salida=$(node ci/scripts/previews.mjs pedir --autorizados="$AUTORIZADOS" comentarios.jsonl); then
+            case "$salida" in
+              si)
+                echo "pedida=true" >> "$GITHUB_OUTPUT"
+                echo "  la PR #$NUM ya tenía la vista previa pedida: se refresca"
+                ;;
+              *)
+                echo "pedida=false" >> "$GITHUB_OUTPUT"
+                echo "  la PR #$NUM no tiene ninguna vista previa pedida: no se compila nada"
+                ;;
+            esac
           else
+            # Si el script no puede decidir, la puerta se queda cerrada: es
+            # mejor no publicar que publicar sin permiso.
             echo "pedida=false" >> "$GITHUB_OUTPUT"
-            echo "  la PR #$NUM no tiene ninguna vista previa pedida: no se compila nada"
+            echo "  no se ha podido decidir si la PR #$NUM tiene la vista previa pedida: no se compila nada"
           fi
 
   compilar:
