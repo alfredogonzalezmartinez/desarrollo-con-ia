@@ -82,6 +82,16 @@ Añade o ajusta ahí las reglas de esa slide (`#s-… .mt32 { margin-top: … }`
 lleva `style` en línea…). Vuelve a medir. Si aún no cabe, recorta texto: es
 preferible a que se pierda contenido por el borde.
 
+### Ver cómo queda una pull request
+
+Escribe `/preview` en un comentario de la PR: la CI compila el deck de esa PR y
+lo publica en `https://<owner>.github.io/<repo>/previews/pr-<n>/`, donde se ve
+el deck entero, tal como quedará al mergear. La URL deja de funcionar al
+mergear o descartar la PR.
+
+Es para **mirarlo en un navegador**. Para medir, sigue mandando
+`npm run check`.
+
 ### Cambiar el estilo global
 
 El CSS está entero en el `<style>` de `src/index.html`, con el vocabulario de la

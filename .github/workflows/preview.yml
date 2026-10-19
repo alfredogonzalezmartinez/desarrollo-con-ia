@@ -1,0 +1,261 @@
+name: Vista previa del deck
+
+# Compila el deck de un pull request y lo deja en una URL pública:
+#
+#   https://<owner>.github.io/<repo>/previews/pr-<n>/
+#
+# La URL vive lo que vive la PR: al mergearla o descartarla, se borra la rama
+# de la vista previa y se vuelve a publicar el sitio, así que deja de
+# funcionar.
+#
+# Este workflow NO publica nada: deja el HTML en la rama `previews/pr-<n>` y
+# pide a `pages.yml` que recoja las vistas previas. Solo hay un publicador.
+#
+# Se lanza a mano: escribiendo `/preview` en un comentario de la PR (solo el
+# owner y quien tenga acceso de escritura; se puede ampliar con la variable
+# `PREVIEW_AUTORIZADOS` del repositorio) o desde la pestaña Actions.
+#
+# Y se refresca solo: cada commit nuevo en una PR de este repositorio vuelve a
+# compilar el deck y a republicarlo, así que la URL siempre enseña el último
+# commit. En las PR de un fork hay que volver a pedirla con `/preview`: el
+# comentario se actualiza con un token de escritura, y en el evento
+# `pull_request` de un fork ese token es de solo lectura.
+#
+# Cómo se cubre cada caso:
+#
+#   - PR de ESTE repositorio: el deck se publica en el sitio y se ve en el
+#     navegador, en una URL que muere con la PR.
+#   - PR de un fork: el deck se compila igual, pero NO se publica en el
+#     dominio del proyecto (ahí no se ejecuta código de otro repositorio). Se
+#     entrega como artefacto, para descargar y abrir en local.
+#
+# Y en los dos casos, el código de la PR se ejecuta en un job con un token de
+# SOLO LECTURA; el token con permisos de escritura vive en otro job, donde no
+# se ejecuta nada de la PR. El HTML viaja entre los dos como artefacto, que es
+# solo datos.
+on:
+  workflow_dispatch:
+    inputs:
+      pr:
+        description: 'Número del pull request'
+        required: true
+        type: number
+  issue_comment:
+    types: [created]
+  pull_request:
+    types: [synchronize]
+  pull_request_target:
+    types: [closed]
+
+permissions:
+  contents: write         # publicar la rama de la vista previa
+  pull-requests: write    # comentar en la PR
+  issues: write           # ídem (los comentarios de PR van por la API de issues)
+  actions: write          # lanzar la publicación del sitio
+
+concurrency:
+  group: preview-${{ github.event.issue.number || inputs.pr || github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  compilar:
+    name: Compilar
+    # A mano, solo el owner y quien tenga acceso de escritura. Y solo, de este
+    # repositorio, cuando llega un commit nuevo: un fork se deja para `/preview`.
+    if: |
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'issue_comment'
+        && github.event.issue.pull_request
+        && startsWith(github.event.comment.body, '/preview')
+        && (
+          github.event.comment.author_association in ('OWNER', 'MEMBER', 'COLLABORATOR')
+          || contains(format(',{0},', vars.PREVIEW_AUTORIZADOS), format(',{0},', github.event.comment.user.login))
+        )) ||
+      (github.event_name == 'pull_request'
+        && github.event.pull_request.head.repo.full_name == github.repository)
+    runs-on: ubuntu-latest
+    # Aquí se ejecuta el código de la PR: solo lectura, y sin credenciales de
+    # git en el checkout.
+    permissions:
+      contents: read
+    outputs:
+      pr: ${{ steps.pr.outputs.n }}
+      fork: ${{ steps.origen.outputs.fork }}
+    steps:
+      - name: Número de la PR
+        id: pr
+        env:
+          EVENTO: ${{ github.event_name }}
+          DEL_INPUT: ${{ inputs.pr }}
+          DEL_COMENTARIO: ${{ github.event.issue.number }}
+        run: |
+          case "$EVENTO" in
+            workflow_dispatch) n="$DEL_INPUT" ;;
+            issue_comment) n="$DEL_COMENTARIO" ;;
+            *) echo "Evento no previsto"; exit 1 ;;
+          esac
+          echo "n=$n" >> "$GITHUB_OUTPUT"
+
+      - name: ¿De dónde viene el código de la PR?
+        id: origen
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NUM: ${{ steps.pr.outputs.n }}
+        run: |
+          repo=$(gh api "repos/${GITHUB_REPOSITORY}/pulls/${NUM}" --jq '.head.repo.full_name')
+          echo "repo=$repo" >> "$GITHUB_OUTPUT"
+          if [ "$repo" = "$GITHUB_REPOSITORY" ]; then
+            echo "fork=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "fork=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Traer la PR (merge con main)
+        id: cojer
+        continue-on-error: true
+        uses: actions/checkout@v4
+        with:
+          ref: refs/pull/${{ steps.pr.outputs.n }}/merge
+          path: deck
+          persist-credentials: false
+
+      - name: Traer la PR (head, si no se puede hacer merge)
+        if: steps.cojer.outcome != 'success'
+        uses: actions/checkout@v4
+        with:
+          ref: refs/pull/${{ steps.pr.outputs.n }}/head
+          path: deck
+          persist-credentials: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: deck/package-lock.json
+
+      - name: Compilar el deck
+        working-directory: deck
+        run: |
+          npm ci
+          npm run build
+
+      - name: Subir el HTML compilado
+        uses: actions/upload-artifact@v4
+        with:
+          # El nombre lleva el id de la ejecución: con el refresco automático
+          # hay un artefacto por commit, y todos deben poder convivir.
+          name: deck-preview-pr-${{ steps.pr.outputs.n }}-${{ github.run_id }}
+          path: deck/dist/index.html
+          retention-days: 7
+
+  publicar:
+    name: Publicar
+    needs: compilar
+    if: needs.compilar.outputs.pr != ''
+    runs-on: ubuntu-latest
+    steps:
+      # Aquí ya no se ejecuta nada de la PR: solo `main` y el HTML, que viaja
+      # como artefacto (es decir, como datos).
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          path: ci
+          persist-credentials: false
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: deck-preview-pr-${{ needs.compilar.outputs.pr }}-${{ github.run_id }}
+          path: html
+
+      - name: Publicar la rama de la vista previa
+        if: needs.compilar.outputs.fork == 'false'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NUM: ${{ needs.compilar.outputs.pr }}
+        run: |
+          node ci/scripts/previews.mjs publicar "$NUM" html/index.html \
+            --remoto="https://github.com/${{ github.repository }}.git"
+
+      - name: Publicar el sitio
+        if: needs.compilar.outputs.fork == 'false'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh workflow run pages.yml --ref main -f ref=main
+
+      - name: Comentar en la PR
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NUM: ${{ needs.compilar.outputs.pr }}
+          ES_FORK: ${{ needs.compilar.outputs.fork }}
+        run: |
+          ejecucion="https://github.com/${GITHUB_REPOSITORY_OWNER}/${GITHUB_REPOSITORY#*/}/actions/runs/${GITHUB_RUN_ID}"
+          tam=$(du -h html/index.html | cut -f1)
+          if [ "$ES_FORK" = "true" ]; then
+            # El código de un fork no se publica en el dominio del proyecto:
+            # se entrega el HTML para descargarlo.
+            cuerpo=$(printf '<!-- deck-preview -->\n### Vista previa del deck (descarga)\n\nEsta pull request viene de un fork, así que el deck compilado **no se publica** en el sitio del proyecto: sería código de otro repositorio ejecutándose en el dominio del proyecto.\n\nEl HTML compilado está en el artefacto `deck-preview-pr-%s-%s` de esta ejecución:\n\n[Descargar el HTML compilado (%s)](%s)\n\nEs un único fichero autocontenido: descárgalo y ábrelo en el navegador. Para refrescarlo tras un commit nuevo, pide otra vez `/preview`.\n' "$NUM" "$GITHUB_RUN_ID" "$tam" "$ejecucion")
+          else
+            url="https://${GITHUB_REPOSITORY_OWNER}.github.io/${GITHUB_REPOSITORY#*/}/previews/pr-${NUM}/"
+            cuerpo=$(printf '<!-- deck-preview -->\n### Vista previa del deck\n\n[Ver el deck compilado de esta PR](%s) · %s\n\n- Se compila el `merge` de la PR con `main` (o su `head`, si no se puede hacer merge).\n- Se refresca sola con cada commit nuevo de la PR: la URL siempre enseña el último.\n- Al mergear o descartar la PR, la rama se borra y el sitio se vuelve a publicar: la URL deja de funcionar.\n- El HTML también está en el [artefacto de esta ejecución](%s) (`deck-preview-pr-%s-%s`).\n- Cualquiera con acceso de escritura puede pedirla otra vez con `/preview`.\n' "$url" "$tam" "$ejecucion" "$NUM" "$GITHUB_RUN_ID")
+          fi
+          id=$(gh api "repos/${GITHUB_REPOSITORY}/issues/${NUM}/comments" --paginate --slurp \
+            --jq '[.. | objects | select((.body? // "") | contains("<!-- deck-preview -->"))] | .[0].id // empty')
+          if [ -n "$id" ]; then
+            gh api -X PATCH "repos/${GITHUB_REPOSITORY}/issues/comments/${id}" -f body="$cuerpo" --silent
+          else
+            gh api -X POST "repos/${GITHUB_REPOSITORY}/issues/${NUM}/comments" -f body="$cuerpo" --silent
+          fi
+
+  limpiar:
+    name: Retirar la vista previa
+    if: github.event_name == 'pull_request_target' && github.event.action == 'closed'
+    runs-on: ubuntu-latest
+    steps:
+      # Solo llamadas a la API: aquí no se ejecuta código de la PR.
+      - name: Borrar la rama de la vista previa
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NUM: ${{ github.event.pull_request.number }}
+        run: |
+          gh api -X DELETE "repos/${GITHUB_REPOSITORY}/git/refs/heads/previews/pr-${NUM}" --silent \
+            || echo "La rama ya no estaba"
+
+      - name: Borrar los artefactos de la vista previa
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NUM: ${{ github.event.pull_request.number }}
+        run: |
+          # Con el refresco automático hay un artefacto por commit: se borran
+          # todos los de esta PR.
+          ids=$(gh api "repos/${GITHUB_REPOSITORY}/actions/artifacts" --paginate --slurp \
+            --jq "add | map(select(.name | startswith(\"deck-preview-pr-${NUM}-\"))) | .[].id")
+          if [ -n "$ids" ]; then
+            for id in $ids; do
+              gh api -X DELETE "repos/${GITHUB_REPOSITORY}/actions/artifacts/${id}" --silent
+              echo "Artefacto borrado: $id"
+            done
+          else
+            echo "No había artefactos"
+          fi
+
+      - name: Volver a publicar el sitio
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh workflow run pages.yml --ref main -f ref=main
+
+      - name: Dejar constancia en la PR
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NUM: ${{ github.event.pull_request.number }}
+        run: |
+          # El comentario de la vista previa se sustituye por una nota: el
+          # enlace ya no funciona y conviene decirlo. Si la PR nunca tuvo
+          # vista previa, no se crea ningún comentario.
+          cuerpo=$(printf '<!-- deck-preview -->\n### Vista previa retirada\n\nEsta pull request se ha cerrado, así que la vista previa se ha retirado: su rama y su artefacto se han borrado y la URL ya no funciona.\n')
+          id=$(gh api "repos/${GITHUB_REPOSITORY}/issues/${NUM}/comments" --paginate --slurp \
+            --jq '[.. | objects | select((.body? // "") | contains("<!-- deck-preview -->"))] | .[0].id // empty')
+          if [ -n "$id" ]; then
+            gh api -X PATCH "repos/${GITHUB_REPOSITORY}/issues/comments/${id}" -f body="$cuerpo" --silent
+          fi

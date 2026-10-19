@@ -3,10 +3,22 @@ name: Publicar el deck
 # Compila src/index.html y publica el resultado en GitHub Pages.
 # Antes de que funcione hay que activarlo una vez:
 #   Settings → Pages → Source: «GitHub Actions».
+#
+# Este es el ÚNICO workflow que publica. Las vistas previas de los pull
+# requests (workflow `preview.yml`) no despliegan nada: dejan el HTML
+# compilado en una rama y piden que este workflow lo recoja. Así el
+# despliegue al mergear en main no pisa las vistas previas de las PR que
+# siguen abiertas, y la de la PR que se acaba de mergear desaparece sola.
 on:
   push:
     branches: [main]
   workflow_dispatch:
+    inputs:
+      ref:
+        description: 'Rama del deck que se publica'
+        required: false
+        default: 'main'
+        type: string
 
 permissions:
   contents: read
@@ -22,6 +34,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          # Al mergear se publica lo que se ha mergeado; si lo dispara
+          # `preview.yml`, se publica el main de ese momento.
+          ref: ${{ inputs.ref || github.sha }}
 
       - uses: actions/setup-node@v4
         with:
@@ -32,6 +48,11 @@ jobs:
 
       # El propio build falla si queda alguna dependencia de red o un ancla rota.
       - run: npm run build
+
+      # Las vistas previas de las PR abiertas viajan en el mismo despliegue:
+      # cada una en dist/previews/<n>/index.html.
+      - name: Recoger las vistas previas
+        run: node scripts/previews.mjs recoger
 
       - uses: actions/configure-pages@v5
 

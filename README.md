@@ -150,6 +150,9 @@ adivinar de cuándo es:
 - Los cambios entran por **pull request**: `main` está protegida y la CI ejecuta
   las mismas comprobaciones (`build`, `check`, `test`, `skills:check`) antes de
   dejar mergear nada.
+- Con `/preview` en un comentario de la pull request se compila el deck de esa
+  PR y se publica en una URL pública, que deja de funcionar al mergear o
+  descartar la PR.
 
 ## Créditos y licencia
 
