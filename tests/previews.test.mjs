@@ -8,7 +8,7 @@
  */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { execFileSync } from 'node:child_process';
+import { execFileSync, spawnSync } from 'node:child_process';
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { numeroDeRama, publicar, recoger } from '../scripts/previews.mjs';
@@ -61,4 +61,32 @@ test('recoger sin previews no inventa nada', () => {
 
     assert.equal(recoger(raiz, remoto), 0);
     assert.ok(!existsSync(path.join(raiz, 'dist', 'previews')));
+});
+
+test('publicar dos veces deja la historia en línea, sin force push', () => {
+    const remoto = temporal('previews-remoto-');
+    execFileSync('git', ['init', '--bare', '--quiet', remoto]);
+    const raiz = temporal('previews-raiz-');
+    execFileSync('git', ['init', '--quiet', raiz]);
+    const fichero = path.join(raiz, 'index.html');
+
+    writeFileSync(fichero, '<p>primera</p>');
+    publicar(7, fichero, remoto, '');
+    writeFileSync(fichero, '<p>segunda</p>');
+    publicar(7, fichero, remoto, '');
+
+    // Los dos commits, uno encima del otro: el segundo push fue un
+    // fast-forward y no hizo falta reescribir nada.
+    const log = execFileSync('git', ['log', '--format=%s', 'refs/heads/previews/pr-7'],
+        { cwd: remoto, encoding: 'utf8' });
+    assert.equal(log.trim().split('\n').length, 2, log);
+    const ancestro = spawnSync('git',
+        ['merge-base', '--is-ancestor', 'refs/heads/previews/pr-7~1', 'refs/heads/previews/pr-7'],
+        { cwd: remoto });
+    assert.equal(ancestro.status, 0, 'el segundo push no fue un fast-forward');
+
+    // Y lo que se publica es la última versión.
+    const html = execFileSync('git', ['show', 'refs/heads/previews/pr-7:index.html'],
+        { cwd: remoto, encoding: 'utf8' });
+    assert.equal(html, '<p>segunda</p>');
 });
