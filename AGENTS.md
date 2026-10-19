@@ -19,6 +19,10 @@ antes de tocar nada.
   esté en verde. El orden es: `git pull` (para tener `main` al día), `git rebase
   origin/main` y solo entonces el push. Con la política estricta del ruleset
   («require branches to be up to date before merging») es obligatorio.
+- **No hagas force push.** Ni `--force` ni `--force-with-lease`. Si una rama ya
+  publicada hay que actualizarla, se mergea `origin/main` en ella
+  (`git merge origin/main`) y se sube normal: reescribir lo ya publicado rompe
+  la historia de quien lo tenga descargado.
 - **Una pull request no se mergea sola.** Si te pido una PR, la abro y la dejo
   lista —con la CI en verde y la descripción puesta—, pero **el merge es del
   mantenedor**. Tampoco la mergeas por tu cuenta si la has creado tú.
