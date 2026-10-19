@@ -19,6 +19,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          # El código de la PR no necesita credenciales: que no las vea.
+          persist-credentials: false
 
       - uses: actions/setup-node@v4
         with:
