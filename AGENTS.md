@@ -264,6 +264,10 @@ sitio: **la URL muere con la PR**.
 La vista previa es **una foto del momento**: no se refresca sola. Después de un
 commit nuevo hay que volver a pedirla con `/preview`.
 
+Cada petición deja un commit en la rama `previews/pr-<n>`: la rama cuenta la
+secuencia de vistas previas y se actualiza con un *fast-forward*, sin reescribir
+nada.
+
 Hay **un solo publicador** (`pages.yml`). El preview no despliega nada: deja el
 HTML en la rama `previews/pr-<n>` y pide a `pages.yml` que lo recoja. Por eso el
 despliegue al mergear en `main` **no pisa** las vistas previas de las PR que
