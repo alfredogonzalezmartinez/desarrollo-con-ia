@@ -225,6 +225,18 @@ vive en el repositorio y hay que configurar a mano:
 > es decorativa: si algún día ves un informe con `✗` y un exit code 0, eso es un
 > fallo del script, no del deck.
 
+Los workflows se validan **en local**, antes de subirlos:
+
+```bash
+brew install actionlint          # una sola vez
+actionlint .github/workflows/*.yml
+```
+
+Es lo que caza los errores que GitHub solo acusa cuando el fichero ya está en
+`main`: una expresión como `x in ('a', 'b')` no es válida, y el workflow no
+arranca ni siquiera para dar el error. Si el `shellcheck` de `actionlint` se
+queja de la glibc —típico en el linuxbrew—, se salta con `-shellcheck=`.
+
 ### Vistas previas de un pull request
 
 Con `/preview` en un comentario de la PR —solo el owner y quien tenga acceso a

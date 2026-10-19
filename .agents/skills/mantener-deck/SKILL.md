@@ -111,6 +111,9 @@ carácter.
 - `npm run build` sin errores.
 - `npm run check` → *«Ninguna slide se sale de su ventana»*.
 - `npm test` en verde.
+- Si has tocado los workflows, `actionlint .github/workflows/*.yml` (se instala
+  con `brew install actionlint`): valida las expresiones, que GitHub solo acusa
+  cuando el fichero ya está en `main`.
 - Las comprobaciones salen con **0** si todo está bien y con **1** si algo
   falla: aunque el informe se vea tranquilo, el código de salida manda. En la
   CI es lo que para el merge.
